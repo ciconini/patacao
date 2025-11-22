@@ -1,0 +1,20 @@
+<form [formGroup]="loginForm" (ngSubmit)="loginSubmit()" class="login-form">
+  <div class="form-input-wrapper">
+    <label for="username">Username</label>
+    <input pInputText type="text" formControlName="username" id="username" fluid
+      [invalid]="username?.hasError('required') && (username?.touched || username?.dirty)"/>
+  </div>
+  <div class="form-input-wrapper">
+    <label for="password">Password</label>
+    <input pInputText type="password" formControlName="password" fluid
+      [invalid]="password?.hasError('required') && (password?.touched || password?.dirty)"/>
+  </div>
+  <div class="form-input-wrapper">
+    <label for="remember-me" class="me-2">Remember me </label>
+    <p-checkbox formControlName="rememberMe" inputId="remember-me" [binary]="true" />
+  </div>
+  <a href="#" class="text-danger text-end">Forgot Password?</a>
+  <div>
+    <p-button label="Log in" type="submit" class="w-100" [style]="{width: '100%'}"/>
+  </div>
+</form>

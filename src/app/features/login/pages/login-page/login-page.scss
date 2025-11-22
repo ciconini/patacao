@@ -1,0 +1,9 @@
+@use '../../../../shared/styles/forms' as *;
+
+p-card-body {
+  padding: 0;
+}
+
+.p-0 .p-card-body {
+  padding: 0 !important;
+}
