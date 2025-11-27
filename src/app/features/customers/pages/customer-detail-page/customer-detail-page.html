@@ -1,0 +1,36 @@
+<div class="row">
+  <div class="col-4">
+    <p-card>
+      <img class="profile-image" [src]="customer.image ? customer.image : `/img-profile.png`" [alt]="`${customer.name} profile image`">
+      <h1>{{customer.name}}</h1>
+      <p>{{customer.email}}</p>
+      <p>{{customer.phone}}</p>
+      <p>{{customer.address}}</p>
+    </p-card>
+  </div>
+  <div class="col-8">
+    <div class="row mb-3">
+      <div class="col d-flex justify-content-between">
+        <h2>Pets</h2>
+        <p-button label="+ Add new" type="button" size="small"/>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="pet-list">
+          @for (pet of customer.pets; track pet.id) {
+            <app-pet-item [data]="pet"></app-pet-item>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <h2>Appointments</h2>
+        <p-card>
+          <app-table [noSearch]="true" [columns]="tableHeaders" [data]="mockAppointments"></app-table>
+        </p-card>
+      </div>
+    </div>
+  </div>
+</div>

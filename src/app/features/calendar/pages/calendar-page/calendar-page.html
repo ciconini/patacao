@@ -1,0 +1,12 @@
+<div class="calendar-list">
+  @for(calendar of calendars; track calendar.id) {
+    <p-card>
+      <div class="calendar-name">
+        {{calendar.name}}
+      </div>
+      <div class="calendar-owner">
+        {{calendar.owner}}
+      </div>
+    </p-card>
+  }
+</div>
