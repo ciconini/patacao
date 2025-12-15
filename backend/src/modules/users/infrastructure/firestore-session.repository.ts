@@ -226,4 +226,3 @@ export class FirestoreSessionRepository implements SessionRepository {
     return timestamp.toDate();
   }
 }
-

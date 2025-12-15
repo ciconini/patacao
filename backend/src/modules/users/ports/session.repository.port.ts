@@ -19,6 +19,15 @@ export interface SessionRepository {
   save(session: Session): Promise<Session>;
 
   /**
+   * Saves a Session with a refresh token
+   * This is a helper method for storing refresh tokens
+   * 
+   * @param session - Session domain entity
+   * @param refreshToken - Refresh token to store
+   */
+  saveWithRefreshToken(session: Session, refreshToken: string): Promise<void>;
+
+  /**
    * Finds a Session by ID
    * 
    * @param sessionId - Session ID

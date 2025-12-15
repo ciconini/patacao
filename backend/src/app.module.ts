@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { SharedModule } from './shared/shared.module';
 import { DatabaseModule } from './adapters/db/database.module';
 import { RedisModule } from './adapters/redis/redis.module';
+import { AuthModule } from './shared/auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RedisModule } from './adapters/redis/redis.module';
     SharedModule,
     DatabaseModule,
     RedisModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

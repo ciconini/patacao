@@ -25,6 +25,7 @@ import { Session } from '../domain/session.entity';
 import { EmailAddress } from '../../shared/domain/email-address.value-object';
 import { AuditLogDomainService } from '../../shared/domain/audit-log.domain-service';
 import { AuditLog, AuditAction } from '../../shared/domain/audit-log.entity';
+import { SessionRepository } from '../ports/session.repository.port';
 
 // Repository interfaces (ports)
 export interface UserRepository {
@@ -34,10 +35,6 @@ export interface UserRepository {
   resetFailedLoginAttempts(userId: string): Promise<void>;
   lockAccount(userId: string, lockoutExpiry: Date): Promise<void>;
   isAccountLocked(userId: string): Promise<boolean>;
-}
-
-export interface SessionRepository {
-  save(session: Session): Promise<Session>;
 }
 
 export interface AuditLogRepository {
@@ -390,9 +387,10 @@ export class UserLoginUseCase {
       false // not revoked
     );
 
-    // Note: In a real implementation, you'd store the refresh token hash
-    // in the session or a separate table. For now, we'll just save the session.
-    return await this.sessionRepository.save(session);
+    // Save session with refresh token
+    // Note: In a production implementation, you might want to hash the refresh token
+    await this.sessionRepository.saveWithRefreshToken(session, refreshToken);
+    return session;
   }
 
   /**
