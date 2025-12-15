@@ -26,7 +26,7 @@ This document lists all environment variables used in the Patacão Petshop Manag
 | Variable | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
 | `FIREBASE_PROJECT_ID` | string | Yes | - | Firebase project ID |
-| `FIREBASE_SERVICE_ACCOUNT_PATH` | string | No | - | Path to service account JSON file |
+| `FIREBASE_SERVICE_ACCOUNT_PATH` | string | No | `config/secrets/firebase-service-account.json` | Path to service account JSON file (relative to project root or absolute path) |
 | `FIREBASE_SERVICE_ACCOUNT_KEY` | string | No | - | Service account JSON as string (base64 or JSON) |
 | `USE_FIREBASE_EMULATOR` | boolean | No | `false` | Use Firebase emulator for local development |
 | `FIREBASE_EMULATOR_HOST` | string | No | `localhost:8080` | Firebase emulator host and port |

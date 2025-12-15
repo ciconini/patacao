@@ -58,8 +58,11 @@ Current project: `patacao`
 1. **For Production:**
    - Create a service account in Firebase Console
    - Download the service account JSON file
-   - Set `FIREBASE_SERVICE_ACCOUNT_PATH` or `FIREBASE_SERVICE_ACCOUNT_KEY` in `.env`
+   - Place the file in `backend/config/secrets/firebase-service-account.json` (recommended)
+   - Or set `FIREBASE_SERVICE_ACCOUNT_PATH` in `.env` to point to the file location
+   - Or set `FIREBASE_SERVICE_ACCOUNT_KEY` in `.env` with the JSON content as a string
    - Set `FIREBASE_PROJECT_ID=patacao` in `.env`
+   - **Note:** The `config/secrets/` directory is automatically ignored by git for security
 
 2. **For Local Development:**
    - Set `USE_FIREBASE_EMULATOR=true` in `.env`

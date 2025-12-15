@@ -47,6 +47,8 @@ firebase-debug.log
 .firebase/
 firebase-service-account.json
 *.serviceAccount.json
+config/secrets/
+*.firebase-adminsdk-*.json
 
 # Build
 *.tsbuildinfo

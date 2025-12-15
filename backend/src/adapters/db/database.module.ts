@@ -29,8 +29,12 @@ import * as admin from 'firebase-admin';
             const serviceAccountKey = configService.get('FIREBASE_SERVICE_ACCOUNT_KEY');
 
             if (serviceAccountPath) {
-              // Load from file path
-              const serviceAccount = require(serviceAccountPath);
+              // Load from file path (absolute or relative to project root)
+              const path = require('path');
+              const resolvedPath = path.isAbsolute(serviceAccountPath)
+                ? serviceAccountPath
+                : path.join(process.cwd(), serviceAccountPath);
+              const serviceAccount = require(resolvedPath);
               admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
                 projectId: projectId,
@@ -43,10 +47,21 @@ import * as admin from 'firebase-admin';
                 projectId: projectId,
               });
             } else {
-              // Use default credentials (for Google Cloud environments)
-              admin.initializeApp({
-                projectId: projectId,
-              });
+              // Try default path: config/secrets/firebase-service-account.json
+              try {
+                const path = require('path');
+                const defaultPath = path.join(process.cwd(), 'config', 'secrets', 'firebase-service-account.json');
+                const serviceAccount = require(defaultPath);
+                admin.initializeApp({
+                  credential: admin.credential.cert(serviceAccount),
+                  projectId: projectId,
+                });
+              } catch (defaultPathError) {
+                // Use default credentials (for Google Cloud environments)
+                admin.initializeApp({
+                  projectId: projectId,
+                });
+              }
             }
           }
         }
