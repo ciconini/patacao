@@ -1,6 +1,8 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import { FirestoreUnitOfWork } from './firestore-unit-of-work';
+import { UnitOfWork } from '../../shared/ports/unit-of-work.port';
 
 @Global()
 @Module({
@@ -76,8 +78,12 @@ import * as admin from 'firebase-admin';
       },
       inject: ['FIREBASE_ADMIN'],
     },
+    {
+      provide: 'UnitOfWork',
+      useClass: FirestoreUnitOfWork,
+    },
   ],
-  exports: ['FIREBASE_ADMIN', 'FIRESTORE'],
+  exports: ['FIREBASE_ADMIN', 'FIRESTORE', 'UnitOfWork'],
 })
 export class DatabaseModule {}
 
