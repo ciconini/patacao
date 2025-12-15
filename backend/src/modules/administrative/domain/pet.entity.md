@@ -98,7 +98,7 @@ All properties are accessed through getters that return copies to maintain encap
 - `dateOfBirth`: Returns a copy of the date of birth (or undefined)
 - `microchipId`: Returns the microchip ID (or undefined)
 - `medicalNotes`: Returns medical notes (or undefined)
-- `vaccinationRecords`: Returns a copy of the vaccination records array
+- `vaccinationRecords`: Returns a copy of the vaccination records array with new Date instances for immutability
 - `createdAt`: Returns a copy of the creation timestamp
 - `updatedAt`: Returns a copy of the last update timestamp
 
@@ -117,10 +117,10 @@ All properties are accessed through getters that return copies to maintain encap
 - **`updateMedicalNotes(notes: string | undefined)`**: Updates medical notes
 
 #### Vaccination Management
-- **`addVaccinationRecord(record: VaccinationRecord)`**: Adds a new vaccination record (validates record)
+- **`addVaccinationRecord(record: VaccinationRecord)`**: Adds a new vaccination record (validates record, creates new Date instances for immutability)
 - **`removeVaccinationRecord(index: number)`**: Removes a vaccination record by index
-- **`getDueVaccinations(referenceDate?: Date)`**: Returns vaccination records that are due or overdue
-- **`getLatestVaccination(vaccineType: string)`**: Returns the most recent vaccination for a specific vaccine type
+- **`getDueVaccinations(referenceDate?: Date)`**: Returns vaccination records that are due or overdue (returns copies with new Date instances)
+- **`getLatestVaccination(vaccineType: string)`**: Returns the most recent vaccination for a specific vaccine type (returns copy with new Date instances)
 
 #### Status Checks
 - **`hasMicrochip()`**: Returns true if pet has a valid microchip ID
@@ -276,8 +276,9 @@ All properties are accessed through getters that return copies to maintain encap
 3. **Validation at Boundaries**: All validation happens in constructor and update methods
 4. **Age Calculation**: Age is calculated, not stored, to ensure accuracy over time
 5. **Vaccination Tracking**: Structured vaccination records support health management workflows
-6. **Species-Aware Logic**: Senior classification considers species-specific age thresholds
-7. **Timestamp Management**: Automatic `updatedAt` tracking on every modification
+6. **Date Immutability**: All Date objects in vaccination records are copied to new instances to prevent external mutation
+7. **Species-Aware Logic**: Senior classification considers species-specific age thresholds
+8. **Timestamp Management**: Automatic `updatedAt` tracking on every modification
 
 ## Usage Notes
 

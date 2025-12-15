@@ -80,7 +80,7 @@ export class Pet {
     this._dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : undefined;
     this._microchipId = microchipId;
     this._medicalNotes = medicalNotes;
-    this._vaccinationRecords = [...vaccinationRecords];
+    this._vaccinationRecords = vaccinationRecords.map(record => this.copyVaccinationRecord(record));
     this._createdAt = createdAt ? new Date(createdAt) : new Date();
     this._updatedAt = updatedAt ? new Date(updatedAt) : new Date();
   }
@@ -119,7 +119,7 @@ export class Pet {
   }
 
   get vaccinationRecords(): ReadonlyArray<VaccinationRecord> {
-    return [...this._vaccinationRecords];
+    return this._vaccinationRecords.map(record => this.copyVaccinationRecord(record));
   }
 
   get createdAt(): Date {
@@ -253,7 +253,7 @@ export class Pet {
    */
   addVaccinationRecord(record: VaccinationRecord): void {
     this.validateVaccinationRecord(record);
-    this._vaccinationRecords.push({ ...record });
+    this._vaccinationRecords.push(this.copyVaccinationRecord(record));
     this._updatedAt = new Date();
   }
 
@@ -276,29 +276,35 @@ export class Pet {
    * Gets all vaccination records that are due or overdue
    * 
    * @param referenceDate - Date to check against (defaults to today)
-   * @returns Array of vaccination records that need attention
+   * @returns Array of vaccination records that need attention (copies with new Date instances)
    */
   getDueVaccinations(referenceDate: Date = new Date()): VaccinationRecord[] {
-    return this._vaccinationRecords.filter(record => {
-      if (!record.nextDueDate) {
-        return false;
-      }
-      return new Date(record.nextDueDate) <= referenceDate;
-    });
+    return this._vaccinationRecords
+      .filter(record => {
+        if (!record.nextDueDate) {
+          return false;
+        }
+        return new Date(record.nextDueDate) <= referenceDate;
+      })
+      .map(record => this.copyVaccinationRecord(record));
   }
 
   /**
    * Gets the most recent vaccination record for a specific vaccine type
    * 
    * @param vaccineType - Type of vaccine to search for
-   * @returns Most recent vaccination record or undefined
+   * @returns Most recent vaccination record or undefined (copy with new Date instances)
    */
   getLatestVaccination(vaccineType: string): VaccinationRecord | undefined {
     const records = this._vaccinationRecords
       .filter(record => record.vaccineType.toLowerCase() === vaccineType.toLowerCase())
-      .sort((a, b) => b.administeredDate.getTime() - a.administeredDate.getTime());
+      .sort((a, b) => {
+        const dateA = new Date(a.administeredDate).getTime();
+        const dateB = new Date(b.administeredDate).getTime();
+        return dateB - dateA;
+      });
 
-    return records.length > 0 ? records[0] : undefined;
+    return records.length > 0 ? this.copyVaccinationRecord(records[0]) : undefined;
   }
 
   /**
@@ -334,6 +340,22 @@ export class Pet {
 
     // Default threshold for other species
     return age >= 7;
+  }
+
+  // Private helper methods
+
+  /**
+   * Creates a deep copy of a vaccination record with new Date instances
+   * Ensures immutability and prevents external mutation
+   */
+  private copyVaccinationRecord(record: VaccinationRecord): VaccinationRecord {
+    return {
+      vaccineType: record.vaccineType,
+      administeredDate: new Date(record.administeredDate),
+      nextDueDate: record.nextDueDate ? new Date(record.nextDueDate) : undefined,
+      veterinarian: record.veterinarian,
+      batchNumber: record.batchNumber,
+    };
   }
 
   // Private validation methods
