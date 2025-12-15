@@ -1,0 +1,827 @@
+openapi: 3.1.0
+info:
+  title: Patacão Petshop Management System API
+  version: 1.0.0
+  description: |
+    REST API for the Patacão Petshop Management System.
+    
+    This API provides endpoints for managing petshop operations including:
+    - Customer and pet management
+    - Appointment scheduling
+    - Inventory management
+    - Financial operations (invoices, transactions)
+    - User and access control
+    
+    **Authentication:** Bearer token (JWT) required for most endpoints.
+    **Base URL:** https://api.patacao.com/api/v1
+    **Language:** Portuguese (Portugal)
+    **Currency:** EUR
+  contact:
+    name: API Support
+    email: api@patacao.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.patacao.com/api/v1
+    description: Production server
+  - url: https://staging-api.patacao.com/api/v1
+    description: Staging server
+  - url: http://localhost:3000/api/v1
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Users
+    description: User and staff management
+  - name: Roles
+    description: Role management
+  - name: Sessions
+    description: Session management
+  - name: Companies
+    description: Company profile management
+  - name: Stores
+    description: Store management
+  - name: Customers
+    description: Customer management
+  - name: Pets
+    description: Pet management
+  - name: Services
+    description: Service catalog management
+  - name: Appointments
+    description: Appointment scheduling and management
+  - name: Products
+    description: Product catalog management
+  - name: Inventory
+    description: Inventory and stock management
+  - name: Suppliers
+    description: Supplier management
+  - name: Purchase Orders
+    description: Purchase order management
+  - name: Invoices
+    description: Invoice management
+  - name: Transactions
+    description: Transaction (POS) management
+  - name: Credit Notes
+    description: Credit note management
+  - name: Financial Exports
+    description: Financial export generation
+  - name: Audit Logs
+    description: Audit log access
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user with email/username and password
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: user@example.com
+              password: securePassword123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Logout current user and revoke session
+      operationId: logout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+                  format: uuid
+      responses:
+        '204':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Get new access token using refresh token
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                    format: uuid
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/password-reset/request:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      description: Request password reset email
+      operationId: requestPasswordReset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Password reset email sent (if email exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/password-reset/confirm:
+    post:
+      tags:
+        - Authentication
+      summary: Confirm password reset
+      description: Reset password using token from email
+      operationId: confirmPasswordReset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - new_password
+              properties:
+                token:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Password reset successful
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List users
+      description: Get paginated list of users with optional filtering
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Search'
+        - name: role
+          in: query
+          schema:
+            type: string
+          description: Filter by role ID
+        - name: store_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by store ID
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Users
+      summary: Create user
+      description: Create a new user (staff member)
+      operationId: createUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      description: Get user details by ID
+      operationId: getUserById
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Users
+      summary: Update user
+      description: Update user details
+      operationId: updateUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user
+      description: Delete (deactivate) user account
+      operationId: deleteUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: User deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /companies:
+    get:
+      tags:
+        - Companies
+      summary: Get company profile
+      description: Get company profile (single company per system)
+      operationId: getCompany
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Company profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Companies
+      summary: Create company profile
+      description: Create company profile (Owner role only)
+      operationId: createCompany
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCompanyRequest'
+      responses:
+        '201':
+          description: Company created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - Companies
+      summary: Update company profile
+      description: Update company profile
+      operationId: updateCompany
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCompanyRequest'
+      responses:
+        '200':
+          description: Company updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      description: Check API health status
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: 1.0.0
+                  checks:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        example: healthy
+                      redis:
+                        type: string
+                        example: healthy
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number
+    PerPage:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Items per page
+    Search:
+      name: q
+      in: query
+      schema:
+        type: string
+      description: Search query
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: User ID
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+          format: uuid
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+        store_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+        - full_name
+        - roles
+      properties:
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        phone:
+          type: string
+        username:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        store_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        working_hours:
+          type: object
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+        phone:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+        store_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        working_hours:
+          type: object
+
+    UserListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+
+    CompanyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        nif:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        tax_regime:
+          type: string
+        default_vat_rate:
+          type: number
+          format: decimal
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        website:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateCompanyRequest:
+      type: object
+      required:
+        - name
+        - nif
+        - address
+        - tax_regime
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        nif:
+          type: string
+          pattern: '^\d{9}$'
+        address:
+          $ref: '#/components/schemas/Address'
+        tax_regime:
+          type: string
+        default_vat_rate:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 100
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        website:
+          type: string
+
+    UpdateCompanyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        nif:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        tax_regime:
+          type: string
+        default_vat_rate:
+          type: number
+          format: decimal
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        website:
+          type: string
+
+    Address:
+      type: object
+      required:
+        - street
+        - city
+        - postal_code
+      properties:
+        street:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 255
+        postal_code:
+          type: string
+          pattern: '^\d{4}-\d{3}$'
+        country:
+          type: string
+          default: Portugal
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        http_status:
+          type: integer
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: VALIDATION_ERROR
+            message: "Dados inválidos"
+            http_status: 400
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: UNAUTHORIZED
+            message: "Autenticação necessária"
+            http_status: 401
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: FORBIDDEN
+            message: "Acesso negado"
+            http_status: 403
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: NOT_FOUND
+            message: "Recurso não encontrado"
+            http_status: 404
+

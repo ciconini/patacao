@@ -1,0 +1,394 @@
+ER Diagram — Patacão (Text)
+
+Conventions:
+- Types: UUID, VARCHAR(n), TEXT, INT, DECIMAL(12,2), BOOLEAN, DATETIME, JSON
+- PK: PRIMARY KEY; FK: FOREIGN KEY -> referenced_table(pk)
+- Index: [idx: field]
+- Nullability: (NOT NULL) implied for required fields; (NULL) shown for optional fields
+
+Tables
+
+1) companies
+- id UUID PRIMARY KEY
+- name VARCHAR(255) NOT NULL
+- nif VARCHAR(32) NOT NULL  -- portuguese fiscal number
+- address JSON NULL         -- {street, city, postal_code, country}
+- tax_regime VARCHAR(64) NULL
+- default_vat_rate DECIMAL(5,2) NULL
+- phone VARCHAR(32) NULL
+- email VARCHAR(255) NULL
+- website VARCHAR(255) NULL
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- Indexes: [idx: nif]
+
+2) stores
+- id UUID PRIMARY KEY
+- company_id UUID NOT NULL  -- FK -> companies(id)
+- name VARCHAR(255) NOT NULL
+- address JSON NULL
+- email VARCHAR(255) NULL
+- phone VARCHAR(32) NULL
+- opening_hours JSON NOT NULL -- structured weekly schedule
+- timezone VARCHAR(64) NOT NULL DEFAULT 'Europe/Lisbon'
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: company_id -> companies(id)
+- Indexes: [idx: company_id]
+
+3) inventory_locations (optional)
+- id UUID PRIMARY KEY
+- store_id UUID NOT NULL    -- FK -> stores(id)
+- name VARCHAR(255) NOT NULL
+- description TEXT NULL
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: store_id -> stores(id)
+- Indexes: [idx: store_id]
+
+4) users
+- id UUID PRIMARY KEY
+- email VARCHAR(255) NOT NULL UNIQUE
+- full_name VARCHAR(255) NOT NULL
+- phone VARCHAR(32) NULL
+- username VARCHAR(128) NULL UNIQUE
+- password_hash VARCHAR(255) NULL
+- active BOOLEAN NOT NULL DEFAULT TRUE
+- working_hours JSON NULL
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- Indexes: [idx: email], [idx: username]
+
+5) roles
+- id VARCHAR(64) PRIMARY KEY    -- canonical role id (Owner, Manager, Staff, Accountant, Veterinarian)
+- name VARCHAR(128) NOT NULL
+- permissions JSON NULL         -- list of permission keys
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+
+6) user_roles (join)
+- id UUID PRIMARY KEY
+- user_id UUID NOT NULL  -- FK -> users(id)
+- role_id VARCHAR(64) NOT NULL -- FK -> roles(id)
+- assigned_at DATETIME NOT NULL
+- FK: user_id -> users(id)
+- FK: role_id -> roles(id)
+- Indexes: [idx: user_id], [idx: role_id]
+
+7) user_service_skills (join)
+- id UUID PRIMARY KEY
+- user_id UUID NOT NULL  -- FK -> users(id)
+- service_id UUID NOT NULL -- FK -> services(id)
+- FK: user_id -> users(id)
+- FK: service_id -> services(id)
+- Indexes: [idx: user_id], [idx: service_id]
+
+8) customers
+- id UUID PRIMARY KEY
+- full_name VARCHAR(255) NOT NULL
+- email VARCHAR(255) NULL
+- phone VARCHAR(32) NULL
+- address JSON NULL
+- consent_marketing BOOLEAN NOT NULL DEFAULT FALSE
+- consent_reminders BOOLEAN NOT NULL DEFAULT TRUE
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- Indexes: [idx: email], [idx: phone]
+
+9) pets
+- id UUID PRIMARY KEY
+- customer_id UUID NOT NULL  -- FK -> customers(id)
+- name VARCHAR(255) NOT NULL
+- species VARCHAR(64) NOT NULL
+- breed VARCHAR(128) NULL
+- date_of_birth DATETIME NULL
+- microchip_id VARCHAR(64) NULL
+- medical_notes TEXT NULL
+- vaccination JSON NULL     -- e.g., [{vaccine, date}]
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: customer_id -> customers(id)
+- Indexes: [idx: customer_id], [idx: microchip_id]
+
+10) services
+- id UUID PRIMARY KEY
+- name VARCHAR(255) NOT NULL
+- description TEXT NULL
+- duration_minutes INT NOT NULL
+- price DECIMAL(12,2) NOT NULL
+- consumes_inventory BOOLEAN NOT NULL DEFAULT FALSE
+- consumed_items JSON NULL  -- [{product_id, quantity}]
+- tags JSON NULL
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- Indexes: [idx: name]
+
+11) service_packages (optional)
+- id UUID PRIMARY KEY
+- name VARCHAR(255) NOT NULL
+- description TEXT NULL
+- services JSON NOT NULL    -- ordered list [{service_id, qty}]
+- bundle_price DECIMAL(12,2) NULL
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+
+12) appointments
+- id UUID PRIMARY KEY
+- store_id UUID NOT NULL           -- FK -> stores(id)
+- customer_id UUID NOT NULL        -- FK -> customers(id)
+- pet_id UUID NOT NULL             -- FK -> pets(id)
+- start_at DATETIME NOT NULL
+- end_at DATETIME NOT NULL
+- status VARCHAR(32) NOT NULL      -- (booked, confirmed, checked_in, completed, cancelled, needs-reschedule)
+- created_by UUID NULL             -- FK -> users(id)
+- staff_id UUID NULL               -- FK -> users(id) (assigned staff)
+- notes TEXT NULL
+- recurrence_id UUID NULL
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: store_id -> stores(id)
+- FK: customer_id -> customers(id)
+- FK: pet_id -> pets(id)
+- FK: created_by -> users(id)
+- FK: staff_id -> users(id)
+- Indexes: [idx: store_id], [idx: start_at], [idx: staff_id]
+
+13) appointment_service_lines
+- id UUID PRIMARY KEY
+- appointment_id UUID NOT NULL  -- FK -> appointments(id)
+- service_id UUID NOT NULL      -- FK -> services(id)
+- quantity INT NOT NULL DEFAULT 1
+- price_override DECIMAL(12,2) NULL
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: appointment_id -> appointments(id)
+- FK: service_id -> services(id)
+- Indexes: [idx: appointment_id]
+
+14) products
+- id UUID PRIMARY KEY
+- sku VARCHAR(64) NOT NULL
+- name VARCHAR(255) NOT NULL
+- description TEXT NULL
+- category VARCHAR(128) NULL
+- unit_price DECIMAL(12,2) NOT NULL
+- vat_rate DECIMAL(5,2) NOT NULL
+- stock_tracked BOOLEAN NOT NULL DEFAULT TRUE
+- reorder_threshold INT NULL
+- supplier_id UUID NULL  -- FK -> suppliers(id)
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: supplier_id -> suppliers(id)
+- Unique: (sku)
+- Indexes: [idx: sku], [idx: supplier_id]
+
+15) suppliers
+- id UUID PRIMARY KEY
+- name VARCHAR(255) NOT NULL
+- contact_email VARCHAR(255) NULL
+- phone VARCHAR(32) NULL
+- default_lead_time_days INT NULL
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- Indexes: [idx: name]
+
+16) stock_batches
+- id UUID PRIMARY KEY
+- product_id UUID NOT NULL   -- FK -> products(id)
+- batch_number VARCHAR(128) NULL
+- quantity INT NOT NULL
+- expiry_date DATETIME NULL
+- received_at DATETIME NOT NULL
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: product_id -> products(id)
+- Indexes: [idx: product_id], [idx: batch_number]
+
+17) stock_movements
+- id UUID PRIMARY KEY
+- product_id UUID NOT NULL   -- FK -> products(id)
+- batch_id UUID NULL         -- FK -> stock_batches(id)
+- quantity_change INT NOT NULL
+- reason VARCHAR(64) NOT NULL  -- (receipt, sale, adjustment, transfer, reservation_release)
+- performed_by UUID NOT NULL   -- FK -> users(id)
+- location_id UUID NULL        -- FK -> inventory_locations(id) or stores(id) depending on schema
+- reference_id UUID NULL       -- generic reference (invoice, purchase_order, transaction)
+- created_at DATETIME NOT NULL
+- FK: product_id -> products(id)
+- FK: batch_id -> stock_batches(id)
+- FK: performed_by -> users(id)
+- FK: location_id -> inventory_locations(id)
+- Indexes: [idx: product_id], [idx: created_at]
+
+18) inventory_reservations
+- id UUID PRIMARY KEY
+- product_id UUID NOT NULL   -- FK -> products(id)
+- quantity INT NOT NULL
+- reserved_for UUID NOT NULL -- FK -> appointments(id) or transactions(id) (polymorphic reference; recommend separate columns or a type field)
+- reserved_type VARCHAR(32) NOT NULL -- (appointment, transaction)
+- expires_at DATETIME NULL
+- created_at DATETIME NOT NULL
+- FK: product_id -> products(id)
+- Indexes: [idx: product_id], [idx: reserved_for]
+
+19) purchase_orders
+- id UUID PRIMARY KEY
+- supplier_id UUID NOT NULL  -- FK -> suppliers(id)
+- store_id UUID NULL         -- FK -> stores(id)
+- status VARCHAR(32) NOT NULL -- (draft, ordered, received, cancelled)
+- created_by UUID NOT NULL   -- FK -> users(id)
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: supplier_id -> suppliers(id)
+- FK: store_id -> stores(id)
+- Indexes: [idx: supplier_id], [idx: status]
+
+20) purchase_order_lines
+- id UUID PRIMARY KEY
+- purchase_order_id UUID NOT NULL -- FK -> purchase_orders(id)
+- product_id UUID NOT NULL        -- FK -> products(id)
+- quantity INT NOT NULL
+- unit_price DECIMAL(12,2) NOT NULL
+- FK: purchase_order_id -> purchase_orders(id)
+- FK: product_id -> products(id)
+- Indexes: [idx: purchase_order_id]
+
+21) invoices
+- id UUID PRIMARY KEY
+- company_id UUID NOT NULL    -- FK -> companies(id)
+- store_id UUID NOT NULL      -- FK -> stores(id)
+- invoice_number VARCHAR(128) NOT NULL -- sequential per company/store
+- issued_at DATETIME NOT NULL
+- buyer_customer_id UUID NULL -- FK -> customers(id)
+- subtotal DECIMAL(12,2) NOT NULL
+- vat_total DECIMAL(12,2) NOT NULL
+- total DECIMAL(12,2) NOT NULL
+- status VARCHAR(32) NOT NULL -- (draft, issued, paid, cancelled, refunded)
+- paid_at DATETIME NULL
+- payment_method VARCHAR(64) NULL
+- external_reference VARCHAR(255) NULL
+- created_by UUID NOT NULL    -- FK -> users(id)
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: company_id -> companies(id)
+- FK: store_id -> stores(id)
+- FK: buyer_customer_id -> customers(id)
+- FK: created_by -> users(id)
+- Indexes: [idx: invoice_number], [idx: issued_at]
+
+22) invoice_lines
+- id UUID PRIMARY KEY
+- invoice_id UUID NOT NULL   -- FK -> invoices(id)
+- description TEXT NOT NULL
+- product_id UUID NULL       -- FK -> products(id)
+- service_id UUID NULL       -- FK -> services(id)
+- quantity INT NOT NULL
+- unit_price DECIMAL(12,2) NOT NULL
+- vat_rate DECIMAL(5,2) NOT NULL
+- line_total DECIMAL(12,2) NOT NULL
+- FK: invoice_id -> invoices(id)
+- FK: product_id -> products(id)
+- FK: service_id -> services(id)
+- Indexes: [idx: invoice_id]
+
+23) credit_notes
+- id UUID PRIMARY KEY
+- invoice_id UUID NOT NULL  -- FK -> invoices(id)
+- issued_at DATETIME NOT NULL
+- reason TEXT NOT NULL
+- amount DECIMAL(12,2) NOT NULL
+- created_by UUID NOT NULL  -- FK -> users(id)
+- created_at DATETIME NOT NULL
+- FK: invoice_id -> invoices(id)
+- FK: created_by -> users(id)
+- Indexes: [idx: invoice_id]
+
+24) transactions
+- id UUID PRIMARY KEY
+- store_id UUID NOT NULL     -- FK -> stores(id)
+- invoice_id UUID NOT NULL   -- FK -> invoices(id)
+- total_amount DECIMAL(12,2) NOT NULL
+- payment_status VARCHAR(32) NOT NULL -- (pending, paid_manual, refunded)
+- created_by UUID NOT NULL   -- FK -> users(id)
+- created_at DATETIME NOT NULL
+- updated_at DATETIME NULL
+- FK: store_id -> stores(id)
+- FK: invoice_id -> invoices(id)
+- FK: created_by -> users(id)
+- Indexes: [idx: store_id], [idx: created_at]
+
+25) transaction_lines
+- id UUID PRIMARY KEY
+- transaction_id UUID NOT NULL -- FK -> transactions(id)
+- product_id UUID NULL         -- FK -> products(id)
+- service_id UUID NULL         -- FK -> services(id)
+- quantity INT NOT NULL
+- unit_price DECIMAL(12,2) NOT NULL
+- line_total DECIMAL(12,2) NOT NULL
+- FK: transaction_id -> transactions(id)
+- Indexes: [idx: transaction_id]
+
+26) financial_exports
+- id UUID PRIMARY KEY
+- company_id UUID NOT NULL    -- FK -> companies(id)
+- period_start DATETIME NOT NULL
+- period_end DATETIME NOT NULL
+- format VARCHAR(16) NOT NULL -- (CSV, JSON)
+- file_path VARCHAR(1024) NULL
+- sftp_reference JSON NULL
+- created_by UUID NOT NULL    -- FK -> users(id)
+- created_at DATETIME NOT NULL
+- FK: company_id -> companies(id)
+- FK: created_by -> users(id)
+
+27) audit_logs
+- id UUID PRIMARY KEY
+- entity_type VARCHAR(128) NOT NULL
+- entity_id UUID NOT NULL
+- action VARCHAR(64) NOT NULL -- (create, update, delete, void)
+- performed_by UUID NOT NULL  -- FK -> users(id)
+- timestamp DATETIME NOT NULL
+- meta JSON NULL              -- before/after snapshots
+- FK: performed_by -> users(id)
+- Indexes: [idx: entity_type, entity_id], [idx: performed_by]
+
+28) sessions
+- id UUID PRIMARY KEY
+- user_id UUID NOT NULL   -- FK -> users(id)
+- created_at DATETIME NOT NULL
+- expires_at DATETIME NOT NULL
+- revoked BOOLEAN NOT NULL DEFAULT FALSE
+- FK: user_id -> users(id)
+- Indexes: [idx: user_id], [idx: revoked]
+
+
+Relationships (summary with cardinality)
+- companies 1 — 1..* stores
+- stores 1 — 0..* inventory_locations
+- stores 1 — 0..* users (staff assignments via join table)
+- users 1 — 1..* roles (via user_roles)
+- customers 1 — 0..* pets
+- customers 1 — 0..* appointments
+- pets 1 — 0..* appointments
+- appointments 1 — 1..* appointment_service_lines
+- appointment_service_lines * — 1 services
+- services 1 — 0..* users (via user_service_skills)
+- products 1 — 0..* stock_batches
+- products 1 — 0..* stock_movements
+- purchase_orders 1 — 0..* purchase_order_lines
+- purchase_orders * — 1 suppliers
+- invoices 1 — 0..* invoice_lines
+- invoices 1 — 0..* transactions
+- transactions 1 — 0..* transaction_lines
+- stock_movements * — 1 products
+- inventory_reservations * — 1 products
+- audit_logs reference any entity (append-only)
+
+Performance & Integrity Notes
+- Use UUID PKs for distributed safety; add surrogate INT PKs only if needed for high-performance indexes.
+- Add FK constraints to enforce referential integrity; use ON DELETE RESTRICT for critical financial records (invoices) and ON DELETE CASCADE where appropriate for join tables.
+- Index frequently queried fields: invoice_number, issued_at, start_at, sku, product_id, store_id, user_id.
+- Normalize repeated structures into join tables (user_roles, user_service_skills, invoice_lines, purchase_order_lines) to avoid duplication.
+- Use database transactions for multi-step operations (appointment booking + reservation, transaction checkout + stock decrements + invoice issuance) to ensure atomicity.
+
+End of ER diagram file.
