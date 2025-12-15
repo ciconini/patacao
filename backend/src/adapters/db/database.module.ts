@@ -1,0 +1,68 @@
+import { Module, Global } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import * as admin from 'firebase-admin';
+
+@Global()
+@Module({
+  imports: [ConfigModule],
+  providers: [
+    {
+      provide: 'FIREBASE_ADMIN',
+      useFactory: (configService: ConfigService) => {
+        // Initialize Firebase Admin SDK
+        if (!admin.apps.length) {
+          const useEmulator = configService.get('USE_FIREBASE_EMULATOR', 'false') === 'true';
+          const projectId = configService.get('FIREBASE_PROJECT_ID');
+
+          if (useEmulator) {
+            // Use Firebase Emulator for local development
+            process.env.FIRESTORE_EMULATOR_HOST = configService.get(
+              'FIREBASE_EMULATOR_HOST',
+              'localhost:8080',
+            );
+            admin.initializeApp({
+              projectId: projectId || 'patacao-dev',
+            });
+          } else {
+            // Production: Use service account
+            const serviceAccountPath = configService.get('FIREBASE_SERVICE_ACCOUNT_PATH');
+            const serviceAccountKey = configService.get('FIREBASE_SERVICE_ACCOUNT_KEY');
+
+            if (serviceAccountPath) {
+              // Load from file path
+              const serviceAccount = require(serviceAccountPath);
+              admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                projectId: projectId,
+              });
+            } else if (serviceAccountKey) {
+              // Load from JSON string (environment variable)
+              const serviceAccount = JSON.parse(serviceAccountKey);
+              admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                projectId: projectId,
+              });
+            } else {
+              // Use default credentials (for Google Cloud environments)
+              admin.initializeApp({
+                projectId: projectId,
+              });
+            }
+          }
+        }
+        return admin;
+      },
+      inject: [ConfigService],
+    },
+    {
+      provide: 'FIRESTORE',
+      useFactory: (firebaseAdmin: typeof admin) => {
+        return firebaseAdmin.firestore();
+      },
+      inject: ['FIREBASE_ADMIN'],
+    },
+  ],
+  exports: ['FIREBASE_ADMIN', 'FIRESTORE'],
+})
+export class DatabaseModule {}
+

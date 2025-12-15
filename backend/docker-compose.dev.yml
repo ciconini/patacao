@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - FIREBASE_EMULATOR_HOST=firebase-emulator:8080
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      firebase-emulator:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run start:dev
+
+  firebase-emulator:
+    image: mtlynch/firestore-emulator:latest
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
+
