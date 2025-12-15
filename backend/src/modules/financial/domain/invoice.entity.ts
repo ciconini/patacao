@@ -102,6 +102,11 @@ export class Invoice {
       this.validateInvoiceLines(lines);
     }
 
+    // Validate that issued_at is set when status is ISSUED
+    if (status === InvoiceStatus.ISSUED && !issuedAt) {
+      throw new Error('Invoice cannot be ISSUED without issued_at date');
+    }
+
     this._id = id;
     this._companyId = companyId;
     this._storeId = storeId;
