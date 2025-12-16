@@ -30,7 +30,6 @@ export interface AuthenticatedRequest extends Request {
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
   constructor(
-    @Inject('FirebaseAuthService')
     private readonly firebaseAuthService: FirebaseAuthService
   ) {}
 

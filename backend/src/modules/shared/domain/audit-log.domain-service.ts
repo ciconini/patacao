@@ -340,7 +340,7 @@ export class AuditLogDomainService {
     afterState: Record<string, unknown>,
     additionalMeta?: Record<string, unknown>
   ): AuditMeta {
-    const meta: AuditMeta = {
+    const meta: any = {
       before: { ...beforeState },
       after: { ...afterState },
     };
@@ -353,7 +353,7 @@ export class AuditLogDomainService {
       }
     }
 
-    return meta;
+    return meta as AuditMeta;
   }
 
   /**
@@ -367,7 +367,7 @@ export class AuditLogDomainService {
     initialState: Record<string, unknown>,
     additionalMeta?: Record<string, unknown>
   ): AuditMeta {
-    const meta: AuditMeta = {
+    const meta: any = {
       after: { ...initialState },
     };
 
@@ -379,7 +379,7 @@ export class AuditLogDomainService {
       }
     }
 
-    return meta;
+    return meta as AuditMeta;
   }
 
   /**
@@ -393,7 +393,7 @@ export class AuditLogDomainService {
     deletedState: Record<string, unknown>,
     additionalMeta?: Record<string, unknown>
   ): AuditMeta {
-    const meta: AuditMeta = {
+    const meta: any = {
       before: { ...deletedState },
     };
 
@@ -405,7 +405,7 @@ export class AuditLogDomainService {
       }
     }
 
-    return meta;
+    return meta as AuditMeta;
   }
 
   /**
@@ -421,7 +421,7 @@ export class AuditLogDomainService {
     voidReason?: string,
     additionalMeta?: Record<string, unknown>
   ): AuditMeta {
-    const meta: AuditMeta = {
+    const meta: any = {
       before: { ...voidedState },
       voidReason,
     };
@@ -434,7 +434,7 @@ export class AuditLogDomainService {
       }
     }
 
-    return meta;
+    return meta as AuditMeta;
   }
 
   /**

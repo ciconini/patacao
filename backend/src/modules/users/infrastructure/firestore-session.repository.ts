@@ -178,14 +178,18 @@ export class FirestoreSessionRepository implements SessionRepository {
    * @returns Firestore document (without refreshToken)
    */
   private toDocument(session: Session): Omit<SessionDocument, 'refreshToken'> {
-    return {
+    const doc: any = {
       id: session.id,
       userId: session.userId,
       createdAt: this.toTimestamp(session.createdAt),
-      expiresAt: session.expiresAt ? this.toTimestamp(session.expiresAt) : undefined,
       revoked: session.revoked,
-      revokedAt: session.revokedAt ? this.toTimestamp(session.revokedAt) : undefined,
     };
+
+    // Only include optional fields if they are defined
+    if (session.expiresAt) doc.expiresAt = this.toTimestamp(session.expiresAt);
+    if (session.revokedAt) doc.revokedAt = this.toTimestamp(session.revokedAt);
+
+    return doc as Omit<SessionDocument, 'refreshToken'>;
   }
 
   /**
@@ -213,7 +217,8 @@ export class FirestoreSessionRepository implements SessionRepository {
    * @returns Firestore Timestamp
    */
   private toTimestamp(date: Date): FirebaseFirestore.Timestamp {
-    return FirebaseFirestore.Timestamp.fromDate(date);
+    const { Timestamp } = require('firebase-admin/firestore');
+    return Timestamp.fromDate(date);
   }
 
   /**

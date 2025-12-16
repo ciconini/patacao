@@ -47,6 +47,8 @@ interface UserDocument {
   };
   serviceSkills: string[];
   active: boolean;
+  // Firebase integration
+  firebaseUid?: string;
   // Infrastructure fields (not in domain entity)
   lastLogin?: FirebaseFirestore.Timestamp;
   failedLoginAttempts?: number;
@@ -406,27 +408,45 @@ export class FirestoreUserRepository implements UserRepository {
   }
 
   /**
+   * Links a Firebase UID to a user
+   * 
+   * @param userId - User ID
+   * @param firebaseUid - Firebase user UID
+   */
+  async linkFirebaseUid(userId: string, firebaseUid: string): Promise<void> {
+    const docRef = this.firestore.collection(this.collectionName).doc(userId);
+    await docRef.update({
+      firebaseUid,
+      updatedAt: this.toTimestamp(new Date()),
+    });
+  }
+
+  /**
    * Converts User domain entity to Firestore document
    * 
    * @param user - User domain entity
    * @returns Firestore document (without infrastructure fields)
    */
   private toDocument(user: User): Omit<UserDocument, 'lastLogin' | 'failedLoginAttempts' | 'lockoutExpiry'> {
-    return {
+    const doc: any = {
       id: user.id,
       email: user.email.toLowerCase(),
       fullName: user.fullName,
-      phone: user.phone,
-      username: user.username,
       passwordHash: user.passwordHash,
       roleIds: [...user.roleIds],
       storeIds: [...user.storeIds],
-      workingHours: user.workingHours ? this.copySchedule(user.workingHours) : undefined,
       serviceSkills: [...user.serviceSkills],
       active: user.active,
       createdAt: this.toTimestamp(user.createdAt),
       updatedAt: this.toTimestamp(user.updatedAt),
     };
+
+    // Only include optional fields if they are defined
+    if (user.phone !== undefined) doc.phone = user.phone;
+    if (user.username !== undefined) doc.username = user.username;
+    if (user.workingHours) doc.workingHours = this.copySchedule(user.workingHours);
+
+    return doc as Omit<UserDocument, 'lastLogin' | 'failedLoginAttempts' | 'lockoutExpiry'>;
   }
 
   /**
@@ -465,7 +485,7 @@ export class FirestoreUserRepository implements UserRepository {
    * @returns Deep copy of schedule
    */
   private copySchedule(schedule: WeeklySchedule): WeeklySchedule {
-    const result: WeeklySchedule = {};
+    const result: any = {};
 
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
     
@@ -479,7 +499,7 @@ export class FirestoreUserRepository implements UserRepository {
       }
     }
 
-    return result;
+    return result as WeeklySchedule;
   }
 
   /**
@@ -489,7 +509,8 @@ export class FirestoreUserRepository implements UserRepository {
    * @returns Firestore Timestamp
    */
   private toTimestamp(date: Date): FirebaseFirestore.Timestamp {
-    return FirebaseFirestore.Timestamp.fromDate(date);
+    const { Timestamp } = require('firebase-admin/firestore');
+    return Timestamp.fromDate(date);
   }
 
   /**

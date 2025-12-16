@@ -20,6 +20,7 @@
  * - Persistence implementation details
  */
 
+import { Injectable, Inject, Optional } from '@nestjs/common';
 import { User } from '../domain/user.entity';
 import { Session } from '../domain/session.entity';
 import { EmailAddress } from '../../shared/domain/email-address.value-object';
@@ -35,6 +36,7 @@ export interface UserRepository {
   resetFailedLoginAttempts(userId: string): Promise<void>;
   lockAccount(userId: string, lockoutExpiry: Date): Promise<void>;
   isAccountLocked(userId: string): Promise<boolean>;
+  linkFirebaseUid?(userId: string, firebaseUid: string): Promise<void>;
 }
 
 export interface AuditLogRepository {
@@ -53,6 +55,20 @@ export interface PasswordHasher {
 export interface TokenGenerator {
   generateAccessToken(userId: string, roles: string[]): Promise<string>;
   generateRefreshToken(): Promise<string>;
+}
+
+// Optional Firebase Auth integration interfaces
+export interface FirebaseAuthIntegration {
+  createFirebaseUser(input: {
+    email: string;
+    password: string;
+    displayName?: string;
+  }): Promise<string>;
+  setUserRoles(firebaseUid: string, roles: string[], storeIds?: string[]): Promise<void>;
+}
+
+export interface FirebaseUserLookup {
+  linkFirebaseUid(userId: string, firebaseUid: string): Promise<void>;
 }
 
 // Input model
@@ -142,21 +158,37 @@ export class UserLoginUseCase {
   private static readonly MAX_FAILED_ATTEMPTS = 5;
 
   constructor(
+    @Inject('UserRepository')
     private readonly userRepository: UserRepository,
+    @Inject('SessionRepository')
     private readonly sessionRepository: SessionRepository,
+    @Inject('AuditLogRepository')
     private readonly auditLogRepository: AuditLogRepository,
+    @Inject('RateLimiter')
     private readonly rateLimiter: RateLimiter,
+    @Inject('PasswordHasher')
     private readonly passwordHasher: PasswordHasher,
+    @Inject('TokenGenerator')
     private readonly tokenGenerator: TokenGenerator,
     private readonly auditLogDomainService: AuditLogDomainService,
-    private readonly generateId: () => string = () => {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    }
+    // Optional Firebase Auth integration services
+    @Optional() @Inject('FirebaseAuthIntegrationService')
+    private readonly firebaseAuthIntegration?: FirebaseAuthIntegration,
+    @Optional() @Inject('FirebaseUserLookupService')
+    private readonly firebaseUserLookup?: FirebaseUserLookup
   ) {}
+
+  /**
+   * Generates a UUID v4
+   * @private
+   */
+  private generateId(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
 
   /**
    * Executes the user login use case
@@ -217,17 +249,24 @@ export class UserLoginUseCase {
       // 10. Reset failed login attempts
       await this.userRepository.resetFailedLoginAttempts(user.id);
 
-      // 11. Generate tokens
+      // 11. Optionally create/link Firebase user if services are available
+      // This is done asynchronously and won't block login if it fails
+      this.ensureFirebaseUser(user, input.password).catch((error) => {
+        // Log error but don't fail login
+        console.warn('Firebase user creation/linking failed (non-blocking):', error.message);
+      });
+
+      // 12. Generate tokens
       const accessToken = await this.tokenGenerator.generateAccessToken(user.id, [...user.roleIds]);
       const refreshToken = await this.tokenGenerator.generateRefreshToken();
 
-      // 12. Create session
+      // 13. Create session
       const session = await this.createSession(user.id, refreshToken, input.ipAddress);
 
-      // 13. Update last login timestamp
+      // 14. Update last login timestamp
       await this.userRepository.updateLastLogin(user.id);
 
-      // 14. Create audit log entry
+      // 15. Create audit log entry
       await this.createAuditLog(user.id, input.ipAddress, input.userAgent, true);
 
       // 15. Return success result
@@ -391,6 +430,51 @@ export class UserLoginUseCase {
     // Note: In a production implementation, you might want to hash the refresh token
     await this.sessionRepository.saveWithRefreshToken(session, refreshToken);
     return session;
+  }
+
+  /**
+   * Ensures Firebase user exists and is linked to internal user
+   * This is an optional step that creates a Firebase Auth user if one doesn't exist
+   * and links it to the internal user entity.
+   * 
+   * @param user - User entity
+   * @param password - User password (needed to create Firebase user)
+   */
+  private async ensureFirebaseUser(user: User, password: string): Promise<void> {
+    // Skip if Firebase integration services are not available
+    if (!this.firebaseAuthIntegration || !this.firebaseUserLookup) {
+      return;
+    }
+
+    try {
+      // Create Firebase Auth user (will return existing UID if user already exists)
+      const firebaseUid = await this.firebaseAuthIntegration.createFirebaseUser({
+        email: user.email,
+        password: password, // Use the same password
+        displayName: user.fullName,
+      });
+
+      // Link Firebase UID to internal user
+      if (this.userRepository.linkFirebaseUid) {
+        await this.userRepository.linkFirebaseUid(user.id, firebaseUid);
+      } else {
+        // Fallback: use FirebaseUserLookupService
+        await this.firebaseUserLookup.linkFirebaseUid(user.id, firebaseUid);
+      }
+
+      // Set custom claims (roles) on Firebase user
+      await this.firebaseAuthIntegration.setUserRoles(
+        firebaseUid,
+        [...user.roleIds],
+        user.storeIds.length > 0 ? [...user.storeIds] : undefined,
+      );
+    } catch (error: any) {
+      // Log error but don't fail login if Firebase integration fails
+      // This ensures login still works even if Firebase is unavailable
+      console.warn('Failed to create/link Firebase user during login:', error.message);
+      // In production, you might want to use a proper logger
+      throw error; // Re-throw to be caught by caller
+    }
   }
 
   /**

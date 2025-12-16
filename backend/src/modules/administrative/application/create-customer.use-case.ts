@@ -190,7 +190,7 @@ export class CreateCustomerUseCase {
     const hasRequiredRole = user.roleIds.some(roleId => {
       try {
         const role = RoleId.fromString(roleId);
-        return role.isStaff() || role.isManager() || role.isOwner();
+        return role ? (role.isStaff() || role.isManager() || role.isOwner()) : false;
       } catch {
         return false;
       }

@@ -226,7 +226,7 @@ export class CreateStoreUseCase {
     const hasOwnerOrManagerRole = user.roleIds.some(roleId => {
       try {
         const role = RoleId.fromString(roleId);
-        return role.isOwner() || role.isManager();
+        return role ? (role.isOwner() || role.isManager()) : false;
       } catch {
         return false;
       }
@@ -360,7 +360,7 @@ export class CreateStoreUseCase {
    * @throws ValidationError if validation fails
    */
   private validateOpeningHours(openingHours: CreateStoreInput['openingHours']): WeeklyOpeningHours {
-    const validated: WeeklyOpeningHours = {};
+    const validated: any = {};
 
     // Validate all 7 days are present
     for (const day of CreateStoreUseCase.REQUIRED_DAYS) {
@@ -394,7 +394,7 @@ export class CreateStoreUseCase {
       }
     }
 
-    return validated;
+    return validated as WeeklyOpeningHours;
   }
 
   /**

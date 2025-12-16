@@ -163,7 +163,7 @@ export class FirestoreStoreRepository implements StoreRepository {
    * @returns Deep copy of opening hours
    */
   private copyOpeningHours(hours: WeeklyOpeningHours): WeeklyOpeningHours {
-    const result: WeeklyOpeningHours = {};
+    const result: any = {};
 
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
     
@@ -177,7 +177,7 @@ export class FirestoreStoreRepository implements StoreRepository {
       }
     }
 
-    return result;
+    return result as WeeklyOpeningHours;
   }
 
   /**

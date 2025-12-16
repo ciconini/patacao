@@ -1,27 +1,27 @@
 import { Module, Global } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { AppConfigService } from '../../shared/config/config.service';
 
 @Global()
 @Module({
-  imports: [ConfigModule],
+  imports: [],
   providers: [
     {
       provide: 'REDIS_CLIENT',
-      useFactory: (configService: ConfigService) => {
+      useFactory: (config: AppConfigService) => {
         return new Redis({
-          host: configService.get('REDIS_HOST', 'localhost'),
-          port: configService.get('REDIS_PORT', 6379),
-          password: configService.get('REDIS_PASSWORD'),
-          db: configService.get('REDIS_DB', 0),
-          keyPrefix: configService.get('REDIS_KEY_PREFIX', 'patacao:'),
+          host: config.redisHost,
+          port: config.redisPort,
+          password: config.redisPassword,
+          db: config.redisDb,
+          keyPrefix: 'patacao:',
           retryStrategy: (times) => {
             const delay = Math.min(times * 50, 2000);
             return delay;
           },
         });
       },
-      inject: [ConfigService],
+      inject: [AppConfigService],
     },
   ],
   exports: ['REDIS_CLIENT'],

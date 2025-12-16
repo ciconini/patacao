@@ -33,7 +33,7 @@ export class Transaction {
   private readonly _storeId: string;
   private readonly _invoiceId: string;
   private _lineItems: TransactionLineItem[];
-  private _totalAmount: number;
+  private _totalAmount!: number;
   private _paymentStatus: PaymentStatus;
   private readonly _createdBy: string; // User ID
   private readonly _createdAt: Date;

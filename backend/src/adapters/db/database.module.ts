@@ -1,34 +1,32 @@
 import { Module, Global } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 import { FirestoreUnitOfWork } from './firestore-unit-of-work';
 import { UnitOfWork } from '../../shared/ports/unit-of-work.port';
+import { FirestoreAuditLogRepository } from './firestore-audit-log.repository';
+import { AppConfigService } from '../../shared/config/config.service';
 
 @Global()
 @Module({
-  imports: [ConfigModule],
+  imports: [],
   providers: [
     {
       provide: 'FIREBASE_ADMIN',
-      useFactory: (configService: ConfigService) => {
+      useFactory: (config: AppConfigService) => {
         // Initialize Firebase Admin SDK
         if (!admin.apps.length) {
-          const useEmulator = configService.get('USE_FIREBASE_EMULATOR', 'false') === 'true';
-          const projectId = configService.get('FIREBASE_PROJECT_ID');
+          const useEmulator = config.useFirebaseEmulator;
+          const projectId = config.firebaseProjectId;
 
           if (useEmulator) {
             // Use Firebase Emulator for local development
-            process.env.FIRESTORE_EMULATOR_HOST = configService.get(
-              'FIREBASE_EMULATOR_HOST',
-              'localhost:8080',
-            );
+            process.env.FIRESTORE_EMULATOR_HOST = config.firebaseEmulatorHost || 'localhost:8080';
             admin.initializeApp({
               projectId: projectId || 'patacao-dev',
             });
           } else {
             // Production: Use service account
-            const serviceAccountPath = configService.get('FIREBASE_SERVICE_ACCOUNT_PATH');
-            const serviceAccountKey = configService.get('FIREBASE_SERVICE_ACCOUNT_KEY');
+            const serviceAccountPath = config.firebaseServiceAccountPath;
+            const serviceAccountKey = config.firebaseServiceAccountKey;
 
             if (serviceAccountPath) {
               // Load from file path (absolute or relative to project root)
@@ -69,7 +67,7 @@ import { UnitOfWork } from '../../shared/ports/unit-of-work.port';
         }
         return admin;
       },
-      inject: [ConfigService],
+      inject: [AppConfigService],
     },
     {
       provide: 'FIRESTORE',
@@ -82,8 +80,12 @@ import { UnitOfWork } from '../../shared/ports/unit-of-work.port';
       provide: 'UnitOfWork',
       useClass: FirestoreUnitOfWork,
     },
+    {
+      provide: 'AuditLogRepository',
+      useClass: FirestoreAuditLogRepository,
+    },
   ],
-  exports: ['FIREBASE_ADMIN', 'FIRESTORE', 'UnitOfWork'],
+  exports: ['FIREBASE_ADMIN', 'FIRESTORE', 'UnitOfWork', 'AuditLogRepository'],
 })
 export class DatabaseModule {}
 

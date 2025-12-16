@@ -284,7 +284,7 @@ export class UpdateStoreUseCase {
     const hasOwnerOrManagerRole = user.roleIds.some(roleId => {
       try {
         const role = RoleId.fromString(roleId);
-        return role.isOwner() || role.isManager();
+        return role ? (role.isOwner() || role.isManager()) : false;
       } catch {
         return false;
       }
@@ -401,7 +401,7 @@ export class UpdateStoreUseCase {
       throw new ValidationError('Opening hours cannot be null');
     }
 
-    const validated: WeeklyOpeningHours = {};
+    const validated: any = {};
 
     // Validate all 7 days are present
     for (const day of UpdateStoreUseCase.REQUIRED_DAYS) {
@@ -435,7 +435,7 @@ export class UpdateStoreUseCase {
       }
     }
 
-    return validated;
+    return validated as WeeklyOpeningHours;
   }
 
   /**

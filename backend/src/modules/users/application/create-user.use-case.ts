@@ -371,7 +371,7 @@ export class CreateUserUseCase {
       throw new ValidationError('Working hours cannot be null');
     }
 
-    const validated: WeeklySchedule = {};
+    const validated: any = {};
 
     for (const day of CreateUserUseCase.REQUIRED_DAYS) {
       const dayHours = workingHours[day];
@@ -401,7 +401,7 @@ export class CreateUserUseCase {
       }
     }
 
-    return validated;
+    return validated as WeeklySchedule;
   }
 
   /**
@@ -540,7 +540,7 @@ export class CreateUserUseCase {
       fullName: user.fullName,
       phone: user.phone,
       username: user.username,
-      roles: user.roleIds,
+      roles: [...user.roleIds],
       storeIds: validatedInput.storeIds,
       workingHours: user.workingHours,
       active: user.active,

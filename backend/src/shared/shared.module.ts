@@ -1,12 +1,22 @@
 import { Global, Module } from '@nestjs/common';
 import { Logger } from './logger/logger.service';
-import { ConfigModule } from '@nestjs/config';
+import { AuditLogDomainService } from '../modules/shared/domain/audit-log.domain-service';
+import { RequestLoggerMiddleware } from './presentation/middleware/request-logger.middleware';
+import { AppConfigService } from './config/config.service';
 
 @Global()
 @Module({
-  imports: [ConfigModule],
-  providers: [Logger],
-  exports: [Logger],
+  imports: [],
+  providers: [
+    Logger,
+    AuditLogDomainService,
+    RequestLoggerMiddleware,
+    {
+      provide: 'Logger',
+      useExisting: Logger,
+    },
+  ],
+  exports: [Logger, AuditLogDomainService, RequestLoggerMiddleware, 'Logger'],
 })
 export class SharedModule {}
 

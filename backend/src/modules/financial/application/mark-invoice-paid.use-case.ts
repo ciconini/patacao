@@ -154,17 +154,14 @@ export class MarkInvoicePaidUseCase {
         throw new NotFoundError('Invoice not found');
       }
 
-      // 5. Validate invoice is in issued status
-      if (invoice.status !== InvoiceStatus.ISSUED) {
-        throw new ValidationError('Only issued invoices can be marked as paid');
-      }
-
-      // 6. Check if invoice is already paid (allow override for Manager/Accountant/Owner)
+      // 5. Validate invoice is in issued status (or allow override if already paid)
       if (invoice.status === InvoiceStatus.PAID) {
         const canOverride = this.canOverridePayment(currentUser.roleIds);
         if (!canOverride) {
           throw new ConflictError('Invoice is already marked as paid. Only Manager/Accountant/Owner can override');
         }
+      } else if (invoice.status !== InvoiceStatus.ISSUED) {
+        throw new ValidationError('Only issued invoices can be marked as paid');
       }
 
       // 7. Mark invoice as paid using domain entity method

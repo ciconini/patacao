@@ -40,9 +40,9 @@ export class Invoice {
   private _issuedAt?: Date;
   private _buyerCustomerId?: string;
   private _lines: InvoiceLine[];
-  private _subtotal: number;
-  private _vatTotal: number;
-  private _total: number;
+  private _subtotal!: number;
+  private _vatTotal!: number;
+  private _total!: number;
   private _status: InvoiceStatus;
   private _paidAt?: Date;
   private _paymentMethod?: string;

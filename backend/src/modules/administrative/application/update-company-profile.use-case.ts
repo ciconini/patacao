@@ -288,7 +288,7 @@ export class UpdateCompanyProfileUseCase {
     return roleIds.some(roleId => {
       try {
         const role = RoleId.fromString(roleId);
-        return role.isOwner();
+        return role ? role.isOwner() : false;
       } catch {
         return false;
       }
@@ -305,7 +305,7 @@ export class UpdateCompanyProfileUseCase {
     return roleIds.some(roleId => {
       try {
         const role = RoleId.fromString(roleId);
-        return role.isManager();
+        return role ? role.isManager() : false;
       } catch {
         return false;
       }

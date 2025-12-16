@@ -1,17 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
 import { Logger } from './shared/logger/logger.service';
+import { HttpExceptionFilter } from './shared/presentation/filters/http-exception.filter';
+import { AppConfigService } from './shared/config/config.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
 
-  const configService = app.get(ConfigService);
+  const configService = app.get(AppConfigService);
   const logger = app.get(Logger);
 
   app.useLogger(logger);
@@ -22,13 +23,15 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN', '*'),
+    origin: configService.corsOrigin,
     credentials: true,
   });
 
   // Global prefix
-  const apiVersion = configService.get('API_VERSION', 'v1');
-  app.setGlobalPrefix(`api/${apiVersion}`);
+  app.setGlobalPrefix(`api/${configService.apiVersion}`);
+
+  // Global exception filter
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Validation
   app.useGlobalPipes(
@@ -39,13 +42,14 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      // Validation errors are automatically formatted by class-validator
+      // and handled by HttpExceptionFilter
     }),
   );
 
-  const port = configService.get('PORT', 3000);
-  await app.listen(port);
+  await app.listen(configService.port);
 
-  logger.log(`Application is running on: http://localhost:${port}/api/${apiVersion}`);
+  logger.log(`Application is running on: http://localhost:${configService.port}/api/${configService.apiVersion}`);
 }
 
 bootstrap();

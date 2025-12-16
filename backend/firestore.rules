@@ -1,17 +1,237 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default: deny all access
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && 
+             request.auth.token.roles != null && 
+             role in request.auth.token.roles;
+    }
+    
+    function isOwner() {
+      return hasRole('Owner');
+    }
+    
+    function isManager() {
+      return hasRole('Manager') || isOwner();
+    }
+    
+    function isStaff() {
+      return hasRole('Staff') || isManager();
+    }
+    
+    function isAccountant() {
+      return hasRole('Accountant') || isOwner();
+    }
+    
+    function isVeterinarian() {
+      return hasRole('Veterinarian') || isManager();
+    }
+    
+    function isOwnerOrManager() {
+      return isOwner() || hasRole('Manager');
+    }
+    
+    function isSelf(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Companies
+    match /companies/{companyId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner();
+      allow update: if isOwner();
+      allow delete: if false; // Companies should not be deleted
+    }
+    
+    // Stores
+    match /stores/{storeId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwnerOrManager();
+      allow update: if isOwnerOrManager();
+      allow delete: if isOwner();
+    }
+    
+    // Users
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwnerOrManager() || isSelf(userId));
+      allow create: if isOwnerOrManager();
+      // Users can update their own data, but not roles or active status
+      // Owners/Managers can update anything
+      allow update: if isOwnerOrManager() || 
+                       (isSelf(userId) && 
+                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roleIds', 'active']));
+      allow delete: if false; // Users should be archived, not deleted
+    }
+    
+    // Sessions
+    match /sessions/{sessionId} {
+      allow read: if isAuthenticated() && 
+                     (resource.data.userId == request.auth.uid || isOwnerOrManager());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+                       (resource.data.userId == request.auth.uid || isOwnerOrManager());
+      allow delete: if isAuthenticated() && 
+                       (resource.data.userId == request.auth.uid || isOwnerOrManager());
+    }
+    
+    // Password Reset Tokens
+    match /password_reset_tokens/{tokenId} {
+      allow read: if false; // Tokens should only be accessed server-side
+      allow write: if false; // Tokens should only be created/updated server-side
+    }
+    
+    // Customers
+    match /customers/{customerId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isManager(); // Soft delete (archive) preferred
+    }
+    
+    // Pets
+    match /pets/{petId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isManager();
+    }
+    
+    // Services
+    match /services/{serviceId} {
+      allow read: if isAuthenticated();
+      allow create: if isManager();
+      allow update: if isManager();
+      allow delete: if isOwner();
+    }
+    
+    // Appointments
+    match /appointments/{appointmentId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isManager();
+    }
+    
+    // Appointment Service Lines
+    match /appointment_service_lines/{lineId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isStaff();
+    }
+    
+    // Products
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      allow create: if isManager();
+      allow update: if isManager();
+      allow delete: if isOwner();
+    }
+    
+    // Product Stock
+    match /product_stock/{stockId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff(); // Stock updates should be done through use cases
+    }
+    
+    // Stock Movements (immutable audit log)
+    match /stock_movements/{movementId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if false; // Immutable
+      allow delete: if false; // Immutable
+    }
+    
+    // Stock Batches
+    match /stock_batches/{batchId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isManager();
+    }
+    
+    // Inventory Reservations
+    match /inventory_reservations/{reservationId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isStaff();
+    }
+    
+    // Suppliers
+    match /suppliers/{supplierId} {
+      allow read: if isAuthenticated();
+      allow create: if isManager();
+      allow update: if isManager();
+      allow delete: if isOwner();
+    }
+    
+    // Purchase Orders
+    match /purchase_orders/{orderId} {
+      allow read: if isAuthenticated();
+      allow create: if isManager();
+      allow update: if isManager();
+      allow delete: if isOwner();
+    }
+    
+    // Invoices
+    match /invoices/{invoiceId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if isStaff() && resource.data.status == 'draft';
+      // Only managers/owners can issue, mark paid, or void invoices
+      allow update: if isManager() && 
+                       request.resource.data.status in ['issued', 'paid', 'void'];
+      allow delete: if false; // Invoices should not be deleted (void instead)
+    }
+    
+    // Invoice Number Counters
+    match /invoice_number_counters/{counterId} {
+      allow read: if false; // Server-side only
+      allow write: if false; // Server-side only
+    }
+    
+    // Transactions
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if false; // Transactions should not be deleted
+    }
+    
+    // Credit Notes
+    match /credit_notes/{creditNoteId} {
+      allow read: if isAuthenticated();
+      allow create: if isManager();
+      allow update: if false; // Credit notes should be immutable
+      allow delete: if false; // Credit notes should not be deleted
+    }
+    
+    // Financial Exports
+    match /financial_exports/{exportId} {
+      allow read: if isAccountant() || isOwner();
+      allow create: if isAccountant() || isOwner();
+      allow update: if isAccountant() || isOwner();
+      allow delete: if isOwner();
+    }
+    
+    // Audit Logs (immutable)
+    match /audit_logs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if true; // System can create audit logs
+      allow update: if false; // Immutable
+      allow delete: if false; // Immutable
+    }
+    
+    // Default: deny all other access
     match /{document=**} {
       allow read, write: if false;
     }
-    
-    // TODO: Add security rules for collections
-    // Example:
-    // match /companies/{companyId} {
-    //   allow read: if request.auth != null;
-    //   allow write: if request.auth != null && request.auth.token.role == 'Owner';
-    // }
   }
 }
-

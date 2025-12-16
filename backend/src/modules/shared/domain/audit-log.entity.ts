@@ -224,7 +224,7 @@ export class AuditLog {
    * @returns Deep copy of metadata
    */
   private deepCopyMeta(meta: AuditMeta): AuditMeta {
-    const copied: AuditMeta = {};
+    const copied: any = {};
 
     for (const key in meta) {
       if (meta.hasOwnProperty(key)) {
@@ -239,7 +239,7 @@ export class AuditLog {
       }
     }
 
-    return copied;
+    return copied as AuditMeta;
   }
 }
 
