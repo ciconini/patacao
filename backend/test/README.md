@@ -1,91 +1,142 @@
-# Firestore Security Rules Testing
+# Testing Infrastructure
 
-This directory contains tests for Firestore security rules using the Firebase Emulator.
-
-## Prerequisites
-
-1. **Install dependencies:**
-   ```bash
-   npm install --save-dev @firebase/rules-unit-testing
-   ```
-
-2. **Start Firebase Emulator:**
-   ```bash
-   npm run firebase:emulators
-   ```
-   
-   Keep this running in a separate terminal window.
-
-## Running Tests
-
-Run the security rules tests:
-```bash
-npm run test:firestore:rules
-```
+This directory contains test files and configuration for the Patacão backend.
 
 ## Test Structure
 
-The test file `firestore-security-rules.test.ts` includes tests for:
+- **Unit Tests** (`*.spec.ts`): Test individual components in isolation with mocked dependencies
+- **Integration Tests** (`*.integration.spec.ts`): Test components with real Firestore emulator
+- **E2E Tests** (`*.e2e-spec.ts`): Test complete application flows end-to-end
+- **Firestore Security Rules Tests** (`firestore-security-rules.test.ts`): Test Firestore security rules
 
-- **Companies Collection**: Owner-only create/update, no deletion
-- **Users Collection**: Role-based access, self-update restrictions
-- **Customers Collection**: Staff can create, Manager can delete
-- **Invoices Collection**: Staff can create drafts, Manager can issue
-- **Stock Movements**: Immutable (create only, no update/delete)
-- **Audit Logs**: Immutable (create only, no update/delete)
-- **Password Reset Tokens**: Server-side only (no client access)
-- **Financial Exports**: Accountant/Owner only
+## Running Tests
 
-## Writing New Tests
+### Unit Tests
+```bash
+npm run test:unit          # Run all unit tests
+npm run test:unit:watch    # Run in watch mode
+npm run test:cov           # Run with coverage report
+```
 
-To add tests for a new collection:
+### Integration Tests
+```bash
+# Start Firestore emulator first
+npm run firebase:emulators
+
+# In another terminal
+npm run test:integration
+```
+
+### E2E Tests
+```bash
+# Start Firestore emulator first
+npm run firebase:emulators
+
+# In another terminal
+npm run test:e2e
+```
+
+### All Tests
+```bash
+npm test
+```
+
+## Test Configuration
+
+- **`jest.config.js`**: Configuration for unit tests
+- **`jest.config.integration.js`**: Configuration for integration tests
+- **`test/jest-e2e.json`**: Configuration for E2E tests
+- **`jest.firestore.config.js`**: Configuration for Firestore security rules tests
+
+## Test Helpers
+
+See `test/helpers/test-helpers.ts` for common utilities:
+- `clearFirestore()`: Clear all Firestore collections
+- `createTestUser()`: Create a test user object
+- `createTestCompany()`: Create a test company object
+- `createMockRepository()`: Create a mock repository
+
+## Writing Tests
+
+### Unit Test Example
 
 ```typescript
-describe('My Collection', () => {
-  const docId = 'doc-123';
-  const docData = {
-    // ... document data
-  };
+import { Test, TestingModule } from '@nestjs/testing';
+import { CreateCustomerUseCase } from './create-customer.use-case';
+import { CustomerRepository } from '../ports/customer.repository.port';
 
-  it('should allow authenticated users to read', async () => {
-    await staffDb.collection('my_collection').doc(docId).set(docData);
-    
-    await firebase.assertSucceeds(
-      staffDb.collection('my_collection').doc(docId).get()
-    );
+describe('CreateCustomerUseCase', () => {
+  let useCase: CreateCustomerUseCase;
+  let mockRepository: jest.Mocked<CustomerRepository>;
+
+  beforeEach(async () => {
+    mockRepository = {
+      save: jest.fn(),
+      findById: jest.fn(),
+      // ... other methods
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        CreateCustomerUseCase,
+        {
+          provide: 'CustomerRepository',
+          useValue: mockRepository,
+        },
+      ],
+    }).compile();
+
+    useCase = module.get<CreateCustomerUseCase>(CreateCustomerUseCase);
   });
 
-  it('should deny unauthenticated access', async () => {
-    await firebase.assertFails(
-      unauthenticatedDb.collection('my_collection').doc(docId).get()
-    );
+  it('should create a customer', async () => {
+    // Test implementation
   });
 });
 ```
 
-## Troubleshooting
+### Integration Test Example
 
-### Error: "Could not reach Cloud Firestore backend"
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { FirestoreCustomerRepository } from './firestore-customer.repository';
+import { DatabaseModule } from '../../../adapters/db/database.module';
+import { clearFirestore } from '../../helpers/test-helpers';
 
-- Make sure the Firebase emulator is running
-- Check that `FIRESTORE_EMULATOR_HOST` is set to `localhost:8080`
-- Verify the emulator is accessible at `http://localhost:8080`
+describe('FirestoreCustomerRepository (Integration)', () => {
+  let repository: FirestoreCustomerRepository;
+  let firestore: Firestore;
 
-### Error: "Permission denied"
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [DatabaseModule],
+      providers: [FirestoreCustomerRepository],
+    }).compile();
 
-- Check that the security rules are correctly deployed to the emulator
-- Verify the test is using the correct authentication context
-- Review the security rules in `firestore.rules`
+    repository = module.get<FirestoreCustomerRepository>(FirestoreCustomerRepository);
+    firestore = module.get<Firestore>('FIRESTORE');
+    
+    // Clear Firestore before each test
+    await clearFirestore(firestore);
+  });
 
-### Tests are slow
+  it('should save and retrieve a customer', async () => {
+    // Test implementation with real Firestore
+  });
+});
+```
 
-- The Firebase emulator can be slow for the first run
-- Consider running tests in watch mode: `jest --watch`
-- Use `test.only()` to run a single test during development
+## Coverage
 
-## Resources
+Coverage reports are generated in the `coverage/` directory:
+- `coverage/lcov-report/index.html`: HTML coverage report
+- `coverage/lcov.info`: LCOV format for CI/CD
 
-- [Firebase Rules Unit Testing Documentation](https://firebase.google.com/docs/rules/unit-tests)
-- [Firebase Emulator Suite](https://firebase.google.com/docs/emulator-suite)
-- [Firestore Security Rules](https://firebase.google.com/docs/firestore/security/get-started)
+## Best Practices
 
+1. **Unit Tests**: Mock all external dependencies (repositories, services)
+2. **Integration Tests**: Use real Firestore emulator, clean up after each test
+3. **E2E Tests**: Test complete user flows, use test fixtures
+4. **Naming**: Use descriptive test names that explain what is being tested
+5. **Arrange-Act-Assert**: Structure tests clearly
+6. **Isolation**: Each test should be independent and not rely on other tests
