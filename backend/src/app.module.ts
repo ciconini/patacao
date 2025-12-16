@@ -6,11 +6,11 @@ import { SharedModule } from './shared/shared.module';
 import { DatabaseModule } from './adapters/db/database.module';
 import { RedisModule } from './adapters/redis/redis.module';
 import { AuthModule } from './shared/auth/auth.module';
-import { AdministrativePresentationModule } from './modules/administrative/presentation/administrative.presentation.module';
-import { UsersPresentationModule } from './modules/users/presentation/users.presentation.module';
-import { ServicesPresentationModule } from './modules/services/presentation/services.presentation.module';
-import { InventoryPresentationModule } from './modules/inventory/presentation/inventory.presentation.module';
-import { FinancialPresentationModule } from './modules/financial/presentation/financial.presentation.module';
+import { AdministrativeModule } from './modules/administrative/administrative.module';
+import { UsersModule } from './modules/users/users.module';
+import { ServicesModule } from './modules/services/services.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { FinancialModule } from './modules/financial/financial.module';
 import { RequestLoggerMiddleware } from './shared/presentation/middleware/request-logger.middleware';
 
 @Module({
@@ -20,12 +20,12 @@ import { RequestLoggerMiddleware } from './shared/presentation/middleware/reques
     DatabaseModule,
     RedisModule,
     AuthModule,
-    // Domain modules
-    AdministrativePresentationModule,
-    UsersPresentationModule,
-    ServicesPresentationModule,
-    InventoryPresentationModule,
-    FinancialPresentationModule,
+    // Domain modules (consolidated modules that include all layers)
+    AdministrativeModule,
+    UsersModule,
+    ServicesModule,
+    InventoryModule,
+    FinancialModule,
   ],
   controllers: [AppController],
   providers: [AppService],
