@@ -1,9 +1,9 @@
 /**
  * Administrative Infrastructure Module
- * 
+ *
  * NestJS module that provides infrastructure implementations (repositories)
  * for the Administrative module.
- * 
+ *
  * This module registers Firestore repository adapters and makes them
  * available for dependency injection.
  */
@@ -38,4 +38,3 @@ import { FirestorePetRepository } from './firestore-pet.repository';
   exports: ['CompanyRepository', 'StoreRepository', 'CustomerRepository', 'PetRepository'],
 })
 export class AdministrativeInfrastructureModule {}
-

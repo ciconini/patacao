@@ -1,10 +1,10 @@
 /**
  * Complete Appointment Use Case (UC-SVC-004)
- * 
+ *
  * Application use case for completing a confirmed or checked-in appointment.
  * This use case orchestrates domain entities and domain services to complete appointments,
  * decrement inventory for services that consume inventory, and record service notes.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Veterinarian, Manager, or Owner role)
  * - Validate appointment exists and is in valid status
@@ -15,7 +15,7 @@
  * - Record service notes
  * - Persist changes via repositories
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -40,10 +40,12 @@ export interface AppointmentRepository {
 }
 
 export interface AppointmentServiceLineRepository {
-  findByAppointmentId(appointmentId: string): Promise<Array<{
-    serviceId: string;
-    quantity: number;
-  }>>;
+  findByAppointmentId(appointmentId: string): Promise<
+    Array<{
+      serviceId: string;
+      quantity: number;
+    }>
+  >;
 }
 
 export interface ServiceRepository {
@@ -115,7 +117,7 @@ export interface CompleteAppointmentResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -176,16 +178,16 @@ export class CompleteAppointmentUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the complete appointment use case
-   * 
+   *
    * @param input - Input data for completing appointment
    * @returns Result containing completed appointment or error
    */
@@ -201,34 +203,40 @@ export class CompleteAppointmentUseCase {
       }
 
       // 3. Validate appointment status
-      if (appointment.status !== AppointmentStatus.CONFIRMED && 
-          appointment.status !== AppointmentStatus.CHECKED_IN) {
+      if (
+        appointment.status !== AppointmentStatus.CONFIRMED &&
+        appointment.status !== AppointmentStatus.CHECKED_IN
+      ) {
         throw new ValidationError('Only confirmed or checked-in appointments can be completed');
       }
 
       // 4. Verify user has store access
       const hasAccess = await this.currentUserRepository.hasStoreAccess(
         input.performedBy,
-        appointment.storeId
+        appointment.storeId,
       );
       if (!hasAccess) {
-        throw new ForbiddenError('You do not have access to this appointment\'s store');
+        throw new ForbiddenError("You do not have access to this appointment's store");
       }
 
       // 5. Validate notes length
       if (input.notes && input.notes.length > CompleteAppointmentUseCase.MAX_NOTES_LENGTH) {
-        throw new ValidationError(`Notes cannot exceed ${CompleteAppointmentUseCase.MAX_NOTES_LENGTH} characters`);
+        throw new ValidationError(
+          `Notes cannot exceed ${CompleteAppointmentUseCase.MAX_NOTES_LENGTH} characters`,
+        );
       }
 
       // 6. Load appointment service lines
-      const serviceLines = await this.appointmentServiceLineRepository.findByAppointmentId(appointment.id);
+      const serviceLines = await this.appointmentServiceLineRepository.findByAppointmentId(
+        appointment.id,
+      );
 
       // 7. Process inventory decrement for services that consume inventory
       const stockMovements = await this.processInventoryDecrement(
         appointment,
         serviceLines,
         input.consumedItems,
-        input.performedBy
+        input.performedBy,
       );
 
       // 8. Release inventory reservations
@@ -255,7 +263,7 @@ export class CompleteAppointmentUseCase {
           completedAt: new Date(),
           completedBy: input.performedBy,
           notes: updatedAppointment.notes,
-          stockMovements: stockMovements.map(m => ({
+          stockMovements: stockMovements.map((m) => ({
             id: m.id,
             productId: m.productId,
             quantityChange: m.quantityChange,
@@ -274,12 +282,12 @@ export class CompleteAppointmentUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -290,7 +298,9 @@ export class CompleteAppointmentUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Veterinarian, Manager, or Owner role can complete appointments');
+      throw new ForbiddenError(
+        'Only Staff, Veterinarian, Manager, or Owner role can complete appointments',
+      );
     }
   }
 
@@ -301,7 +311,7 @@ export class CompleteAppointmentUseCase {
     appointment: Appointment,
     serviceLines: Array<{ serviceId: string; quantity: number }>,
     consumedItems?: CompleteAppointmentInput['consumedItems'],
-    performedBy?: string
+    performedBy?: string,
   ): Promise<StockMovement[]> {
     const stockMovements: StockMovement[] = [];
 
@@ -312,10 +322,12 @@ export class CompleteAppointmentUseCase {
       }
 
       // Use provided consumed items or service consumed items
-      const itemsToConsume = consumedItems || service.consumedItems.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity * line.quantity,
-      }));
+      const itemsToConsume =
+        consumedItems ||
+        service.consumedItems.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity * line.quantity,
+        }));
 
       for (const item of itemsToConsume) {
         const product = await this.productRepository.findById(item.productId);
@@ -341,18 +353,18 @@ export class CompleteAppointmentUseCase {
           appointment.storeId,
           undefined, // batchId - would be set if provided
           appointment.id, // referenceId
-          new Date()
+          new Date(),
         );
 
         // Validate movement using domain service
         const validationResult = this.stockMovementDomainService.validateMovementLegality(
           movement,
-          product
+          product,
         );
 
         if (!validationResult.isValid) {
           throw new ValidationError(
-            `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`
+            `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`,
           );
         }
 
@@ -372,8 +384,9 @@ export class CompleteAppointmentUseCase {
    * Releases inventory reservations for the appointment
    */
   private async releaseInventoryReservations(appointmentId: string): Promise<void> {
-    const reservations = await this.inventoryReservationRepository.findByAppointmentId(appointmentId);
-    
+    const reservations =
+      await this.inventoryReservationRepository.findByAppointmentId(appointmentId);
+
     for (const reservation of reservations) {
       // Delete reservation (releasing the hold)
       await this.inventoryReservationRepository.delete(reservation.id);
@@ -386,7 +399,7 @@ export class CompleteAppointmentUseCase {
   private async createAuditLog(
     appointment: Appointment,
     stockMovements: StockMovement[],
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -403,7 +416,7 @@ export class CompleteAppointmentUseCase {
             stockMovementsCount: stockMovements.length,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -437,4 +450,3 @@ export class CompleteAppointmentUseCase {
     };
   }
 }
-

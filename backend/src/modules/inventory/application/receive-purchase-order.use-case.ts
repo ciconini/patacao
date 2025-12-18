@@ -1,10 +1,10 @@
 /**
  * Receive Purchase Order Use Case (UC-INV-012)
- * 
+ *
  * Application use case for receiving goods against a purchase order.
  * This use case orchestrates domain entities to receive purchase orders, create stock batches,
  * and create stock movements.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, or Owner role)
  * - Validate purchase order exists and is in ordered status
@@ -16,7 +16,7 @@
  * - Update product on-hand quantities
  * - Persist all changes via repositories
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -130,7 +130,7 @@ export interface ReceivePurchaseOrderResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -190,16 +190,16 @@ export class ReceivePurchaseOrderUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the receive purchase order use case
-   * 
+   *
    * @param input - Input data for receiving purchase order
    * @returns Result containing receipt details or error
    */
@@ -225,17 +225,16 @@ export class ReceivePurchaseOrderUseCase {
       // 5. Determine store (use provided store or PO store)
       const storeId = input.storeId || purchaseOrder.storeId;
       if (!storeId) {
-        throw new ValidationError('Store ID is required. Either provide store_id or ensure PO has a store_id');
+        throw new ValidationError(
+          'Store ID is required. Either provide store_id or ensure PO has a store_id',
+        );
       }
 
       // 6. Validate store exists
       const store = await this.validateAndLoadStore(storeId);
 
       // 7. Validate user has store access
-      const hasAccess = await this.currentUserRepository.hasStoreAccess(
-        input.performedBy,
-        storeId
-      );
+      const hasAccess = await this.currentUserRepository.hasStoreAccess(input.performedBy, storeId);
       if (!hasAccess) {
         throw new ForbiddenError('You do not have access to this store');
       }
@@ -244,7 +243,7 @@ export class ReceivePurchaseOrderUseCase {
       const validatedLines = await this.validateReceivedLines(
         input.receivedLines,
         purchaseOrder,
-        storeId
+        storeId,
       );
 
       // 9. Process receipt (create batches and movements)
@@ -270,7 +269,7 @@ export class ReceivePurchaseOrderUseCase {
           storeId,
           batch.id,
           purchaseOrder.id,
-          input.performedBy
+          input.performedBy,
         );
 
         // Validate movement using domain service
@@ -281,12 +280,12 @@ export class ReceivePurchaseOrderUseCase {
 
         const validationResult = this.stockMovementDomainService.validateMovementLegality(
           movement,
-          product
+          product,
         );
 
         if (!validationResult.isValid) {
           throw new ValidationError(
-            `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`
+            `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`,
           );
         }
 
@@ -313,7 +312,7 @@ export class ReceivePurchaseOrderUseCase {
         input,
         stockBatches,
         stockMovements,
-        input.performedBy
+        input.performedBy,
       );
 
       // 12. Return success result
@@ -325,7 +324,7 @@ export class ReceivePurchaseOrderUseCase {
           stockBatches,
           stockMovements,
           input.performedBy,
-          now
+          now,
         ),
       };
     } catch (error) {
@@ -338,12 +337,12 @@ export class ReceivePurchaseOrderUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -376,7 +375,7 @@ export class ReceivePurchaseOrderUseCase {
    */
   private async validateAndLoadStore(storeId: string): Promise<Store> {
     const store = await this.storeRepository.findById(storeId);
-    
+
     if (!store) {
       throw new NotFoundError('Store not found');
     }
@@ -390,7 +389,7 @@ export class ReceivePurchaseOrderUseCase {
   private async validateReceivedLines(
     receivedLines: ReceivePurchaseOrderInput['receivedLines'],
     purchaseOrder: PurchaseOrder,
-    storeId: string
+    storeId: string,
   ): Promise<ReceivePurchaseOrderInput['receivedLines']> {
     const validatedLines: ReceivePurchaseOrderInput['receivedLines'] = [];
     const poLinesByProduct = new Map<string, { quantity: number }>();
@@ -425,7 +424,9 @@ export class ReceivePurchaseOrderUseCase {
       // Validate product is in PO
       const poLine = poLinesByProduct.get(line.productId);
       if (!poLine) {
-        throw new ValidationError(`Line ${lineIndex}: Product ${product.name} is not in this purchase order`);
+        throw new ValidationError(
+          `Line ${lineIndex}: Product ${product.name} is not in this purchase order`,
+        );
       }
 
       // Validate quantity
@@ -440,16 +441,19 @@ export class ReceivePurchaseOrderUseCase {
       // Validate total received doesn't exceed ordered
       if (totalReceived > poLine.quantity) {
         throw new ValidationError(
-          `Line ${lineIndex}: Received quantity ${totalReceived} exceeds ordered quantity ${poLine.quantity} for product ${product.name}`
+          `Line ${lineIndex}: Received quantity ${totalReceived} exceeds ordered quantity ${poLine.quantity} for product ${product.name}`,
         );
       }
 
       receivedQuantitiesByProduct.set(line.productId, totalReceived);
 
       // Validate batch number length
-      if (line.batchNumber && line.batchNumber.length > ReceivePurchaseOrderUseCase.MAX_BATCH_NUMBER_LENGTH) {
+      if (
+        line.batchNumber &&
+        line.batchNumber.length > ReceivePurchaseOrderUseCase.MAX_BATCH_NUMBER_LENGTH
+      ) {
         throw new ValidationError(
-          `Line ${lineIndex}: Batch number cannot exceed ${ReceivePurchaseOrderUseCase.MAX_BATCH_NUMBER_LENGTH} characters`
+          `Line ${lineIndex}: Batch number cannot exceed ${ReceivePurchaseOrderUseCase.MAX_BATCH_NUMBER_LENGTH} characters`,
         );
       }
 
@@ -474,12 +478,12 @@ export class ReceivePurchaseOrderUseCase {
    */
   private areAllLinesFullyReceived(
     purchaseOrder: PurchaseOrder,
-    receivedLines: ReceivePurchaseOrderInput['receivedLines']
+    receivedLines: ReceivePurchaseOrderInput['receivedLines'],
   ): boolean {
     // Simplified check: if we received all products in the PO, consider it fully received
     // In a real system, you'd need to track partial receipts and compare received vs ordered quantities
-    const receivedProductIds = new Set(receivedLines.map(line => line.productId));
-    const poProductIds = new Set(purchaseOrder.orderLines.map(line => line.productId));
+    const receivedProductIds = new Set(receivedLines.map((line) => line.productId));
+    const poProductIds = new Set(purchaseOrder.orderLines.map((line) => line.productId));
 
     if (receivedProductIds.size !== poProductIds.size) {
       return false;
@@ -505,7 +509,7 @@ export class ReceivePurchaseOrderUseCase {
     locationId: string,
     batchId: string | undefined,
     purchaseOrderId: string,
-    performedBy: string
+    performedBy: string,
   ): StockMovement {
     const movementId = this.generateId();
     const now = new Date();
@@ -519,7 +523,7 @@ export class ReceivePurchaseOrderUseCase {
       locationId,
       batchId,
       purchaseOrderId, // Reference to PO
-      now
+      now,
     );
   }
 
@@ -531,7 +535,7 @@ export class ReceivePurchaseOrderUseCase {
     input: ReceivePurchaseOrderInput,
     stockBatches: StockBatch[],
     stockMovements: StockMovement[],
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -550,7 +554,7 @@ export class ReceivePurchaseOrderUseCase {
             movementsCount: stockMovements.length,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -570,7 +574,7 @@ export class ReceivePurchaseOrderUseCase {
     stockBatches: StockBatch[],
     stockMovements: StockMovement[],
     receivedBy: string,
-    receivedAt: Date
+    receivedAt: Date,
   ): ReceivePurchaseOrderOutput {
     return {
       purchaseOrderId: purchaseOrder.id,
@@ -582,14 +586,14 @@ export class ReceivePurchaseOrderUseCase {
         batchNumber: line.batchNumber,
         expiryDate: line.expiryDate,
       })),
-      stockBatches: stockBatches.map(batch => ({
+      stockBatches: stockBatches.map((batch) => ({
         id: batch.id,
         productId: batch.productId,
         batchNumber: batch.batchNumber,
         expiryDate: batch.expiryDate,
         quantity: batch.quantity,
       })),
-      stockMovements: stockMovements.map(movement => ({
+      stockMovements: stockMovements.map((movement) => ({
         id: movement.id,
         productId: movement.productId,
         quantityChange: movement.quantityChange,
@@ -626,4 +630,3 @@ export class ReceivePurchaseOrderUseCase {
     };
   }
 }
-

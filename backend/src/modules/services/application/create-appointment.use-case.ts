@@ -1,10 +1,10 @@
 /**
  * Create Appointment Use Case (UC-SVC-002)
- * 
+ *
  * Application use case for creating a new appointment.
  * This use case orchestrates domain entities and domain services to create appointments
  * with conflict detection and scheduling validation.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, or Owner role)
  * - Validate store, customer, pet, and services exist
@@ -15,7 +15,7 @@
  * - Create AppointmentServiceLine entities
  * - Persist appointment via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -56,7 +56,10 @@ export interface AppointmentRepository {
 }
 
 export interface AppointmentServiceLineRepository {
-  saveLines(appointmentId: string, lines: AppointmentServiceLine[]): Promise<AppointmentServiceLine[]>;
+  saveLines(
+    appointmentId: string,
+    lines: AppointmentServiceLine[],
+  ): Promise<AppointmentServiceLine[]>;
 }
 
 export interface StoreRepository {
@@ -143,7 +146,7 @@ export interface CreateAppointmentResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -205,16 +208,16 @@ export class CreateAppointmentUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create appointment use case
-   * 
+   *
    * @param input - Input data for creating appointment
    * @returns Result containing created appointment or error
    */
@@ -232,7 +235,7 @@ export class CreateAppointmentUseCase {
       // 4. Verify user has store access
       const hasAccess = await this.currentUserRepository.hasStoreAccess(
         input.performedBy,
-        input.storeId
+        input.storeId,
       );
       if (!hasAccess) {
         throw new ForbiddenError('You do not have access to this store');
@@ -270,7 +273,11 @@ export class CreateAppointmentUseCase {
       const savedAppointment = await this.appointmentRepository.save(appointment);
 
       // 14. Create appointment service lines
-      const serviceLines = this.createServiceLines(savedAppointment.id, input.services, validatedServices);
+      const serviceLines = this.createServiceLines(
+        savedAppointment.id,
+        input.services,
+        validatedServices,
+      );
       await this.appointmentServiceLineRepository.saveLines(savedAppointment.id, serviceLines);
 
       // 15. Create audit log entry
@@ -291,12 +298,12 @@ export class CreateAppointmentUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -345,7 +352,7 @@ export class CreateAppointmentUseCase {
    */
   private async validateAndLoadStore(storeId: string): Promise<Store> {
     const store = await this.storeRepository.findById(storeId);
-    
+
     if (!store) {
       throw new NotFoundError('Store not found');
     }
@@ -358,7 +365,7 @@ export class CreateAppointmentUseCase {
    */
   private async validateAndLoadCustomer(customerId: string): Promise<Customer> {
     const customer = await this.customerRepository.findById(customerId);
-    
+
     if (!customer) {
       throw new NotFoundError('Customer not found');
     }
@@ -374,7 +381,7 @@ export class CreateAppointmentUseCase {
    */
   private async validateAndLoadPet(petId: string, customerId: string): Promise<Pet> {
     const pet = await this.petRepository.findById(petId);
-    
+
     if (!pet) {
       throw new NotFoundError('Pet not found');
     }
@@ -390,7 +397,7 @@ export class CreateAppointmentUseCase {
    * Validates and loads services
    */
   private async validateAndLoadServices(
-    services: CreateAppointmentInput['services']
+    services: CreateAppointmentInput['services'],
   ): Promise<Service[]> {
     const validatedServices: Service[] = [];
 
@@ -404,7 +411,9 @@ export class CreateAppointmentUseCase {
 
       const service = await this.serviceRepository.findById(serviceInput.serviceId);
       if (!service) {
-        throw new NotFoundError(`Service ${serviceIndex}: Service with ID ${serviceInput.serviceId} not found`);
+        throw new NotFoundError(
+          `Service ${serviceIndex}: Service with ID ${serviceInput.serviceId} not found`,
+        );
       }
 
       const quantity = serviceInput.quantity || 1;
@@ -453,12 +462,12 @@ export class CreateAppointmentUseCase {
    */
   private validateDuration(startAt: Date, endAt: Date, totalDuration: number): void {
     const appointmentDuration = Math.floor((endAt.getTime() - startAt.getTime()) / (1000 * 60));
-    
+
     // Allow some tolerance (e.g., 5 minutes)
     const tolerance = 5;
     if (Math.abs(appointmentDuration - totalDuration) > tolerance) {
       throw new ValidationError(
-        `Appointment duration (${appointmentDuration} minutes) does not match total service duration (${totalDuration} minutes)`
+        `Appointment duration (${appointmentDuration} minutes) does not match total service duration (${totalDuration} minutes)`,
       );
     }
   }
@@ -468,7 +477,7 @@ export class CreateAppointmentUseCase {
    */
   private async validateAndLoadStaff(staffId: string, storeId: string): Promise<User> {
     const staff = await this.userRepository.findById(staffId);
-    
+
     if (!staff) {
       throw new NotFoundError(`Staff with ID ${staffId} not found`);
     }
@@ -487,7 +496,7 @@ export class CreateAppointmentUseCase {
     input: CreateAppointmentInput,
     store: Store,
     pet: Pet,
-    staff: User | undefined
+    staff: User | undefined,
   ): Promise<void> {
     // Create temporary appointment entity for validation
     const tempAppointment = new Appointment(
@@ -500,7 +509,7 @@ export class CreateAppointmentUseCase {
       AppointmentStatus.BOOKED,
       input.performedBy,
       input.staffId,
-      input.notes
+      input.notes,
     );
 
     // Find existing appointments that might conflict
@@ -517,12 +526,12 @@ export class CreateAppointmentUseCase {
       store,
       pet,
       staff,
-      existingAppointments
+      existingAppointments,
     );
 
     if (!validationResult.isValid) {
       throw new ConflictError(
-        `Appointment conflicts detected: ${validationResult.errors.join('; ')}`
+        `Appointment conflicts detected: ${validationResult.errors.join('; ')}`,
       );
     }
   }
@@ -545,7 +554,7 @@ export class CreateAppointmentUseCase {
       input.performedBy,
       input.staffId,
       input.notes,
-      undefined // recurrenceId - would be set if recurrence is handled
+      undefined, // recurrenceId - would be set if recurrence is handled
     );
   }
 
@@ -555,7 +564,7 @@ export class CreateAppointmentUseCase {
   private createServiceLines(
     appointmentId: string,
     serviceInputs: CreateAppointmentInput['services'],
-    services: Service[]
+    services: Service[],
   ): AppointmentServiceLine[] {
     return serviceInputs.map((serviceInput, index) => ({
       id: this.generateId(),
@@ -569,10 +578,7 @@ export class CreateAppointmentUseCase {
   /**
    * Creates audit log entry
    */
-  private async createAuditLog(
-    appointment: Appointment,
-    performedBy: string
-  ): Promise<void> {
+  private async createAuditLog(appointment: Appointment, performedBy: string): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
         this.generateId(),
@@ -592,7 +598,7 @@ export class CreateAppointmentUseCase {
             staffId: appointment.staffId,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -608,7 +614,7 @@ export class CreateAppointmentUseCase {
    */
   private mapToOutput(
     appointment: Appointment,
-    serviceLines: AppointmentServiceLine[]
+    serviceLines: AppointmentServiceLine[],
   ): CreateAppointmentOutput {
     return {
       id: appointment.id,
@@ -651,4 +657,3 @@ export class CreateAppointmentUseCase {
     };
   }
 }
-

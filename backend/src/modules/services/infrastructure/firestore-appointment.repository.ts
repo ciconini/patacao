@@ -1,6 +1,6 @@
 /**
  * AppointmentRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for AppointmentRepository port.
  */
 
@@ -38,7 +38,7 @@ export class FirestoreAppointmentRepository implements AppointmentRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   async save(appointment: Appointment): Promise<Appointment> {
@@ -64,7 +64,7 @@ export class FirestoreAppointmentRepository implements AppointmentRepository {
   async search(
     criteria: AppointmentSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<Appointment>> {
     let query: FirebaseFirestore.Query = this.firestore.collection(this.collectionName);
 
@@ -114,8 +114,8 @@ export class FirestoreAppointmentRepository implements AppointmentRepository {
     const snapshot = await query.get();
 
     // Convert to entities
-    const items = snapshot.docs.map(doc => 
-      this.toEntity(doc.id, doc.data() as AppointmentDocument)
+    const items = snapshot.docs.map((doc) =>
+      this.toEntity(doc.id, doc.data() as AppointmentDocument),
     );
 
     // Calculate pagination metadata
@@ -157,8 +157,8 @@ export class FirestoreAppointmentRepository implements AppointmentRepository {
     const snapshot = await query.get();
 
     const conflicts = snapshot.docs
-      .map(doc => this.toEntity(doc.id, doc.data() as AppointmentDocument))
-      .filter(appointment => {
+      .map((doc) => this.toEntity(doc.id, doc.data() as AppointmentDocument))
+      .filter((appointment) => {
         // Exclude the appointment being checked (if provided)
         if (params.excludeId && appointment.id === params.excludeId) {
           return false;
@@ -209,7 +209,7 @@ export class FirestoreAppointmentRepository implements AppointmentRepository {
       doc.notes,
       doc.recurrenceId,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
@@ -221,4 +221,3 @@ export class FirestoreAppointmentRepository implements AppointmentRepository {
     return timestamp.toDate();
   }
 }
-

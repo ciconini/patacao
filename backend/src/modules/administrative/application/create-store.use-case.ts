@@ -1,9 +1,9 @@
 /**
  * Create Store Use Case (UC-ADMIN-003)
- * 
+ *
  * Application use case for creating a new store location associated with a company.
  * This use case orchestrates domain entities and domain services to create a store.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Owner or Manager role required)
  * - Validate company exists and user has access
@@ -11,7 +11,7 @@
  * - Create Store domain entity
  * - Persist store via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -105,7 +105,7 @@ export interface CreateStoreResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -152,7 +152,15 @@ export class RepositoryError extends ApplicationError {
  */
 export class CreateStoreUseCase {
   private static readonly DEFAULT_TIMEZONE = 'Europe/Lisbon';
-  private static readonly REQUIRED_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+  private static readonly REQUIRED_DAYS = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ] as const;
 
   constructor(
     private readonly storeRepository: StoreRepository,
@@ -162,16 +170,16 @@ export class CreateStoreUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create store use case
-   * 
+   *
    * @param input - Input data for creating store
    * @returns Result containing created store or error
    */
@@ -210,23 +218,25 @@ export class CreateStoreUseCase {
 
   /**
    * Validates user authorization (must have Owner or Manager role)
-   * 
+   *
    * @param userId - User ID to validate
    * @returns User data
    * @throws UnauthorizedError if user not found
    * @throws ForbiddenError if user does not have required role
    */
-  private async validateUserAuthorization(userId: string): Promise<{ id: string; roleIds: string[] }> {
+  private async validateUserAuthorization(
+    userId: string,
+  ): Promise<{ id: string; roleIds: string[] }> {
     const user = await this.userRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasOwnerOrManagerRole = user.roleIds.some(roleId => {
+    const hasOwnerOrManagerRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
-        return role ? (role.isOwner() || role.isManager()) : false;
+        return role ? role.isOwner() || role.isManager() : false;
       } catch {
         return false;
       }
@@ -241,14 +251,14 @@ export class CreateStoreUseCase {
 
   /**
    * Validates and loads company
-   * 
+   *
    * @param companyId - Company ID
    * @returns Company entity
    * @throws NotFoundError if company not found
    */
   private async validateCompany(companyId: string): Promise<Company> {
     const company = await this.companyRepository.findById(companyId);
-    
+
     if (!company) {
       throw new NotFoundError('Company not found');
     }
@@ -258,7 +268,7 @@ export class CreateStoreUseCase {
 
   /**
    * Validates user has access to company
-   * 
+   *
    * @param userId - User ID
    * @param companyId - Company ID
    * @throws ForbiddenError if user does not have access
@@ -277,7 +287,7 @@ export class CreateStoreUseCase {
 
   /**
    * Validates and normalizes input data
-   * 
+   *
    * @param input - Raw input data
    * @returns Validated and normalized input
    * @throws ValidationError if validation fails
@@ -310,7 +320,7 @@ export class CreateStoreUseCase {
           input.address.street,
           input.address.city,
           input.address.postalCode,
-          input.address.country
+          input.address.country,
         );
       } catch (error: any) {
         throw new ValidationError(`Invalid address: ${error.message}`);
@@ -354,7 +364,7 @@ export class CreateStoreUseCase {
 
   /**
    * Validates opening hours structure
-   * 
+   *
    * @param openingHours - Opening hours input
    * @returns Validated WeeklyOpeningHours
    * @throws ValidationError if validation fails
@@ -365,7 +375,7 @@ export class CreateStoreUseCase {
     // Validate all 7 days are present
     for (const day of CreateStoreUseCase.REQUIRED_DAYS) {
       const dayHours = openingHours[day];
-      
+
       if (!dayHours) {
         throw new ValidationError(`Opening hours must contain all 7 days of week. Missing: ${day}`);
       }
@@ -377,7 +387,9 @@ export class CreateStoreUseCase {
       } else {
         // If not closed, must have open and close times
         if (!dayHours.open || !dayHours.close) {
-          throw new ValidationError(`Opening hours for ${day} must have open and close times when not closed`);
+          throw new ValidationError(
+            `Opening hours for ${day} must have open and close times when not closed`,
+          );
         }
 
         // Validate time format using OpeningHours value object
@@ -399,7 +411,7 @@ export class CreateStoreUseCase {
 
   /**
    * Creates Store domain entity
-   * 
+   *
    * @param validatedInput - Validated input data
    * @param companyId - Company ID
    * @returns Store domain entity
@@ -413,7 +425,7 @@ export class CreateStoreUseCase {
       openingHours: WeeklyOpeningHours;
       timezone: string;
     },
-    companyId: string
+    companyId: string,
   ): Store {
     const storeId = this.generateId();
     const now = new Date();
@@ -423,23 +435,25 @@ export class CreateStoreUseCase {
       companyId,
       validatedInput.name,
       validatedInput.openingHours,
-      validatedInput.address ? {
-        street: validatedInput.address.street,
-        city: validatedInput.address.city,
-        postalCode: validatedInput.address.postalCode,
-        country: validatedInput.address.country,
-      } : undefined,
+      validatedInput.address
+        ? {
+            street: validatedInput.address.street,
+            city: validatedInput.address.city,
+            postalCode: validatedInput.address.postalCode,
+            country: validatedInput.address.country,
+          }
+        : undefined,
       validatedInput.email?.value,
       validatedInput.phone?.value,
       validatedInput.timezone,
       now,
-      now
+      now,
     );
   }
 
   /**
    * Persists store via repository
-   * 
+   *
    * @param store - Store domain entity
    * @returns Persisted store entity
    * @throws RepositoryError if persistence fails
@@ -454,7 +468,7 @@ export class CreateStoreUseCase {
 
   /**
    * Creates audit log entry for store creation
-   * 
+   *
    * @param store - Created store entity
    * @param performedBy - User ID who performed the action
    */
@@ -474,7 +488,7 @@ export class CreateStoreUseCase {
             timezone: store.timezone,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -487,7 +501,7 @@ export class CreateStoreUseCase {
 
   /**
    * Maps Store domain entity to output model
-   * 
+   *
    * @param store - Store domain entity
    * @returns Output model
    */
@@ -496,12 +510,14 @@ export class CreateStoreUseCase {
       id: store.id,
       companyId: store.companyId,
       name: store.name,
-      address: store.address ? {
-        street: store.address.street,
-        city: store.address.city,
-        postalCode: store.address.postalCode,
-        country: store.address.country,
-      } : undefined,
+      address: store.address
+        ? {
+            street: store.address.street,
+            city: store.address.city,
+            postalCode: store.address.postalCode,
+            country: store.address.country,
+          }
+        : undefined,
       email: store.email,
       phone: store.phone,
       openingHours: store.openingHours,
@@ -513,7 +529,7 @@ export class CreateStoreUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -537,4 +553,3 @@ export class CreateStoreUseCase {
     };
   }
 }
-

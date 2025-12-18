@@ -1,15 +1,15 @@
 /**
  * PasswordResetTokenRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for PasswordResetTokenRepository port.
  * This implementation handles persistence of PasswordResetToken to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map PasswordResetToken to Firestore documents
  * - Map Firestore documents to PasswordResetToken
  * - Implement repository interface methods
  * - Handle Firestore-specific operations (queries, transactions)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -38,12 +38,12 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a password reset token to Firestore
-   * 
+   *
    * @param token - Password reset token to save
    * @returns Saved token
    */
@@ -58,7 +58,7 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
 
   /**
    * Finds a token by its hash
-   * 
+   *
    * @param tokenHash - Token hash to search for
    * @returns Token or null if not found
    */
@@ -87,7 +87,7 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
 
   /**
    * Marks a token as used
-   * 
+   *
    * @param tokenId - Token ID to mark as used
    */
   async markAsUsed(tokenId: string): Promise<void> {
@@ -99,7 +99,7 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
 
   /**
    * Invalidates all existing tokens for a user
-   * 
+   *
    * @param userId - User ID
    */
   async invalidateExistingTokens(userId: string): Promise<void> {
@@ -111,7 +111,7 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
 
     const batch = this.firestore.batch();
 
-    snapshot.docs.forEach(doc => {
+    snapshot.docs.forEach((doc) => {
       batch.update(doc.ref, {
         used: true,
       });
@@ -122,7 +122,7 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
 
   /**
    * Converts PasswordResetToken to Firestore document
-   * 
+   *
    * @param token - Password reset token
    * @returns Firestore document
    */
@@ -139,7 +139,7 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
 
   /**
    * Converts Firestore document to PasswordResetToken
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns Password reset token
@@ -157,7 +157,7 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -167,7 +167,7 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -175,4 +175,3 @@ export class FirestorePasswordResetTokenRepository implements PasswordResetToken
     return timestamp.toDate();
   }
 }
-

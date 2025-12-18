@@ -1,6 +1,6 @@
 /**
  * Pet Controller
- * 
+ *
  * REST API controller for Pet management endpoints.
  */
 
@@ -17,17 +17,32 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { CreatePetDto, UpdatePetDto, PetResponseDto } from '../dto/pet.dto';
-import { CreatePetUseCase, CreatePetInput, CreatePetOutput } from '../../application/create-pet.use-case';
+import {
+  CreatePetUseCase,
+  CreatePetInput,
+  CreatePetOutput,
+} from '../../application/create-pet.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Administrative')
+@ApiBearerAuth('JWT-auth')
 @Controller('api/v1/pets')
 @UseGuards(FirebaseAuthGuard)
 export class PetController {
-  constructor(
-    private readonly createPetUseCase: CreatePetUseCase,
-  ) {}
+  constructor(private readonly createPetUseCase: CreatePetUseCase) {}
 
   /**
    * Create a new pet
@@ -35,6 +50,13 @@ export class PetController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create pet', description: 'Creates a new pet profile for a customer' })
+  @ApiBody({ type: CreatePetDto })
+  @ApiResponse({ status: 201, description: 'Pet created successfully', type: PetResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
   async create(
     @Body() createDto: CreatePetDto,
     @Request() req: AuthenticatedRequest,
@@ -52,12 +74,13 @@ export class PetController {
       dateOfBirth: createDto.dateOfBirth, // ISO date string
       microchipId: createDto.microchipId,
       medicalNotes: createDto.medicalNotes,
-      vaccination: createDto.vaccination?.map((v: any) => ({
-        vaccine: v.vaccine,
-        date: v.date, // ISO date string
-        expires: v.expires, // ISO date string
-        administered_by: v.administered_by,
-      })) || [],
+      vaccination:
+        createDto.vaccination?.map((v: any) => ({
+          vaccine: v.vaccine,
+          date: v.date, // ISO date string
+          expires: v.expires, // ISO date string
+          administered_by: v.administered_by,
+        })) || [],
       performedBy: userId,
     };
 
@@ -75,6 +98,14 @@ export class PetController {
    * PUT /api/v1/pets/:id
    */
   @Put(':id')
+  @ApiOperation({ summary: 'Update pet', description: 'Updates an existing pet profile' })
+  @ApiParam({ name: 'id', description: 'Pet UUID', type: String })
+  @ApiBody({ type: UpdatePetDto })
+  @ApiResponse({ status: 200, description: 'Pet updated successfully', type: PetResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Pet not found' })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdatePetDto,
@@ -89,6 +120,12 @@ export class PetController {
    * GET /api/v1/pets/:id
    */
   @Get(':id')
+  @ApiOperation({ summary: 'Get pet by ID', description: 'Retrieves a pet profile by its ID' })
+  @ApiParam({ name: 'id', description: 'Pet UUID', type: String })
+  @ApiResponse({ status: 200, description: 'Pet retrieved successfully', type: PetResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Pet not found' })
   async findOne(@Param('id') id: string): Promise<PetResponseDto> {
     // TODO: Implement GetPetUseCase
     throw new Error('Not implemented yet');
@@ -100,6 +137,12 @@ export class PetController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete pet', description: 'Deletes a pet profile' })
+  @ApiParam({ name: 'id', description: 'Pet UUID', type: String })
+  @ApiResponse({ status: 204, description: 'Pet deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Pet not found' })
   async delete(@Param('id') id: string): Promise<void> {
     // TODO: Implement DeletePetUseCase
     throw new Error('Not implemented yet');
@@ -121,12 +164,14 @@ export class PetController {
       medicalNotes: output.medicalNotes,
       vaccination: output.vaccination.map((v: any) => ({
         vaccine: v.vaccineType || v.vaccine,
-        date: (v.administeredDate || v.date) instanceof Date 
-          ? (v.administeredDate || v.date).toISOString() 
-          : (v.administeredDate || v.date),
-        expires: (v.nextDueDate || v.expires) instanceof Date 
-          ? (v.nextDueDate || v.expires).toISOString() 
-          : (v.nextDueDate || v.expires),
+        date:
+          (v.administeredDate || v.date) instanceof Date
+            ? (v.administeredDate || v.date).toISOString()
+            : v.administeredDate || v.date,
+        expires:
+          (v.nextDueDate || v.expires) instanceof Date
+            ? (v.nextDueDate || v.expires).toISOString()
+            : v.nextDueDate || v.expires,
         administered_by: v.veterinarian || v.administered_by,
       })),
       createdAt: output.createdAt,

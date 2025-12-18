@@ -1,29 +1,29 @@
 /**
  * Import Controller
- * 
+ *
  * REST API controller for data import endpoints.
  */
 
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth, ApiResponse, ApiExtraModels } from '@nestjs/swagger';
 import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  HttpStatus,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
-import { ImportCustomersDto, ImportCustomersResponseDto } from '../dto/customer.dto';
-import { ImportCustomersUseCase, ImportCustomersInput } from '../../application/import-customers.use-case';
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
+import { ImportCustomersDto, ImportCustomersResponseDto, ImportErrorDto } from '../dto/customer.dto';
+import {
+  ImportCustomersUseCase,
+  ImportCustomersInput,
+} from '../../application/import-customers.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Administrative')
+@ApiBearerAuth('JWT-auth')
+@ApiExtraModels(ImportCustomersResponseDto, ImportErrorDto)
 @Controller('api/v1/import')
 @UseGuards(FirebaseAuthGuard)
 export class ImportController {
-  constructor(
-    private readonly importCustomersUseCase: ImportCustomersUseCase,
-  ) {}
+  constructor(private readonly importCustomersUseCase: ImportCustomersUseCase) {}
 
   /**
    * Import customers from CSV
@@ -31,6 +31,16 @@ export class ImportController {
    */
   @Post('customers')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Import customers', description: 'Imports customers from CSV content' })
+  @ApiBody({ type: ImportCustomersDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Import completed successfully',
+    type: ImportCustomersResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   async importCustomers(
     @Body() importDto: ImportCustomersDto,
     @Request() req: AuthenticatedRequest,
@@ -62,4 +72,3 @@ export class ImportController {
     };
   }
 }
-

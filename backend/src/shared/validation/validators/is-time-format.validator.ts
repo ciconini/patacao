@@ -1,9 +1,9 @@
 /**
  * Time Format Validator
- * 
+ *
  * Custom validator for time format (HH:MM).
  * Validates that a string is in 24-hour format (00:00 to 23:59).
- * 
+ *
  * Usage:
  * @IsTimeFormat()
  * openTime: string;
@@ -44,7 +44,7 @@ export class IsTimeFormatConstraint implements ValidatorConstraintInterface {
 
 /**
  * Validates that a string is in HH:MM time format
- * 
+ *
  * @param validationOptions - Optional validation options
  * @returns Property decorator
  */
@@ -59,4 +59,3 @@ export function IsTimeFormat(validationOptions?: ValidationOptions) {
     });
   };
 }
-

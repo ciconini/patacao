@@ -1,6 +1,6 @@
 /**
  * Services Application Module
- * 
+ *
  * NestJS module that registers all use cases for the Services module.
  */
 
@@ -15,10 +15,7 @@ import { CancelAppointmentUseCase } from './cancel-appointment.use-case';
 import { SearchAppointmentsUseCase } from './search-appointments.use-case';
 
 @Module({
-  imports: [
-    ServicesInfrastructureModule,
-    SharedModule,
-  ],
+  imports: [ServicesInfrastructureModule, SharedModule],
   providers: [
     CreateServiceUseCase,
     CreateAppointmentUseCase,
@@ -37,4 +34,3 @@ import { SearchAppointmentsUseCase } from './search-appointments.use-case';
   ],
 })
 export class ServicesApplicationModule {}
-

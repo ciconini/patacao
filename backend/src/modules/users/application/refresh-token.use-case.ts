@@ -1,16 +1,16 @@
 /**
  * Refresh Token Use Case (UC-AUTH-003)
- * 
+ *
  * Application use case for refreshing an access token using a refresh token.
  * This use case orchestrates domain entities to issue new access tokens.
- * 
+ *
  * Responsibilities:
  * - Validate refresh token
  * - Verify session is still valid
  * - Generate new access token
  * - Optionally rotate refresh token
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -68,7 +68,7 @@ export interface RefreshTokenResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -97,8 +97,8 @@ export class RefreshTokenUseCase {
 
   private readonly generateId = (): string => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
   };
@@ -113,7 +113,7 @@ export class RefreshTokenUseCase {
 
   /**
    * Executes the refresh token use case
-   * 
+   *
    * @param input - Input data for refreshing token
    * @returns Result containing new access token or error
    */
@@ -212,7 +212,7 @@ export class RefreshTokenUseCase {
             action: 'token_refresh',
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (auditLogResult.auditLog) {
@@ -239,4 +239,3 @@ export class RefreshTokenUseCase {
     }
   }
 }
-

@@ -1,9 +1,9 @@
 /**
  * Update Store Use Case (UC-ADMIN-004)
- * 
+ *
  * Application use case for updating an existing store's information.
  * This use case orchestrates domain entities and domain services to update a store.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Owner or Manager role required)
  * - Validate store exists and user has access to its company
@@ -11,7 +11,7 @@
  * - Update Store domain entity
  * - Persist updated store via repository
  * - Create audit log entry with before/after values
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -106,7 +106,7 @@ export interface UpdateStoreResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -152,7 +152,15 @@ export class RepositoryError extends ApplicationError {
  * Update Store Use Case
  */
 export class UpdateStoreUseCase {
-  private static readonly REQUIRED_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+  private static readonly REQUIRED_DAYS = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ] as const;
 
   constructor(
     private readonly storeRepository: StoreRepository,
@@ -162,16 +170,16 @@ export class UpdateStoreUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the update store use case
-   * 
+   *
    * @param input - Input data for updating store
    * @returns Result containing updated store or error
    */
@@ -214,12 +222,12 @@ export class UpdateStoreUseCase {
 
   /**
    * Validates that at least one field is provided for update
-   * 
+   *
    * @param input - Input data
    * @throws ValidationError if no fields provided
    */
   private validateAtLeastOneFieldProvided(input: UpdateStoreInput): void {
-    const hasField = 
+    const hasField =
       input.name !== undefined ||
       input.address !== undefined ||
       input.email !== undefined ||
@@ -234,14 +242,14 @@ export class UpdateStoreUseCase {
 
   /**
    * Loads existing store by ID
-   * 
+   *
    * @param storeId - Store ID
    * @returns Store entity
    * @throws NotFoundError if store not found
    */
   private async loadStore(storeId: string): Promise<Store> {
     const store = await this.storeRepository.findById(storeId);
-    
+
     if (!store) {
       throw new NotFoundError('Store not found');
     }
@@ -251,14 +259,14 @@ export class UpdateStoreUseCase {
 
   /**
    * Validates and loads company
-   * 
+   *
    * @param companyId - Company ID
    * @returns Company entity
    * @throws NotFoundError if company not found
    */
   private async validateCompany(companyId: string): Promise<Company> {
     const company = await this.companyRepository.findById(companyId);
-    
+
     if (!company) {
       throw new NotFoundError('Company not found');
     }
@@ -268,7 +276,7 @@ export class UpdateStoreUseCase {
 
   /**
    * Validates user exists, has required role, and has access to company
-   * 
+   *
    * @param userId - User ID
    * @param companyId - Company ID
    * @throws UnauthorizedError if user not found
@@ -276,15 +284,15 @@ export class UpdateStoreUseCase {
    */
   private async validateUserAndAccess(userId: string, companyId: string): Promise<void> {
     const user = await this.userRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasOwnerOrManagerRole = user.roleIds.some(roleId => {
+    const hasOwnerOrManagerRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
-        return role ? (role.isOwner() || role.isManager()) : false;
+        return role ? role.isOwner() || role.isManager() : false;
       } catch {
         return false;
       }
@@ -298,14 +306,14 @@ export class UpdateStoreUseCase {
     if (this.userRepository.hasCompanyAccess) {
       const hasAccess = await this.userRepository.hasCompanyAccess(userId, companyId);
       if (!hasAccess) {
-        throw new ForbiddenError('You do not have access to this store\'s company');
+        throw new ForbiddenError("You do not have access to this store's company");
       }
     }
   }
 
   /**
    * Validates and normalizes input data
-   * 
+   *
    * @param input - Raw input data
    * @returns Validated and normalized updates
    * @throws ValidationError if validation fails
@@ -343,7 +351,7 @@ export class UpdateStoreUseCase {
             input.address.street,
             input.address.city,
             input.address.postalCode,
-            input.address.country
+            input.address.country,
           );
         } catch (error: any) {
           throw new ValidationError(`Invalid address: ${error.message}`);
@@ -391,7 +399,7 @@ export class UpdateStoreUseCase {
 
   /**
    * Validates opening hours structure
-   * 
+   *
    * @param openingHours - Opening hours input
    * @returns Validated WeeklyOpeningHours
    * @throws ValidationError if validation fails
@@ -406,7 +414,7 @@ export class UpdateStoreUseCase {
     // Validate all 7 days are present
     for (const day of UpdateStoreUseCase.REQUIRED_DAYS) {
       const dayHours = openingHours[day];
-      
+
       if (!dayHours) {
         throw new ValidationError(`Opening hours must contain all 7 days of week. Missing: ${day}`);
       }
@@ -418,7 +426,9 @@ export class UpdateStoreUseCase {
       } else {
         // If not closed, must have open and close times
         if (!dayHours.open || !dayHours.close) {
-          throw new ValidationError(`Opening hours for ${day} must have open and close times when not closed`);
+          throw new ValidationError(
+            `Opening hours for ${day} must have open and close times when not closed`,
+          );
         }
 
         // Validate time format using OpeningHours value object
@@ -440,7 +450,7 @@ export class UpdateStoreUseCase {
 
   /**
    * Captures before state for audit log
-   * 
+   *
    * @param store - Store entity
    * @returns Before state object
    */
@@ -457,7 +467,7 @@ export class UpdateStoreUseCase {
 
   /**
    * Updates Store domain entity with validated updates
-   * 
+   *
    * @param store - Existing store entity
    * @param updates - Validated update data
    */
@@ -470,7 +480,7 @@ export class UpdateStoreUseCase {
       phone?: PhoneNumber;
       openingHours?: WeeklyOpeningHours;
       timezone?: string;
-    }
+    },
   ): void {
     if (updates.name !== undefined) {
       store.updateName(updates.name);
@@ -509,7 +519,7 @@ export class UpdateStoreUseCase {
 
   /**
    * Persists updated store via repository
-   * 
+   *
    * @param store - Updated store entity
    * @returns Persisted store entity
    * @throws RepositoryError if persistence fails
@@ -524,7 +534,7 @@ export class UpdateStoreUseCase {
 
   /**
    * Creates audit log entry for store update
-   * 
+   *
    * @param store - Updated store entity
    * @param beforeState - Before state for audit log
    * @param performedBy - User ID who performed the action
@@ -532,7 +542,7 @@ export class UpdateStoreUseCase {
   private async createAuditLog(
     store: Store,
     beforeState: Record<string, unknown>,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const afterState: Record<string, unknown> = {
@@ -551,7 +561,7 @@ export class UpdateStoreUseCase {
         AuditAction.UPDATE,
         performedBy,
         this.auditLogDomainService.createUpdateMetadata(beforeState, afterState),
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -564,7 +574,7 @@ export class UpdateStoreUseCase {
 
   /**
    * Maps Store domain entity to output model
-   * 
+   *
    * @param store - Store domain entity
    * @returns Output model
    */
@@ -573,12 +583,14 @@ export class UpdateStoreUseCase {
       id: store.id,
       companyId: store.companyId,
       name: store.name,
-      address: store.address ? {
-        street: store.address.street,
-        city: store.address.city,
-        postalCode: store.address.postalCode,
-        country: store.address.country,
-      } : undefined,
+      address: store.address
+        ? {
+            street: store.address.street,
+            city: store.address.city,
+            postalCode: store.address.postalCode,
+            country: store.address.country,
+          }
+        : undefined,
       email: store.email,
       phone: store.phone,
       openingHours: store.openingHours,
@@ -590,7 +602,7 @@ export class UpdateStoreUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -614,4 +626,3 @@ export class UpdateStoreUseCase {
     };
   }
 }
-

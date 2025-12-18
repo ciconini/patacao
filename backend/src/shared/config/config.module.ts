@@ -1,6 +1,6 @@
 /**
  * Configuration Module
- * 
+ *
  * NestJS module that provides configuration management with validation.
  * Validates environment variables on startup and provides typed access.
  */
@@ -39,4 +39,3 @@ import { AppConfigService } from './config.service';
   exports: [AppConfigService, 'AppConfigService', NestConfigModule],
 })
 export class ConfigModule {}
-

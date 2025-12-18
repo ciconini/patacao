@@ -1,6 +1,6 @@
 /**
  * Financial Application Module
- * 
+ *
  * NestJS module that registers all use cases for the Financial module.
  */
 
@@ -17,10 +17,7 @@ import { CreateCreditNoteUseCase } from './create-credit-note.use-case';
 import { CreateFinancialExportUseCase } from './create-financial-export.use-case';
 
 @Module({
-  imports: [
-    FinancialInfrastructureModule,
-    SharedModule,
-  ],
+  imports: [FinancialInfrastructureModule, SharedModule],
   providers: [
     CreateInvoiceDraftUseCase,
     IssueInvoiceUseCase,
@@ -43,4 +40,3 @@ import { CreateFinancialExportUseCase } from './create-financial-export.use-case
   ],
 })
 export class FinancialApplicationModule {}
-

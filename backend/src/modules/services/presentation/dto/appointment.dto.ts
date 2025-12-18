@@ -1,10 +1,20 @@
 /**
  * Appointment DTOs
- * 
+ *
  * Data Transfer Objects for Appointment API endpoints.
  */
 
-import { IsString, IsOptional, IsUUID, IsDateString, IsArray, ValidateNested, IsNumber, IsBoolean, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsUUID,
+  IsDateString,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsBoolean,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**
@@ -229,4 +239,3 @@ export class AppointmentEnrichedResponseDto extends AppointmentResponseDto {
     quantity: number;
   }>;
 }
-

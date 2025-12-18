@@ -1,25 +1,29 @@
 /**
  * Stock Controller
- * 
+ *
  * REST API controller for Stock management endpoints (receipts, adjustments, reconciliation).
  */
 
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  HttpStatus,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { ReceiveStockDto, StockAdjustmentDto } from '../dto/stock.dto';
 import { ReceiveStockUseCase, ReceiveStockInput } from '../../application/receive-stock.use-case';
-import { StockAdjustmentUseCase, StockAdjustmentInput } from '../../application/stock-adjustment.use-case';
-import { StockReconciliationUseCase, StockReconciliationInput } from '../../application/stock-reconciliation.use-case';
+import {
+  StockAdjustmentUseCase,
+  StockAdjustmentInput,
+} from '../../application/stock-adjustment.use-case';
+import {
+  StockReconciliationUseCase,
+  StockReconciliationInput,
+} from '../../application/stock-reconciliation.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Inventory')
+@ApiBearerAuth('JWT-auth')
 @Controller('api/v1/stock')
 @UseGuards(FirebaseAuthGuard)
 export class StockController {
@@ -35,6 +39,8 @@ export class StockController {
    */
   @Post('receipts')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Receive stock', description: 'Records stock receipt with batch information' })
+  @ApiBody({ type: ReceiveStockDto })
   async receiveStock(
     @Body() receiveDto: ReceiveStockDto,
     @Request() req: AuthenticatedRequest,
@@ -48,7 +54,7 @@ export class StockController {
       storeId: receiveDto.storeId,
       supplierId: receiveDto.supplierId,
       purchaseOrderId: receiveDto.purchaseOrderId,
-      lines: receiveDto.lines.map(line => ({
+      lines: receiveDto.lines.map((line) => ({
         productId: line.productId,
         quantity: line.quantity,
         batchNumber: line.batchNumber,
@@ -74,6 +80,8 @@ export class StockController {
    */
   @Post('adjustments')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Adjust stock', description: 'Adjusts stock quantity with a reason' })
+  @ApiBody({ type: StockAdjustmentDto })
   async adjustStock(
     @Body() adjustmentDto: StockAdjustmentDto,
     @Request() req: AuthenticatedRequest,
@@ -108,8 +116,36 @@ export class StockController {
    */
   @Post('reconciliation')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reconcile stock', description: 'Reconciles stock counts with physical inventory' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['storeId', 'counts'],
+      properties: {
+        storeId: { type: 'string', format: 'uuid' },
+        locationId: { type: 'string', format: 'uuid' },
+        counts: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['productId', 'countedQuantity'],
+            properties: {
+              productId: { type: 'string', format: 'uuid' },
+              countedQuantity: { type: 'number' },
+              batchNumber: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
   async reconcileStock(
-    @Body() reconciliationDto: { storeId: string; locationId?: string; counts: Array<{ productId: string; countedQuantity: number; batchNumber?: string }> },
+    @Body()
+    reconciliationDto: {
+      storeId: string;
+      locationId?: string;
+      counts: Array<{ productId: string; countedQuantity: number; batchNumber?: string }>;
+    },
     @Request() req: AuthenticatedRequest,
   ): Promise<any> {
     const userId = req.firebaseUid || req.user?.uid;
@@ -133,4 +169,3 @@ export class StockController {
     return result.reconciliation;
   }
 }
-

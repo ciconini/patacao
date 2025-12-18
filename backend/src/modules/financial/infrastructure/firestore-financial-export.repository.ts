@@ -1,15 +1,15 @@
 /**
  * FinancialExportRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for FinancialExportRepository port.
  * This implementation handles persistence of FinancialExport domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map FinancialExport domain entities to Firestore documents
  * - Map Firestore documents to FinancialExport domain entities
  * - Implement repository interface methods
  * - Handle Firestore-specific operations
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -39,13 +39,13 @@ export class FirestoreFinancialExportRepository implements FinancialExportReposi
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a FinancialExport entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
-   * 
+   *
    * @param exportEntity - FinancialExport domain entity to save
    * @returns Saved FinancialExport entity
    */
@@ -59,8 +59,38 @@ export class FirestoreFinancialExportRepository implements FinancialExportReposi
   }
 
   /**
+   * Finds a FinancialExport by ID
+   *
+   * @param id - FinancialExport ID
+   * @returns FinancialExport entity or null if not found
+   */
+  async findById(id: string): Promise<FinancialExport | null> {
+    const docRef = this.firestore.collection(this.collectionName).doc(id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return null;
+    }
+
+    return this.toEntity(id, doc.data() as FinancialExportDocument);
+  }
+
+  /**
+   * Finds pending financial exports
+   *
+   * @returns Array of pending FinancialExport entities
+   * Note: This is a placeholder - FinancialExport entity doesn't have a status field yet
+   * For now, returns empty array
+   */
+  async findPendingExports(): Promise<FinancialExport[]> {
+    // TODO: Implement when FinancialExport entity has status field
+    // For now, return empty array
+    return [];
+  }
+
+  /**
    * Converts FinancialExport domain entity to Firestore document
-   * 
+   *
    * @param exportEntity - FinancialExport domain entity
    * @returns Firestore document
    */
@@ -68,7 +98,9 @@ export class FirestoreFinancialExportRepository implements FinancialExportReposi
     return {
       id: exportEntity.id,
       companyId: exportEntity.companyId,
-      periodStart: exportEntity.periodStart ? this.toTimestamp(exportEntity.periodStart) : undefined,
+      periodStart: exportEntity.periodStart
+        ? this.toTimestamp(exportEntity.periodStart)
+        : undefined,
       periodEnd: exportEntity.periodEnd ? this.toTimestamp(exportEntity.periodEnd) : undefined,
       format: exportEntity.format,
       filePath: exportEntity.filePath,
@@ -80,7 +112,7 @@ export class FirestoreFinancialExportRepository implements FinancialExportReposi
 
   /**
    * Converts Firestore document to FinancialExport domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns FinancialExport domain entity
@@ -95,13 +127,13 @@ export class FirestoreFinancialExportRepository implements FinancialExportReposi
       doc.periodEnd ? this.toDate(doc.periodEnd) : undefined,
       doc.filePath,
       doc.sftpReference,
-      this.toDate(doc.createdAt)
+      this.toDate(doc.createdAt),
     );
   }
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -111,7 +143,7 @@ export class FirestoreFinancialExportRepository implements FinancialExportReposi
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -119,4 +151,3 @@ export class FirestoreFinancialExportRepository implements FinancialExportReposi
     return timestamp.toDate();
   }
 }
-

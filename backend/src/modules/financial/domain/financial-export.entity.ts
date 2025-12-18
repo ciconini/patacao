@@ -1,11 +1,11 @@
 /**
  * FinancialExport Domain Entity
- * 
+ *
  * Represents a financial export in the petshop management system.
  * Financial exports are generated reports containing financial data (invoices, transactions, etc.)
  * for accounting purposes. Once generated, exports are immutable.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - FinancialExport must be linked to a Company (invariant)
  * - Export format must be CSV or JSON
@@ -32,7 +32,7 @@ export class FinancialExport {
 
   /**
    * Creates a new FinancialExport entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param companyId - Company ID this export belongs to (required)
    * @param createdBy - User ID who created the export (required)
@@ -42,7 +42,7 @@ export class FinancialExport {
    * @param filePath - File path where export is stored
    * @param sftpReference - SFTP reference for remote storage
    * @param createdAt - Creation timestamp (defaults to now)
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if companyId is empty
    * @throws Error if createdBy is empty
@@ -58,7 +58,7 @@ export class FinancialExport {
     periodEnd?: Date,
     filePath?: string,
     sftpReference?: string,
-    createdAt?: Date
+    createdAt?: Date,
   ) {
     this.validateId(id);
     this.validateCompanyId(companyId);
@@ -122,7 +122,7 @@ export class FinancialExport {
 
   /**
    * Updates the period start date
-   * 
+   *
    * @param periodStart - New period start date
    * @throws Error if periodEnd exists and is before periodStart
    * @throws Error if export is already generated
@@ -139,7 +139,7 @@ export class FinancialExport {
 
   /**
    * Updates the period end date
-   * 
+   *
    * @param periodEnd - New period end date
    * @throws Error if periodStart exists and periodEnd is before it
    * @throws Error if export is already generated
@@ -156,7 +156,7 @@ export class FinancialExport {
 
   /**
    * Updates the export format
-   * 
+   *
    * @param format - New export format
    * @throws Error if export is already generated
    */
@@ -169,7 +169,7 @@ export class FinancialExport {
 
   /**
    * Sets the file path (for local storage)
-   * 
+   *
    * @param filePath - File path where export is stored
    * @throws Error if sftpReference is already set
    * @throws Error if export is already generated
@@ -190,7 +190,7 @@ export class FinancialExport {
 
   /**
    * Sets the SFTP reference (for remote storage)
-   * 
+   *
    * @param sftpReference - SFTP reference for remote storage
    * @throws Error if filePath is already set
    * @throws Error if export is already generated
@@ -211,7 +211,7 @@ export class FinancialExport {
 
   /**
    * Checks if the export is generated (has file path or SFTP reference)
-   * 
+   *
    * @returns True if export has file path or SFTP reference
    */
   isGenerated(): boolean {
@@ -220,7 +220,7 @@ export class FinancialExport {
 
   /**
    * Checks if the export has a file path
-   * 
+   *
    * @returns True if file path is set
    */
   hasFilePath(): boolean {
@@ -229,7 +229,7 @@ export class FinancialExport {
 
   /**
    * Checks if the export has an SFTP reference
-   * 
+   *
    * @returns True if SFTP reference is set
    */
   hasSftpReference(): boolean {
@@ -238,7 +238,7 @@ export class FinancialExport {
 
   /**
    * Checks if the export has a period defined
-   * 
+   *
    * @returns True if both period start and end are set
    */
   hasPeriod(): boolean {
@@ -247,7 +247,7 @@ export class FinancialExport {
 
   /**
    * Calculates the period duration in days
-   * 
+   *
    * @returns Number of days in the period, or undefined if period is not fully defined
    */
   getPeriodDurationDays(): number | undefined {
@@ -260,7 +260,7 @@ export class FinancialExport {
 
   /**
    * Checks if the export format is CSV
-   * 
+   *
    * @returns True if format is CSV
    */
   isCsvFormat(): boolean {
@@ -269,7 +269,7 @@ export class FinancialExport {
 
   /**
    * Checks if the export format is JSON
-   * 
+   *
    * @returns True if format is JSON
    */
   isJsonFormat(): boolean {
@@ -279,7 +279,7 @@ export class FinancialExport {
   /**
    * Checks if the export can be modified
    * Exports are immutable once generated
-   * 
+   *
    * @returns True if export is not yet generated
    */
   canBeModified(): boolean {
@@ -315,4 +315,3 @@ export class FinancialExport {
     }
   }
 }
-

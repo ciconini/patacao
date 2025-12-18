@@ -1,6 +1,6 @@
 /**
  * Services Presentation Module
- * 
+ *
  * NestJS module that registers all controllers for the Services module.
  */
 
@@ -11,10 +11,6 @@ import { AppointmentController } from './controllers/appointment.controller';
 
 @Module({
   imports: [ServicesApplicationModule],
-  controllers: [
-    ServiceController,
-    AppointmentController,
-  ],
+  controllers: [ServiceController, AppointmentController],
 })
 export class ServicesPresentationModule {}
-

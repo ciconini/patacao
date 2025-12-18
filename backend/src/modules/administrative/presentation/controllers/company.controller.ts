@@ -1,6 +1,6 @@
 /**
  * Company Controller
- * 
+ *
  * REST API controller for Company management endpoints.
  */
 
@@ -16,12 +16,31 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { CreateCompanyDto, UpdateCompanyDto, CompanyResponseDto } from '../dto/company.dto';
-import { CreateCompanyProfileUseCase, CreateCompanyProfileInput } from '../../application/create-company-profile.use-case';
-import { UpdateCompanyProfileUseCase, UpdateCompanyProfileInput } from '../../application/update-company-profile.use-case';
+import {
+  CreateCompanyProfileUseCase,
+  CreateCompanyProfileInput,
+} from '../../application/create-company-profile.use-case';
+import {
+  UpdateCompanyProfileUseCase,
+  UpdateCompanyProfileInput,
+} from '../../application/update-company-profile.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Administrative')
+@ApiBearerAuth('JWT-auth')
 @Controller('api/v1/companies')
 @UseGuards(FirebaseAuthGuard)
 export class CompanyController {
@@ -36,6 +55,32 @@ export class CompanyController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create company profile',
+    description: 'Creates a new company profile with fiscal data and settings',
+  })
+  @ApiBody({ type: CreateCompanyDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Company created successfully',
+    type: CompanyResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Company with this NIF already exists',
+  })
   async create(
     @Body() createDto: CreateCompanyDto,
     @Request() req: AuthenticatedRequest,
@@ -71,6 +116,33 @@ export class CompanyController {
    * PUT /api/v1/companies/:id
    */
   @Put(':id')
+  @ApiOperation({
+    summary: 'Update company profile',
+    description: 'Updates an existing company profile',
+  })
+  @ApiParam({ name: 'id', description: 'Company UUID', type: String })
+  @ApiBody({ type: UpdateCompanyDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Company updated successfully',
+    type: CompanyResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Company not found',
+  })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateCompanyDto,
@@ -108,6 +180,28 @@ export class CompanyController {
    * GET /api/v1/companies/:id
    */
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get company by ID',
+    description: 'Retrieves a company profile by its ID',
+  })
+  @ApiParam({ name: 'id', description: 'Company UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Company retrieved successfully',
+    type: CompanyResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Company not found',
+  })
   async findOne(@Param('id') id: string): Promise<CompanyResponseDto> {
     // TODO: Implement GetCompanyUseCase or use repository directly
     // For now, this is a placeholder
@@ -150,4 +244,3 @@ export class CompanyController {
     };
   }
 }
-

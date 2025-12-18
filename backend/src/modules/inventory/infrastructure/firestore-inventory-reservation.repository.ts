@@ -1,6 +1,6 @@
 /**
  * InventoryReservationRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for InventoryReservationRepository port.
  */
 
@@ -24,7 +24,7 @@ export class FirestoreInventoryReservationRepository implements InventoryReserva
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   async save(reservation: InventoryReservation): Promise<InventoryReservation> {
@@ -53,8 +53,8 @@ export class FirestoreInventoryReservationRepository implements InventoryReserva
       .where('productId', '==', productId)
       .get();
 
-    return snapshot.docs.map(doc => 
-      this.toEntity(doc.id, doc.data() as InventoryReservationDocument)
+    return snapshot.docs.map((doc) =>
+      this.toEntity(doc.id, doc.data() as InventoryReservationDocument),
     );
   }
 
@@ -64,8 +64,8 @@ export class FirestoreInventoryReservationRepository implements InventoryReserva
       .where('reservedFor', '==', appointmentId)
       .get();
 
-    return snapshot.docs.map(doc => 
-      this.toEntity(doc.id, doc.data() as InventoryReservationDocument)
+    return snapshot.docs.map((doc) =>
+      this.toEntity(doc.id, doc.data() as InventoryReservationDocument),
     );
   }
 
@@ -92,7 +92,7 @@ export class FirestoreInventoryReservationRepository implements InventoryReserva
       doc.quantity,
       doc.reservedFor,
       doc.expiresAt ? this.toDate(doc.expiresAt) : undefined,
-      this.toDate(doc.createdAt)
+      this.toDate(doc.createdAt),
     );
   }
 
@@ -104,4 +104,3 @@ export class FirestoreInventoryReservationRepository implements InventoryReserva
     return timestamp.toDate();
   }
 }
-

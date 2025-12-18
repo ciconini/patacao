@@ -1,11 +1,11 @@
 /**
  * Firebase Connection Test Script
- * 
+ *
  * This script tests the Firebase connection by:
  * 1. Initializing Firebase Admin SDK
  * 2. Testing Firestore connection
  * 3. Performing a test read/write operation
- * 
+ *
  * Usage:
  *   npm run test:firebase
  *   or
@@ -57,8 +57,12 @@ async function testFirebaseConnection(): Promise<void> {
   if (useEmulator) {
     console.log(`   FIREBASE_EMULATOR_HOST: ${emulatorHost}`);
   } else {
-    console.log(`   FIREBASE_SERVICE_ACCOUNT_PATH: ${process.env.FIREBASE_SERVICE_ACCOUNT_PATH || 'Not set'}`);
-    console.log(`   FIREBASE_SERVICE_ACCOUNT_KEY: ${process.env.FIREBASE_SERVICE_ACCOUNT_KEY ? 'Set' : 'Not set'}`);
+    console.log(
+      `   FIREBASE_SERVICE_ACCOUNT_PATH: ${process.env.FIREBASE_SERVICE_ACCOUNT_PATH || 'Not set'}`,
+    );
+    console.log(
+      `   FIREBASE_SERVICE_ACCOUNT_KEY: ${process.env.FIREBASE_SERVICE_ACCOUNT_KEY ? 'Set' : 'Not set'}`,
+    );
   }
   console.log('');
 
@@ -72,52 +76,77 @@ async function testFirebaseConnection(): Promise<void> {
         admin.initializeApp({
           projectId: projectId || 'patacao-dev',
         });
-        logResult('Firebase Admin Initialization', true, `Initialized with emulator at ${emulatorHost}`);
-          } else {
-            // Production: Use service account
-            const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
-            const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+        logResult(
+          'Firebase Admin Initialization',
+          true,
+          `Initialized with emulator at ${emulatorHost}`,
+        );
+      } else {
+        // Production: Use service account
+        const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+        const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-            if (serviceAccountPath) {
-              // Load from file path (absolute or relative to project root)
-              const path = require('path');
-              const resolvedPath = path.isAbsolute(serviceAccountPath)
-                ? serviceAccountPath
-                : path.join(process.cwd(), serviceAccountPath);
-              const serviceAccount = require(resolvedPath);
-              admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-                projectId: projectId,
-              });
-              logResult('Firebase Admin Initialization', true, `Initialized with service account from ${serviceAccountPath}`);
-            } else if (serviceAccountKey) {
-              // Load from JSON string
-              const serviceAccount = JSON.parse(serviceAccountKey);
-              admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-                projectId: projectId,
-              });
-              logResult('Firebase Admin Initialization', true, 'Initialized with service account from environment variable');
-            } else {
-              // Try default path: config/secrets/firebase-service-account.json
-              try {
-                const path = require('path');
-                const defaultPath = path.join(process.cwd(), 'config', 'secrets', 'firebase-service-account.json');
-                const serviceAccount = require(defaultPath);
-                admin.initializeApp({
-                  credential: admin.credential.cert(serviceAccount),
-                  projectId: projectId,
-                });
-                logResult('Firebase Admin Initialization', true, `Initialized with service account from default path: ${defaultPath}`);
-              } catch (defaultPathError) {
-                // Use default credentials (for Google Cloud environments)
-                admin.initializeApp({
-                  projectId: projectId,
-                });
-                logResult('Firebase Admin Initialization', true, 'Initialized with default credentials (no service account found)');
-              }
-            }
+        if (serviceAccountPath) {
+          // Load from file path (absolute or relative to project root)
+          const path = require('path');
+          const resolvedPath = path.isAbsolute(serviceAccountPath)
+            ? serviceAccountPath
+            : path.join(process.cwd(), serviceAccountPath);
+          const serviceAccount = require(resolvedPath);
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: projectId,
+          });
+          logResult(
+            'Firebase Admin Initialization',
+            true,
+            `Initialized with service account from ${serviceAccountPath}`,
+          );
+        } else if (serviceAccountKey) {
+          // Load from JSON string
+          const serviceAccount = JSON.parse(serviceAccountKey);
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: projectId,
+          });
+          logResult(
+            'Firebase Admin Initialization',
+            true,
+            'Initialized with service account from environment variable',
+          );
+        } else {
+          // Try default path: config/secrets/firebase-service-account.json
+          try {
+            const path = require('path');
+            const defaultPath = path.join(
+              process.cwd(),
+              'config',
+              'secrets',
+              'firebase-service-account.json',
+            );
+            const serviceAccount = require(defaultPath);
+            admin.initializeApp({
+              credential: admin.credential.cert(serviceAccount),
+              projectId: projectId,
+            });
+            logResult(
+              'Firebase Admin Initialization',
+              true,
+              `Initialized with service account from default path: ${defaultPath}`,
+            );
+          } catch (defaultPathError) {
+            // Use default credentials (for Google Cloud environments)
+            admin.initializeApp({
+              projectId: projectId,
+            });
+            logResult(
+              'Firebase Admin Initialization',
+              true,
+              'Initialized with default credentials (no service account found)',
+            );
           }
+        }
+      }
     } else {
       logResult('Firebase Admin Initialization', true, 'Already initialized');
     }
@@ -143,7 +172,11 @@ async function testFirebaseConnection(): Promise<void> {
   try {
     const testCollection = db.collection('_test_connection');
     const snapshot = await testCollection.limit(1).get();
-    logResult('Read Operation', true, `Successfully read from Firestore (found ${snapshot.size} documents)`);
+    logResult(
+      'Read Operation',
+      true,
+      `Successfully read from Firestore (found ${snapshot.size} documents)`,
+    );
   } catch (error: any) {
     logResult('Read Operation', false, 'Failed to read from Firestore', error);
   }
@@ -189,8 +222,8 @@ async function testFirebaseConnection(): Promise<void> {
   console.log('📊 Test Summary');
   console.log('='.repeat(60));
 
-  const successful = results.filter(r => r.success).length;
-  const failed = results.filter(r => !r.success).length;
+  const successful = results.filter((r) => r.success).length;
+  const failed = results.filter((r) => !r.success).length;
   const total = results.length;
 
   console.log(`Total Tests: ${total}`);
@@ -224,4 +257,3 @@ testFirebaseConnection().catch((error) => {
   console.error('❌ Unexpected error:', error);
   process.exit(1);
 });
-

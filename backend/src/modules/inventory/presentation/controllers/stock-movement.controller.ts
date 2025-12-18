@@ -1,28 +1,26 @@
 /**
  * Stock Movement Controller
- * 
+ *
  * REST API controller for Stock Movement endpoints.
  */
 
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { SearchStockMovementsQueryDto, StockMovementEnrichedResponseDto } from '../dto/stock.dto';
 import { PaginatedResponseDto } from '../../../../shared/presentation/dto/pagination.dto';
-import { SearchStockMovementsUseCase, SearchStockMovementsInput } from '../../application/search-stock-movements.use-case';
+import {
+  SearchStockMovementsUseCase,
+  SearchStockMovementsInput,
+} from '../../application/search-stock-movements.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
 @Controller('api/v1/stock-movements')
 @UseGuards(FirebaseAuthGuard)
 export class StockMovementController {
-  constructor(
-    private readonly searchStockMovementsUseCase: SearchStockMovementsUseCase,
-  ) {}
+  constructor(private readonly searchStockMovementsUseCase: SearchStockMovementsUseCase) {}
 
   /**
    * Search stock movements
@@ -78,13 +76,14 @@ export class StockMovementController {
           id: item.performedBy,
           fullName: item.performedByName,
         },
-        location: item.locationName ? {
-          id: item.locationId,
-          name: item.locationName,
-        } : undefined,
+        location: item.locationName
+          ? {
+              id: item.locationId,
+              name: item.locationName,
+            }
+          : undefined,
       })),
       meta: result.data.meta,
     };
   }
 }
-

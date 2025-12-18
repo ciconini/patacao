@@ -1,10 +1,10 @@
 /**
  * Appointment Domain Entity
- * 
+ *
  * Represents an appointment for a pet service in the petshop management system.
  * This entity represents scheduled appointments between customers, pets, and staff.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - An Appointment must be linked to a Store, Customer, and Pet (invariants)
  * - Start time must be before end time
@@ -39,7 +39,7 @@ export class Appointment {
 
   /**
    * Creates a new Appointment entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param storeId - Store ID where appointment takes place (required)
    * @param customerId - Customer ID who owns the pet (required)
@@ -53,7 +53,7 @@ export class Appointment {
    * @param recurrenceId - Recurrence group identifier for recurring appointments
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if storeId is empty
    * @throws Error if customerId is empty
    * @throws Error if petId is empty
@@ -73,7 +73,7 @@ export class Appointment {
     notes?: string,
     recurrenceId?: string,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateStoreId(storeId);
@@ -151,7 +151,7 @@ export class Appointment {
 
   /**
    * Updates the appointment start and end times
-   * 
+   *
    * @param startAt - New start date and time
    * @param endAt - New end date and time
    * @throws Error if startAt is after endAt or duration is invalid
@@ -165,7 +165,7 @@ export class Appointment {
 
   /**
    * Updates only the start time, keeping the same duration
-   * 
+   *
    * @param startAt - New start date and time
    * @throws Error if resulting end time would be invalid
    */
@@ -173,7 +173,7 @@ export class Appointment {
     const duration = this.getDurationMinutes();
     const newEndAt = new Date(startAt);
     newEndAt.setMinutes(newEndAt.getMinutes() + duration);
-    
+
     this.validateDateTimeRange(startAt, newEndAt);
     this._startAt = new Date(startAt);
     this._endAt = newEndAt;
@@ -182,7 +182,7 @@ export class Appointment {
 
   /**
    * Updates only the end time
-   * 
+   *
    * @param endAt - New end date and time
    * @throws Error if endAt is before startAt
    */
@@ -194,7 +194,7 @@ export class Appointment {
 
   /**
    * Confirms the appointment
-   * 
+   *
    * @throws Error if current status doesn't allow confirmation
    */
   confirm(): void {
@@ -207,7 +207,7 @@ export class Appointment {
 
   /**
    * Marks the appointment as checked in
-   * 
+   *
    * @throws Error if current status doesn't allow check-in
    */
   checkIn(): void {
@@ -220,11 +220,14 @@ export class Appointment {
 
   /**
    * Marks the appointment as completed
-   * 
+   *
    * @throws Error if current status doesn't allow completion
    */
   complete(): void {
-    if (this._status !== AppointmentStatus.CHECKED_IN && this._status !== AppointmentStatus.CONFIRMED) {
+    if (
+      this._status !== AppointmentStatus.CHECKED_IN &&
+      this._status !== AppointmentStatus.CONFIRMED
+    ) {
       throw new Error(`Cannot complete appointment with status: ${this._status}`);
     }
     this._status = AppointmentStatus.COMPLETED;
@@ -233,7 +236,7 @@ export class Appointment {
 
   /**
    * Cancels the appointment
-   * 
+   *
    * @throws Error if appointment is already completed or cancelled
    */
   cancel(): void {
@@ -249,7 +252,7 @@ export class Appointment {
 
   /**
    * Marks the appointment as needing reschedule
-   * 
+   *
    * @throws Error if appointment is already completed or cancelled
    */
   markNeedsReschedule(): void {
@@ -265,7 +268,7 @@ export class Appointment {
 
   /**
    * Assigns a staff member to the appointment
-   * 
+   *
    * @param staffId - User ID of the staff member
    * @throws Error if staffId is empty
    */
@@ -287,7 +290,7 @@ export class Appointment {
 
   /**
    * Updates the appointment notes
-   * 
+   *
    * @param notes - New notes
    */
   updateNotes(notes: string | undefined): void {
@@ -297,7 +300,7 @@ export class Appointment {
 
   /**
    * Links the appointment to a recurrence group
-   * 
+   *
    * @param recurrenceId - Recurrence group identifier
    */
   linkToRecurrence(recurrenceId: string): void {
@@ -318,7 +321,7 @@ export class Appointment {
 
   /**
    * Calculates the duration of the appointment in minutes
-   * 
+   *
    * @returns Duration in minutes
    */
   getDurationMinutes(): number {
@@ -328,7 +331,7 @@ export class Appointment {
 
   /**
    * Calculates the duration of the appointment in hours
-   * 
+   *
    * @returns Duration in hours (decimal)
    */
   getDurationHours(): number {
@@ -337,7 +340,7 @@ export class Appointment {
 
   /**
    * Checks if the appointment is in the past
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to now)
    * @returns True if appointment end time is before reference date
    */
@@ -347,7 +350,7 @@ export class Appointment {
 
   /**
    * Checks if the appointment is in the future
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to now)
    * @returns True if appointment start time is after reference date
    */
@@ -357,7 +360,7 @@ export class Appointment {
 
   /**
    * Checks if the appointment is currently ongoing
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to now)
    * @returns True if reference date is between start and end time
    */
@@ -367,37 +370,40 @@ export class Appointment {
 
   /**
    * Checks if the appointment can be modified
-   * 
+   *
    * @returns True if appointment status allows modifications
    */
   canBeModified(): boolean {
-    return this._status !== AppointmentStatus.COMPLETED && 
-           this._status !== AppointmentStatus.CANCELLED;
+    return (
+      this._status !== AppointmentStatus.COMPLETED && this._status !== AppointmentStatus.CANCELLED
+    );
   }
 
   /**
    * Checks if the appointment can be cancelled
-   * 
+   *
    * @returns True if appointment can be cancelled
    */
   canBeCancelled(): boolean {
-    return this._status !== AppointmentStatus.COMPLETED && 
-           this._status !== AppointmentStatus.CANCELLED;
+    return (
+      this._status !== AppointmentStatus.COMPLETED && this._status !== AppointmentStatus.CANCELLED
+    );
   }
 
   /**
    * Checks if the appointment is active (not cancelled or completed)
-   * 
+   *
    * @returns True if appointment is active
    */
   isActive(): boolean {
-    return this._status !== AppointmentStatus.CANCELLED && 
-           this._status !== AppointmentStatus.COMPLETED;
+    return (
+      this._status !== AppointmentStatus.CANCELLED && this._status !== AppointmentStatus.COMPLETED
+    );
   }
 
   /**
    * Checks if the appointment is part of a recurrence group
-   * 
+   *
    * @returns True if appointment has a recurrence ID
    */
   isRecurring(): boolean {
@@ -406,7 +412,7 @@ export class Appointment {
 
   /**
    * Checks if the appointment has assigned staff
-   * 
+   *
    * @returns True if staff is assigned
    */
   hasAssignedStaff(): boolean {
@@ -415,12 +421,12 @@ export class Appointment {
 
   /**
    * Checks if two appointments overlap in time
-   * 
+   *
    * Appointments overlap if:
    * - They are at the same store
    * - If both have staff assigned, they must be the same staff member
    * - Their time ranges overlap
-   * 
+   *
    * @param other - Other appointment to check against
    * @returns True if appointments overlap (same store, compatible staff, overlapping times)
    */
@@ -481,4 +487,3 @@ export class Appointment {
     }
   }
 }
-

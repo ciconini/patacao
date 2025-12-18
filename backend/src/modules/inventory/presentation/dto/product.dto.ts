@@ -1,6 +1,6 @@
 /**
  * Product DTOs
- * 
+ *
  * Data Transfer Objects for Product API endpoints.
  */
 
@@ -152,4 +152,3 @@ export class ProductResponseDto {
   createdAt!: Date;
   updatedAt!: Date;
 }
-

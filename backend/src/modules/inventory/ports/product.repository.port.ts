@@ -1,9 +1,9 @@
 /**
  * ProductRepository Port (Interface)
- * 
+ *
  * Repository interface for Product domain entity persistence.
  * This is a port in the Hexagonal Architecture pattern.
- * 
+ *
  * Implementations should be provided in the Infrastructure layer.
  */
 
@@ -44,7 +44,7 @@ export interface PaginatedResult<T> {
 export interface ProductRepository {
   /**
    * Saves a Product entity (creates or updates)
-   * 
+   *
    * @param product - Product domain entity to save
    * @returns Saved Product entity
    */
@@ -52,7 +52,7 @@ export interface ProductRepository {
 
   /**
    * Updates an existing Product entity
-   * 
+   *
    * @param product - Product domain entity to update
    * @returns Updated Product entity
    */
@@ -60,7 +60,7 @@ export interface ProductRepository {
 
   /**
    * Finds a Product by ID
-   * 
+   *
    * @param id - Product ID
    * @returns Product entity or null if not found
    */
@@ -68,7 +68,7 @@ export interface ProductRepository {
 
   /**
    * Finds a Product by SKU
-   * 
+   *
    * @param sku - SKU to search for
    * @returns Product entity or null if not found
    */
@@ -76,7 +76,7 @@ export interface ProductRepository {
 
   /**
    * Searches for products with pagination
-   * 
+   *
    * @param criteria - Search criteria
    * @param pagination - Pagination parameters
    * @param sort - Sort parameters
@@ -85,12 +85,12 @@ export interface ProductRepository {
   search(
     criteria: ProductSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<Product>>;
 
   /**
    * Gets the on-hand stock quantity for a product at a location
-   * 
+   *
    * @param productId - Product ID
    * @param locationId - Location ID (optional, if not provided returns aggregate)
    * @returns On-hand stock quantity
@@ -99,7 +99,7 @@ export interface ProductRepository {
 
   /**
    * Updates the on-hand stock quantity for a product
-   * 
+   *
    * @param productId - Product ID
    * @param delta - Change in quantity (positive for increase, negative for decrease)
    */
@@ -107,7 +107,7 @@ export interface ProductRepository {
 
   /**
    * Checks if there is sufficient stock for a product
-   * 
+   *
    * @param productId - Product ID
    * @param quantity - Required quantity
    * @returns True if sufficient stock is available
@@ -116,7 +116,7 @@ export interface ProductRepository {
 
   /**
    * Decrements stock for a product
-   * 
+   *
    * @param productId - Product ID
    * @param quantity - Quantity to decrement
    */
@@ -125,10 +125,9 @@ export interface ProductRepository {
   /**
    * Calculates the current stock for a product
    * (sum of all stock movements)
-   * 
+   *
    * @param productId - Product ID
    * @returns Current stock quantity
    */
   calculateCurrentStock(productId: string): Promise<number>;
 }
-

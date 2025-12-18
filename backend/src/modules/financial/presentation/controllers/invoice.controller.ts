@@ -1,6 +1,6 @@
 /**
  * Invoice Controller
- * 
+ *
  * REST API controller for Invoice management endpoints.
  */
 
@@ -15,14 +15,42 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
-import { CreateInvoiceDraftDto, IssueInvoiceDto, MarkInvoicePaidDto, VoidInvoiceDto, InvoiceResponseDto } from '../dto/invoice.dto';
-import { CreateInvoiceDraftUseCase, CreateInvoiceDraftInput } from '../../application/create-invoice-draft.use-case';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiParam,
+  ApiExtraModels,
+} from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
+import {
+  CreateInvoiceDraftDto,
+  IssueInvoiceDto,
+  MarkInvoicePaidDto,
+  VoidInvoiceDto,
+  InvoiceResponseDto,
+  InvoiceLineDto,
+} from '../dto/invoice.dto';
+import {
+  CreateInvoiceDraftUseCase,
+  CreateInvoiceDraftInput,
+} from '../../application/create-invoice-draft.use-case';
 import { IssueInvoiceUseCase, IssueInvoiceInput } from '../../application/issue-invoice.use-case';
-import { MarkInvoicePaidUseCase, MarkInvoicePaidInput } from '../../application/mark-invoice-paid.use-case';
+import {
+  MarkInvoicePaidUseCase,
+  MarkInvoicePaidInput,
+} from '../../application/mark-invoice-paid.use-case';
 import { VoidInvoiceUseCase, VoidInvoiceInput } from '../../application/void-invoice.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Financial')
+@ApiBearerAuth('JWT-auth')
+@ApiExtraModels(InvoiceLineDto)
 @Controller('api/v1/invoices')
 @UseGuards(FirebaseAuthGuard)
 export class InvoiceController {
@@ -39,6 +67,20 @@ export class InvoiceController {
    */
   @Post('draft')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create invoice draft',
+    description: 'Creates a new invoice in draft status',
+  })
+  @ApiBody({ type: CreateInvoiceDraftDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Invoice draft created successfully',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Company, store, or customer not found' })
   async createDraft(
     @Body() createDto: CreateInvoiceDraftDto,
     @Request() req: AuthenticatedRequest,
@@ -70,6 +112,21 @@ export class InvoiceController {
    * POST /api/v1/invoices/:id/issue
    */
   @Post(':id/issue')
+  @ApiOperation({
+    summary: 'Issue invoice',
+    description: 'Issues a draft invoice, generating invoice number',
+  })
+  @ApiParam({ name: 'id', description: 'Invoice UUID', type: String })
+  @ApiBody({ type: IssueInvoiceDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice issued successfully',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invoice cannot be issued' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
   async issue(
     @Param('id') id: string,
     @Body() issueDto: IssueInvoiceDto,
@@ -99,6 +156,18 @@ export class InvoiceController {
    * POST /api/v1/invoices/:id/mark-paid
    */
   @Post(':id/mark-paid')
+  @ApiOperation({ summary: 'Mark invoice as paid', description: 'Marks an issued invoice as paid' })
+  @ApiParam({ name: 'id', description: 'Invoice UUID', type: String })
+  @ApiBody({ type: MarkInvoicePaidDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice marked as paid successfully',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invoice cannot be marked as paid' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
   async markPaid(
     @Param('id') id: string,
     @Body() markPaidDto: MarkInvoicePaidDto,
@@ -139,6 +208,18 @@ export class InvoiceController {
    * POST /api/v1/invoices/:id/void
    */
   @Post(':id/void')
+  @ApiOperation({ summary: 'Void invoice', description: 'Voids an issued invoice with a reason' })
+  @ApiParam({ name: 'id', description: 'Invoice UUID', type: String })
+  @ApiBody({ type: VoidInvoiceDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice voided successfully',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invoice cannot be voided' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
   async void(
     @Param('id') id: string,
     @Body() voidDto: VoidInvoiceDto,
@@ -174,6 +255,16 @@ export class InvoiceController {
    * GET /api/v1/invoices/:id
    */
   @Get(':id')
+  @ApiOperation({ summary: 'Get invoice by ID', description: 'Retrieves an invoice by its ID' })
+  @ApiParam({ name: 'id', description: 'Invoice UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice retrieved successfully',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
   async findOne(@Param('id') id: string): Promise<InvoiceResponseDto> {
     // TODO: Implement GetInvoiceUseCase
     throw new Error('Not implemented yet');
@@ -204,4 +295,3 @@ export class InvoiceController {
     };
   }
 }
-

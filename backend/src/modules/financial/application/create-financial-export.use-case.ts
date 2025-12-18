@@ -1,9 +1,9 @@
 /**
  * Create Financial Export Use Case (UC-FIN-008)
- * 
+ *
  * Application use case for creating a financial export containing invoices, transactions, and credit notes.
  * This use case orchestrates domain entities to generate financial exports for accounting purposes.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Accountant or Owner role)
  * - Validate export period and format
@@ -13,7 +13,7 @@
  * - Create FinancialExport domain entity
  * - Persist export via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -45,16 +45,12 @@ export interface InvoiceRepository {
     companyId: string,
     start: Date,
     end: Date,
-    includeVoided: boolean
+    includeVoided: boolean,
   ): Promise<Invoice[]>;
 }
 
 export interface TransactionRepository {
-  findByCompanyAndPeriod(
-    companyId: string,
-    start: Date,
-    end: Date
-  ): Promise<Transaction[]>;
+  findByCompanyAndPeriod(companyId: string, start: Date, end: Date): Promise<Transaction[]>;
 }
 
 export interface CreditNoteRepository {
@@ -139,7 +135,7 @@ export interface CreateFinancialExportResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -193,16 +189,16 @@ export class CreateFinancialExportUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create financial export use case
-   * 
+   *
    * @param input - Input data for creating export
    * @returns Result containing created export or error
    */
@@ -215,7 +211,10 @@ export class CreateFinancialExportUseCase {
       this.validateRequiredFields(input);
 
       // 3. Validate and normalize dates
-      const { periodStart, periodEnd } = this.validateAndNormalizePeriod(input.periodStart, input.periodEnd);
+      const { periodStart, periodEnd } = this.validateAndNormalizePeriod(
+        input.periodStart,
+        input.periodEnd,
+      );
 
       // 4. Validate format
       const format = this.validateFormat(input.format);
@@ -228,21 +227,20 @@ export class CreateFinancialExportUseCase {
         input.companyId,
         periodStart,
         periodEnd,
-        input.includeVoided ?? false
+        input.includeVoided ?? false,
       );
 
       // 7. Query transactions for period
       const transactions = await this.transactionRepository.findByCompanyAndPeriod(
         input.companyId,
         periodStart,
-        periodEnd
+        periodEnd,
       );
 
       // 8. Query credit notes for invoices in period
-      const invoiceIds = invoices.map(inv => inv.id);
-      const creditNotes = invoiceIds.length > 0
-        ? await this.creditNoteRepository.findByInvoiceIds(invoiceIds)
-        : [];
+      const invoiceIds = invoices.map((inv) => inv.id);
+      const creditNotes =
+        invoiceIds.length > 0 ? await this.creditNoteRepository.findByInvoiceIds(invoiceIds) : [];
 
       // 9. Check if any records found
       const recordCount = invoices.length + transactions.length + creditNotes.length;
@@ -260,9 +258,10 @@ export class CreateFinancialExportUseCase {
         companyId: input.companyId,
       };
 
-      const fileContent = format === ExportFormat.CSV
-        ? await this.exportFileGenerator.generateCSV(exportData)
-        : await this.exportFileGenerator.generateJSON(exportData);
+      const fileContent =
+        format === ExportFormat.CSV
+          ? await this.exportFileGenerator.generateCSV(exportData)
+          : await this.exportFileGenerator.generateJSON(exportData);
 
       // 11. Store export file
       const fileName = this.generateFileName(input.companyId, periodStart, periodEnd, format);
@@ -277,7 +276,7 @@ export class CreateFinancialExportUseCase {
         sftpReference = await this.fileStorageService.uploadToSFTP(
           fileContent,
           fileName,
-          {} as SFTPConfig // SFTP config would come from configuration
+          {} as SFTPConfig, // SFTP config would come from configuration
         );
       } else {
         // Save locally
@@ -293,7 +292,7 @@ export class CreateFinancialExportUseCase {
         format,
         filePath,
         sftpReference,
-        input.performedBy
+        input.performedBy,
       );
 
       // 13. Persist export via repository
@@ -317,12 +316,12 @@ export class CreateFinancialExportUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -361,7 +360,10 @@ export class CreateFinancialExportUseCase {
   /**
    * Validates and normalizes period dates
    */
-  private validateAndNormalizePeriod(periodStart: Date, periodEnd: Date): { periodStart: Date; periodEnd: Date } {
+  private validateAndNormalizePeriod(
+    periodStart: Date,
+    periodEnd: Date,
+  ): { periodStart: Date; periodEnd: Date } {
     const start = new Date(periodStart);
     const end = new Date(periodEnd);
 
@@ -383,7 +385,7 @@ export class CreateFinancialExportUseCase {
 
     if (diffDays > CreateFinancialExportUseCase.MAX_PERIOD_DAYS) {
       throw new ValidationError(
-        `Export period cannot exceed ${CreateFinancialExportUseCase.MAX_PERIOD_DAYS} days`
+        `Export period cannot exceed ${CreateFinancialExportUseCase.MAX_PERIOD_DAYS} days`,
       );
     }
 
@@ -400,7 +402,7 @@ export class CreateFinancialExportUseCase {
     if (format === 'json' || format === 'JSON') {
       return ExportFormat.JSON;
     }
-    throw new ValidationError('Format must be \'csv\' or \'json\'');
+    throw new ValidationError("Format must be 'csv' or 'json'");
   }
 
   /**
@@ -408,7 +410,7 @@ export class CreateFinancialExportUseCase {
    */
   private async validateAndLoadCompany(companyId: string): Promise<Company> {
     const company = await this.companyRepository.findById(companyId);
-    
+
     if (!company) {
       throw new NotFoundError('Company not found');
     }
@@ -419,7 +421,12 @@ export class CreateFinancialExportUseCase {
   /**
    * Generates export file name
    */
-  private generateFileName(companyId: string, start: Date, end: Date, format: ExportFormat): string {
+  private generateFileName(
+    companyId: string,
+    start: Date,
+    end: Date,
+    format: ExportFormat,
+  ): string {
     const startStr = start.toISOString().split('T')[0]; // YYYY-MM-DD
     const endStr = end.toISOString().split('T')[0]; // YYYY-MM-DD
     const extension = format === ExportFormat.CSV ? 'csv' : 'json';
@@ -436,7 +443,7 @@ export class CreateFinancialExportUseCase {
     format: ExportFormat,
     filePath: string | undefined,
     sftpReference: string | undefined,
-    createdBy: string
+    createdBy: string,
   ): FinancialExport {
     const exportId = this.generateId();
     const now = new Date();
@@ -450,7 +457,7 @@ export class CreateFinancialExportUseCase {
       periodEnd,
       filePath,
       sftpReference,
-      now
+      now,
     );
 
     return exportEntity;
@@ -462,7 +469,7 @@ export class CreateFinancialExportUseCase {
   private async createAuditLog(
     exportEntity: FinancialExport,
     recordCount: number,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -481,7 +488,7 @@ export class CreateFinancialExportUseCase {
             recordCount,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -498,7 +505,7 @@ export class CreateFinancialExportUseCase {
   private mapToOutput(
     exportEntity: FinancialExport,
     recordCount: number,
-    downloadUrl?: string
+    downloadUrl?: string,
   ): CreateFinancialExportOutput {
     return {
       id: exportEntity.id,
@@ -539,4 +546,3 @@ export class CreateFinancialExportUseCase {
     };
   }
 }
-

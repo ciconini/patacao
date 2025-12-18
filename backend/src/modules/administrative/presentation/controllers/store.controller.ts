@@ -1,6 +1,6 @@
 /**
  * Store Controller
- * 
+ *
  * REST API controller for Store management endpoints.
  */
 
@@ -17,12 +17,25 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { CreateStoreDto, UpdateStoreDto, StoreResponseDto } from '../dto/store.dto';
 import { CreateStoreUseCase, CreateStoreInput } from '../../application/create-store.use-case';
 import { UpdateStoreUseCase, UpdateStoreInput } from '../../application/update-store.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Administrative')
+@ApiBearerAuth('JWT-auth')
 @Controller('api/v1/stores')
 @UseGuards(FirebaseAuthGuard)
 export class StoreController {
@@ -37,6 +50,13 @@ export class StoreController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create store', description: 'Creates a new store for a company' })
+  @ApiBody({ type: CreateStoreDto })
+  @ApiResponse({ status: 201, description: 'Store created successfully', type: StoreResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Company not found' })
   async create(
     @Body() createDto: CreateStoreDto,
     @Request() req: AuthenticatedRequest,
@@ -71,6 +91,14 @@ export class StoreController {
    * PUT /api/v1/stores/:id
    */
   @Put(':id')
+  @ApiOperation({ summary: 'Update store', description: 'Updates an existing store' })
+  @ApiParam({ name: 'id', description: 'Store UUID', type: String })
+  @ApiBody({ type: UpdateStoreDto })
+  @ApiResponse({ status: 200, description: 'Store updated successfully', type: StoreResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Store not found' })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateStoreDto,
@@ -106,6 +134,12 @@ export class StoreController {
    * GET /api/v1/stores/:id
    */
   @Get(':id')
+  @ApiOperation({ summary: 'Get store by ID', description: 'Retrieves a store by its ID' })
+  @ApiParam({ name: 'id', description: 'Store UUID', type: String })
+  @ApiResponse({ status: 200, description: 'Store retrieved successfully', type: StoreResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Store not found' })
   async findOne(@Param('id') id: string): Promise<StoreResponseDto> {
     // TODO: Implement GetStoreUseCase
     throw new Error('Not implemented yet');
@@ -117,6 +151,12 @@ export class StoreController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete store', description: 'Deletes a store (soft delete)' })
+  @ApiParam({ name: 'id', description: 'Store UUID', type: String })
+  @ApiResponse({ status: 204, description: 'Store deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Store not found' })
   async delete(@Param('id') id: string): Promise<void> {
     // TODO: Implement DeleteStoreUseCase
     throw new Error('Not implemented yet');
@@ -156,4 +196,3 @@ export class StoreController {
     };
   }
 }
-

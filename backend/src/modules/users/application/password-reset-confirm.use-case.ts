@@ -1,9 +1,9 @@
 /**
  * Password Reset Confirm Use Case (UC-AUTH-004)
- * 
+ *
  * Application use case for confirming password reset with token and new password.
  * This use case orchestrates domain entities and domain services to complete password reset flow.
- * 
+ *
  * Responsibilities:
  * - Validate reset token
  * - Validate new password complexity
@@ -11,7 +11,7 @@
  * - Mark token as used
  * - Revoke all user sessions
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -89,7 +89,7 @@ export interface PasswordResetConfirmResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -140,16 +140,16 @@ export class PasswordResetConfirmUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the password reset confirm use case
-   * 
+   *
    * @param input - Password reset confirm input
    * @returns Result containing success message or error
    */
@@ -195,7 +195,10 @@ export class PasswordResetConfirmUseCase {
 
       // 9. Optional: Check if new password is different from current password
       if (user.passwordHash) {
-        const isSamePassword = await this.passwordHasher.verify(input.newPassword, user.passwordHash);
+        const isSamePassword = await this.passwordHasher.verify(
+          input.newPassword,
+          user.passwordHash,
+        );
         if (isSamePassword) {
           throw new ValidationError('New password must be different from current password');
         }
@@ -231,7 +234,7 @@ export class PasswordResetConfirmUseCase {
 
   /**
    * Validates password complexity requirements
-   * 
+   *
    * @param password - Password string
    * @throws ValidationError if password doesn't meet requirements
    */
@@ -260,18 +263,23 @@ export class PasswordResetConfirmUseCase {
     }
 
     // Special character (optional)
-    if (requirements.requireSpecialChar && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (
+      requirements.requireSpecialChar &&
+      !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+    ) {
       errors.push('Password must contain at least one special character');
     }
 
     if (errors.length > 0) {
-      throw new ValidationError(`Password does not meet complexity requirements: ${errors.join(', ')}`);
+      throw new ValidationError(
+        `Password does not meet complexity requirements: ${errors.join(', ')}`,
+      );
     }
   }
 
   /**
    * Creates audit log entry for password reset completion
-   * 
+   *
    * @param userId - User ID
    * @param ipAddress - Client IP address
    */
@@ -289,7 +297,7 @@ export class PasswordResetConfirmUseCase {
             ipAddress,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (auditResult.auditLog) {
@@ -302,7 +310,7 @@ export class PasswordResetConfirmUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -326,4 +334,3 @@ export class PasswordResetConfirmUseCase {
     };
   }
 }
-

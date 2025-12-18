@@ -1,6 +1,6 @@
 /**
  * StockBatchRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for StockBatchRepository port.
  */
 
@@ -26,7 +26,7 @@ export class FirestoreStockBatchRepository implements StockBatchRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   async createOrIncrement(params: {
@@ -38,7 +38,7 @@ export class FirestoreStockBatchRepository implements StockBatchRepository {
   }): Promise<StockBatch> {
     // Try to find existing batch
     let existingBatch: StockBatch | null = null;
-    
+
     if (params.batchNumber) {
       existingBatch = await this.findByProductAndBatch(params.productId, params.batchNumber);
     }
@@ -61,13 +61,13 @@ export class FirestoreStockBatchRepository implements StockBatchRepository {
         params.receivedAt,
         params.quantity,
         params.batchNumber,
-        params.expiryDate
+        params.expiryDate,
       );
-      
+
       const docRef = this.firestore.collection(this.collectionName).doc(id);
       const document = this.toDocument(batch);
       await docRef.set(document);
-      
+
       return batch;
     }
   }
@@ -94,15 +94,13 @@ export class FirestoreStockBatchRepository implements StockBatchRepository {
       .where('productId', '==', productId)
       .get();
 
-    return snapshot.docs.map(doc => 
-      this.toEntity(doc.id, doc.data() as StockBatchDocument)
-    );
+    return snapshot.docs.map((doc) => this.toEntity(doc.id, doc.data() as StockBatchDocument));
   }
 
   private generateId(): string {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
   }
@@ -129,7 +127,7 @@ export class FirestoreStockBatchRepository implements StockBatchRepository {
       doc.batchNumber,
       doc.expiryDate ? this.toDate(doc.expiryDate) : undefined,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
@@ -141,4 +139,3 @@ export class FirestoreStockBatchRepository implements StockBatchRepository {
     return timestamp.toDate();
   }
 }
-

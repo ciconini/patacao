@@ -1,9 +1,9 @@
 /**
  * Import Customers Use Case (UC-ADMIN-011)
- * 
+ *
  * Application use case for importing customer records from CSV or JSON file.
  * This use case orchestrates domain entities and domain services to import customers in bulk.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role required)
  * - Validate file format and size
@@ -13,7 +13,7 @@
  * - Handle duplicates based on skip_duplicates flag
  * - Generate import summary with errors
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -111,7 +111,7 @@ export interface ImportCustomersResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -160,16 +160,16 @@ export class ImportCustomersUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the import customers use case
-   * 
+   *
    * @param input - Import input data
    * @returns Result containing import summary or error
    */
@@ -205,19 +205,19 @@ export class ImportCustomersUseCase {
 
   /**
    * Validates user authorization (must have Manager or Owner role)
-   * 
+   *
    * @param userId - User ID to validate
    * @throws UnauthorizedError if user not found
    * @throws ForbiddenError if user does not have required role
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -234,38 +234,43 @@ export class ImportCustomersUseCase {
 
   /**
    * Validates file format
-   * 
+   *
    * @param format - File format
    * @throws ValidationError if invalid format
    */
   private validateFileFormat(format: string): void {
     if (format !== 'csv' && format !== 'json') {
-      throw new ValidationError('File format must be \'csv\' or \'json\'');
+      throw new ValidationError("File format must be 'csv' or 'json'");
     }
   }
 
   /**
    * Validates file size
-   * 
+   *
    * @param content - File content
    * @throws ValidationError if file too large
    */
   private validateFileSize(content: string): void {
     const sizeInBytes = new Blob([content]).size;
     if (sizeInBytes > ImportCustomersUseCase.MAX_FILE_SIZE) {
-      throw new ValidationError(`File size exceeds maximum limit of ${ImportCustomersUseCase.MAX_FILE_SIZE / (1024 * 1024)}MB`);
+      throw new ValidationError(
+        `File size exceeds maximum limit of ${ImportCustomersUseCase.MAX_FILE_SIZE / (1024 * 1024)}MB`,
+      );
     }
   }
 
   /**
    * Parses file content based on format
-   * 
+   *
    * @param content - File content
    * @param format - File format
    * @returns Parsed records
    * @throws ParseError if parsing fails
    */
-  private async parseFile(content: string, format: 'csv' | 'json'): Promise<Record<string, unknown>[]> {
+  private async parseFile(
+    content: string,
+    format: 'csv' | 'json',
+  ): Promise<Record<string, unknown>[]> {
     try {
       if (format === 'csv') {
         return await this.fileParser.parseCSV(content);
@@ -279,14 +284,14 @@ export class ImportCustomersUseCase {
 
   /**
    * Processes import records
-   * 
+   *
    * @param records - Parsed records
    * @param input - Import input
    * @returns Import result
    */
   private async processRecords(
     records: Record<string, unknown>[],
-    input: ImportCustomersInput
+    input: ImportCustomersInput,
   ): Promise<ImportCustomersOutput> {
     const importId = this.generateId();
     const skipDuplicates = input.skipDuplicates ?? true;
@@ -311,7 +316,9 @@ export class ImportCustomersUseCase {
 
         // Check for duplicate email if skip_duplicates is true
         if (skipDuplicates && normalizedRecord.email) {
-          const existingCustomer = await this.customerRepository.findByEmail(normalizedRecord.email);
+          const existingCustomer = await this.customerRepository.findByEmail(
+            normalizedRecord.email,
+          );
           if (existingCustomer) {
             skipped++;
             continue;
@@ -370,7 +377,7 @@ export class ImportCustomersUseCase {
 
   /**
    * Normalizes record data from parsed format
-   * 
+   *
    * @param record - Parsed record
    * @returns Normalized import record
    */
@@ -380,8 +387,13 @@ export class ImportCustomersUseCase {
       email: this.getStringValue(record, 'email'),
       phone: this.getStringValue(record, 'phone'),
       address: this.getAddressValue(record),
-      consentMarketing: this.getBooleanValue(record, 'consent_marketing') || this.getBooleanValue(record, 'consentMarketing'),
-      consentReminders: this.getBooleanValue(record, 'consent_reminders') ?? this.getBooleanValue(record, 'consentReminders') ?? true,
+      consentMarketing:
+        this.getBooleanValue(record, 'consent_marketing') ||
+        this.getBooleanValue(record, 'consentMarketing'),
+      consentReminders:
+        this.getBooleanValue(record, 'consent_reminders') ??
+        this.getBooleanValue(record, 'consentReminders') ??
+        true,
     };
   }
 
@@ -423,23 +435,32 @@ export class ImportCustomersUseCase {
   /**
    * Gets address value from record
    */
-  private getAddressValue(record: Record<string, unknown>): ImportRecord['data']['address'] | undefined {
+  private getAddressValue(
+    record: Record<string, unknown>,
+  ): ImportRecord['data']['address'] | undefined {
     // Try structured address object first
     if (record.address && typeof record.address === 'object') {
       const addr = record.address as Record<string, unknown>;
       return {
         street: this.getStringValue(addr, 'street'),
         city: this.getStringValue(addr, 'city'),
-        postalCode: this.getStringValue(addr, 'postal_code') || this.getStringValue(addr, 'postalCode'),
+        postalCode:
+          this.getStringValue(addr, 'postal_code') || this.getStringValue(addr, 'postalCode'),
         country: this.getStringValue(addr, 'country'),
       };
     }
 
     // Try flat address fields (CSV format)
-    const street = this.getStringValue(record, 'address_street') || this.getStringValue(record, 'addressStreet');
-    const city = this.getStringValue(record, 'address_city') || this.getStringValue(record, 'addressCity');
-    const postalCode = this.getStringValue(record, 'address_postal_code') || this.getStringValue(record, 'addressPostalCode');
-    const country = this.getStringValue(record, 'address_country') || this.getStringValue(record, 'addressCountry');
+    const street =
+      this.getStringValue(record, 'address_street') || this.getStringValue(record, 'addressStreet');
+    const city =
+      this.getStringValue(record, 'address_city') || this.getStringValue(record, 'addressCity');
+    const postalCode =
+      this.getStringValue(record, 'address_postal_code') ||
+      this.getStringValue(record, 'addressPostalCode');
+    const country =
+      this.getStringValue(record, 'address_country') ||
+      this.getStringValue(record, 'addressCountry');
 
     if (street || city || postalCode) {
       return { street, city, postalCode, country };
@@ -450,7 +471,7 @@ export class ImportCustomersUseCase {
 
   /**
    * Validates import record
-   * 
+   *
    * @param record - Normalized record
    * @param rowNumber - Row number for error reporting
    * @throws ValidationError if validation fails
@@ -478,14 +499,16 @@ export class ImportCustomersUseCase {
 
     if (record.address) {
       if (!record.address.street || !record.address.city || !record.address.postalCode) {
-        throw new ValidationError(`Row ${rowNumber}: Address must contain street, city, and postal_code`);
+        throw new ValidationError(
+          `Row ${rowNumber}: Address must contain street, city, and postal_code`,
+        );
       }
       try {
         new Address(
           record.address.street,
           record.address.city,
           record.address.postalCode,
-          record.address.country
+          record.address.country,
         );
       } catch (error: any) {
         throw new ValidationError(`Row ${rowNumber}: Invalid address: ${error.message}`);
@@ -495,14 +518,14 @@ export class ImportCustomersUseCase {
 
   /**
    * Creates customer from import record
-   * 
+   *
    * @param record - Normalized record
    * @param performedBy - User ID performing the import
    * @returns Created customer or null if failed
    */
   private async createCustomerFromRecord(
     record: ImportRecord['data'],
-    performedBy: string
+    performedBy: string,
   ): Promise<Customer | null> {
     try {
       const customerId = this.generateId();
@@ -520,12 +543,17 @@ export class ImportCustomersUseCase {
       }
 
       let address: Address | undefined;
-      if (record.address && record.address.street && record.address.city && record.address.postalCode) {
+      if (
+        record.address &&
+        record.address.street &&
+        record.address.city &&
+        record.address.postalCode
+      ) {
         address = new Address(
           record.address.street,
           record.address.city,
           record.address.postalCode,
-          record.address.country
+          record.address.country,
         );
       }
 
@@ -535,16 +563,18 @@ export class ImportCustomersUseCase {
         record.fullName!,
         email?.value,
         phone?.value,
-        address ? {
-          street: address.street,
-          city: address.city,
-          postalCode: address.postalCode,
-          country: address.country,
-        } : undefined,
+        address
+          ? {
+              street: address.street,
+              city: address.city,
+              postalCode: address.postalCode,
+              country: address.country,
+            }
+          : undefined,
         record.consentMarketing ?? false,
         record.consentReminders ?? true,
         now,
-        now
+        now,
       );
 
       // Persist customer
@@ -556,14 +586,11 @@ export class ImportCustomersUseCase {
 
   /**
    * Creates audit log entry for import
-   * 
+   *
    * @param result - Import result
    * @param performedBy - User ID who performed the import
    */
-  private async createAuditLog(
-    result: ImportCustomersOutput,
-    performedBy: string
-  ): Promise<void> {
+  private async createAuditLog(result: ImportCustomersOutput, performedBy: string): Promise<void> {
     try {
       const auditResult = this.auditLogDomainService.createAuditEntry(
         this.generateId(),
@@ -581,7 +608,7 @@ export class ImportCustomersUseCase {
             skipped: result.skipped,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (auditResult.auditLog) {
@@ -594,7 +621,7 @@ export class ImportCustomersUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -618,4 +645,3 @@ export class ImportCustomersUseCase {
     };
   }
 }
-

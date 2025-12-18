@@ -1,6 +1,6 @@
 /**
  * Administrative Application Module
- * 
+ *
  * NestJS module that registers all use cases for the Administrative module.
  * This module provides use cases as injectable services.
  */
@@ -20,10 +20,7 @@ import { CreatePetUseCase } from './create-pet.use-case';
 import { ImportCustomersUseCase } from './import-customers.use-case';
 
 @Module({
-  imports: [
-    AdministrativeInfrastructureModule,
-    SharedModule,
-  ],
+  imports: [AdministrativeInfrastructureModule, SharedModule],
   providers: [
     CreateCompanyProfileUseCase,
     UpdateCompanyProfileUseCase,
@@ -50,4 +47,3 @@ import { ImportCustomersUseCase } from './import-customers.use-case';
   ],
 })
 export class AdministrativeApplicationModule {}
-

@@ -1,6 +1,6 @@
 /**
  * Search Customers Query DTO
- * 
+ *
  * Query parameters for searching customers.
  */
 
@@ -43,4 +43,3 @@ export class SearchCustomersQueryDto extends PaginationQueryDto {
   @IsBoolean()
   archived?: boolean;
 }
-

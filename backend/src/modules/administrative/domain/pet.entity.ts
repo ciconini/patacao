@@ -1,9 +1,9 @@
 /**
  * Pet Domain Entity
- * 
+ *
  * Represents a pet (animal) owned by a customer in the petshop management system.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - A Pet must be linked to a Customer (invariant)
  * - Microchip ID format must be validated when provided
@@ -34,7 +34,7 @@ export class Pet {
 
   /**
    * Creates a new Pet entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param customerId - Customer ID that owns this pet (required)
    * @param name - Pet's name (required)
@@ -46,7 +46,7 @@ export class Pet {
    * @param vaccinationRecords - List of vaccination records
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if customerId is empty or invalid
    * @throws Error if name is empty
    * @throws Error if microchipId format is invalid (when provided)
@@ -62,12 +62,12 @@ export class Pet {
     medicalNotes?: string,
     vaccinationRecords: VaccinationRecord[] = [],
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateCustomerId(customerId);
     this.validateName(name);
-    
+
     if (microchipId) {
       this.validateMicrochipId(microchipId);
     }
@@ -80,7 +80,9 @@ export class Pet {
     this._dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : undefined;
     this._microchipId = microchipId;
     this._medicalNotes = medicalNotes;
-    this._vaccinationRecords = vaccinationRecords.map(record => this.copyVaccinationRecord(record));
+    this._vaccinationRecords = vaccinationRecords.map((record) =>
+      this.copyVaccinationRecord(record),
+    );
     this._createdAt = createdAt ? new Date(createdAt) : new Date();
     this._updatedAt = updatedAt ? new Date(updatedAt) : new Date();
   }
@@ -119,7 +121,7 @@ export class Pet {
   }
 
   get vaccinationRecords(): ReadonlyArray<VaccinationRecord> {
-    return this._vaccinationRecords.map(record => this.copyVaccinationRecord(record));
+    return this._vaccinationRecords.map((record) => this.copyVaccinationRecord(record));
   }
 
   get createdAt(): Date {
@@ -164,13 +166,13 @@ export class Pet {
     const birthDate = new Date(this._dateOfBirth);
     const years = today.getFullYear() - birthDate.getFullYear();
     const months = today.getMonth() - birthDate.getMonth();
-    
+
     return years * 12 + months;
   }
 
   /**
    * Updates the pet's name
-   * 
+   *
    * @param newName - New name for the pet
    * @throws Error if name is empty
    */
@@ -182,7 +184,7 @@ export class Pet {
 
   /**
    * Updates the pet's species
-   * 
+   *
    * @param species - Species name (e.g., "dog", "cat")
    */
   updateSpecies(species: string | undefined): void {
@@ -192,7 +194,7 @@ export class Pet {
 
   /**
    * Updates the pet's breed
-   * 
+   *
    * @param breed - Breed name
    */
   updateBreed(breed: string | undefined): void {
@@ -202,7 +204,7 @@ export class Pet {
 
   /**
    * Updates the pet's date of birth
-   * 
+   *
    * @param dateOfBirth - Date of birth
    * @throws Error if date is in the future
    */
@@ -210,7 +212,7 @@ export class Pet {
     if (dateOfBirth) {
       const birthDate = new Date(dateOfBirth);
       const today = new Date();
-      
+
       if (birthDate > today) {
         throw new Error('Date of birth cannot be in the future');
       }
@@ -222,7 +224,7 @@ export class Pet {
 
   /**
    * Updates or sets the microchip ID
-   * 
+   *
    * @param microchipId - Microchip identification number
    * @throws Error if microchip format is invalid
    */
@@ -230,14 +232,14 @@ export class Pet {
     if (microchipId) {
       this.validateMicrochipId(microchipId);
     }
-    
+
     this._microchipId = microchipId;
     this._updatedAt = new Date();
   }
 
   /**
    * Updates medical notes
-   * 
+   *
    * @param notes - Medical history and notes
    */
   updateMedicalNotes(notes: string | undefined): void {
@@ -247,7 +249,7 @@ export class Pet {
 
   /**
    * Adds a vaccination record
-   * 
+   *
    * @param record - Vaccination record to add
    * @throws Error if record is invalid
    */
@@ -259,7 +261,7 @@ export class Pet {
 
   /**
    * Removes a vaccination record by index
-   * 
+   *
    * @param index - Index of the record to remove
    * @throws Error if index is out of bounds
    */
@@ -274,30 +276,30 @@ export class Pet {
 
   /**
    * Gets all vaccination records that are due or overdue
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to today)
    * @returns Array of vaccination records that need attention (copies with new Date instances)
    */
   getDueVaccinations(referenceDate: Date = new Date()): VaccinationRecord[] {
     return this._vaccinationRecords
-      .filter(record => {
+      .filter((record) => {
         if (!record.nextDueDate) {
           return false;
         }
         return new Date(record.nextDueDate) <= referenceDate;
       })
-      .map(record => this.copyVaccinationRecord(record));
+      .map((record) => this.copyVaccinationRecord(record));
   }
 
   /**
    * Gets the most recent vaccination record for a specific vaccine type
-   * 
+   *
    * @param vaccineType - Type of vaccine to search for
    * @returns Most recent vaccination record or undefined (copy with new Date instances)
    */
   getLatestVaccination(vaccineType: string): VaccinationRecord | undefined {
     const records = this._vaccinationRecords
-      .filter(record => record.vaccineType.toLowerCase() === vaccineType.toLowerCase())
+      .filter((record) => record.vaccineType.toLowerCase() === vaccineType.toLowerCase())
       .sort((a, b) => {
         const dateA = new Date(a.administeredDate).getTime();
         const dateB = new Date(b.administeredDate).getTime();
@@ -385,7 +387,7 @@ export class Pet {
   /**
    * Validates microchip ID format
    * Supports ISO 11784/11785 format (15 digits) and other common formats
-   * 
+   *
    * @param microchipId - Microchip ID to validate
    * @throws Error if format is invalid
    */
@@ -398,19 +400,21 @@ export class Pet {
 
     // ISO 11784/11785 format: 15 digits
     const isoFormat = /^\d{15}$/;
-    
+
     // Alternative formats: 9-10 digits (common in some regions)
     const alternativeFormat = /^\d{9,10}$/;
 
     // Alphanumeric format (some newer chips)
     const alphanumericFormat = /^[A-Z0-9]{9,15}$/i;
 
-    if (!isoFormat.test(trimmed) && 
-        !alternativeFormat.test(trimmed) && 
-        !alphanumericFormat.test(trimmed)) {
+    if (
+      !isoFormat.test(trimmed) &&
+      !alternativeFormat.test(trimmed) &&
+      !alphanumericFormat.test(trimmed)
+    ) {
       throw new Error(
         'Invalid microchip ID format. Expected ISO 11784/11785 (15 digits), ' +
-        '9-10 digits, or alphanumeric format (9-15 characters)'
+          '9-10 digits, or alphanumeric format (9-15 characters)',
       );
     }
   }
@@ -439,4 +443,3 @@ export class Pet {
     }
   }
 }
-

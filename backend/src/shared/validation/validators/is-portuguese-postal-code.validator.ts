@@ -1,9 +1,9 @@
 /**
  * Portuguese Postal Code Validator
- * 
+ *
  * Custom validator for Portuguese postal codes.
  * Validates format: XXXX-XXX (4 digits, dash, 3 digits)
- * 
+ *
  * Usage:
  * @IsPortuguesePostalCode()
  * postalCode: string;
@@ -42,7 +42,7 @@ export class IsPortuguesePostalCodeConstraint implements ValidatorConstraintInte
 
 /**
  * Validates that a string is a valid Portuguese postal code
- * 
+ *
  * @param validationOptions - Optional validation options
  * @returns Property decorator
  */
@@ -57,4 +57,3 @@ export function IsPortuguesePostalCode(validationOptions?: ValidationOptions) {
     });
   };
 }
-

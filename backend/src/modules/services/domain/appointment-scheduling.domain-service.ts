@@ -1,22 +1,22 @@
 /**
  * AppointmentSchedulingDomainService
- * 
+ *
  * Domain service responsible for validating appointment scheduling rules.
  * This service enforces business rules related to appointment scheduling without
  * depending on infrastructure, repositories, or time providers.
- * 
+ *
  * Responsibilities:
  * - Validate appointment time against Store opening hours
  * - Validate assigned staff working hours
  * - Prevent double booking of staff and pet
  * - Handle recurring appointment validation
- * 
+ *
  * Collaborating Entities:
  * - Appointment: The appointment being validated
  * - Store: Provides opening hours for validation
  * - User: Provides staff working hours when staff is assigned
  * - Pet: Used for pet double-booking validation
- * 
+ *
  * Business Rules Enforced:
  * - BR: Appointment must fall within Store opening hours
  * - BR: If staff is assigned, appointment must fall within staff working hours
@@ -24,13 +24,13 @@
  * - BR: Pet cannot be double-booked (same pet, overlapping times)
  * - BR: Staff working hours must be within Store opening hours
  * - BR: Recurring appointments must have valid recurrence_id and follow same rules
- * 
+ *
  * Invariants:
  * - Store must have opening hours defined
  * - If staff is assigned, staff must have working hours defined
  * - Staff must be assigned to the store
  * - Pet must belong to the customer
- * 
+ *
  * Edge Cases:
  * - Store closed on appointment day
  * - Staff not available on appointment day
@@ -54,13 +54,13 @@ export interface SchedulingValidationResult {
 export class AppointmentSchedulingDomainService {
   /**
    * Validates if an appointment can be scheduled with the given constraints.
-   * 
+   *
    * This method performs comprehensive validation including:
    * - Store opening hours validation
    * - Staff working hours validation (if staff assigned)
    * - Double-booking prevention for staff
    * - Double-booking prevention for pet
-   * 
+   *
    * @param appointment - The appointment to validate
    * @param store - The store where the appointment takes place
    * @param staff - The assigned staff member (optional)
@@ -73,7 +73,7 @@ export class AppointmentSchedulingDomainService {
     store: Store,
     pet: Pet,
     staff: User | undefined,
-    existingAppointments: Appointment[]
+    existingAppointments: Appointment[],
   ): SchedulingValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -103,10 +103,7 @@ export class AppointmentSchedulingDomainService {
     errors.push(...petValidation.errors);
 
     // Check for double-booking conflicts
-    const conflictValidation = this.validateNoDoubleBooking(
-      appointment,
-      existingAppointments
-    );
+    const conflictValidation = this.validateNoDoubleBooking(appointment, existingAppointments);
     errors.push(...conflictValidation.errors);
     warnings.push(...conflictValidation.warnings);
 
@@ -119,17 +116,14 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Validates if appointment time falls within store opening hours.
-   * 
+   *
    * Business Rule: Appointment must fall within Store opening hours.
-   * 
+   *
    * @param appointment - The appointment to validate
    * @param store - The store with opening hours
    * @returns Validation result
    */
-  validateStoreOpeningHours(
-    appointment: Appointment,
-    store: Store
-  ): SchedulingValidationResult {
+  validateStoreOpeningHours(appointment: Appointment, store: Store): SchedulingValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -161,7 +155,7 @@ export class AppointmentSchedulingDomainService {
     if (!store.isOpenAtTime(dayName as any, appointmentStartTime)) {
       errors.push(
         `Appointment start time ${appointmentStartTime} is outside store opening hours ` +
-        `(${dayHours.openTime} - ${dayHours.closeTime}) on ${dayName}`
+          `(${dayHours.openTime} - ${dayHours.closeTime}) on ${dayName}`,
       );
     }
 
@@ -169,21 +163,25 @@ export class AppointmentSchedulingDomainService {
     if (!store.isOpenAtTime(dayName as any, appointmentEndTime)) {
       errors.push(
         `Appointment end time ${appointmentEndTime} is outside store opening hours ` +
-        `(${dayHours.openTime} - ${dayHours.closeTime}) on ${dayName}`
+          `(${dayHours.openTime} - ${dayHours.closeTime}) on ${dayName}`,
       );
     }
 
     // Check if entire appointment range is within opening hours
-    if (!store.isTimeRangeWithinOpeningHours(dayName as any, appointmentStartTime, appointmentEndTime)) {
+    if (
+      !store.isTimeRangeWithinOpeningHours(dayName as any, appointmentStartTime, appointmentEndTime)
+    ) {
       errors.push(
         `Appointment time range (${appointmentStartTime} - ${appointmentEndTime}) is not fully within ` +
-        `store opening hours (${dayHours.openTime} - ${dayHours.closeTime}) on ${dayName}`
+          `store opening hours (${dayHours.openTime} - ${dayHours.closeTime}) on ${dayName}`,
       );
     }
 
     // Handle appointments spanning multiple days
     if (this.isSameDay(startAt, endAt) === false) {
-      warnings.push('Appointment spans multiple days. Only the start day opening hours are validated.');
+      warnings.push(
+        'Appointment spans multiple days. Only the start day opening hours are validated.',
+      );
     }
 
     return {
@@ -195,10 +193,10 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Validates if appointment time falls within staff working hours.
-   * 
+   *
    * Business Rule: If staff is assigned, appointment must fall within staff working hours.
    * Business Rule: Staff working hours must be within Store opening hours.
-   * 
+   *
    * @param appointment - The appointment to validate
    * @param store - The store (for cross-validation)
    * @param staff - The staff member with working hours
@@ -207,7 +205,7 @@ export class AppointmentSchedulingDomainService {
   validateStaffWorkingHours(
     appointment: Appointment,
     store: Store,
-    staff: User
+    staff: User,
   ): SchedulingValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -253,7 +251,7 @@ export class AppointmentSchedulingDomainService {
     if (!staff.isAvailableAtTime(dayName as any, appointmentStartTime)) {
       errors.push(
         `Appointment start time ${appointmentStartTime} is outside staff working hours ` +
-        `(${dayWorkingHours.startTime} - ${dayWorkingHours.endTime}) on ${dayName}`
+          `(${dayWorkingHours.startTime} - ${dayWorkingHours.endTime}) on ${dayName}`,
       );
     }
 
@@ -261,25 +259,38 @@ export class AppointmentSchedulingDomainService {
     if (!staff.isAvailableAtTime(dayName as any, appointmentEndTime)) {
       errors.push(
         `Appointment end time ${appointmentEndTime} is outside staff working hours ` +
-        `(${dayWorkingHours.startTime} - ${dayWorkingHours.endTime}) on ${dayName}`
+          `(${dayWorkingHours.startTime} - ${dayWorkingHours.endTime}) on ${dayName}`,
       );
     }
 
     // Check if entire appointment range is within working hours
-    if (!staff.isTimeRangeWithinWorkingHours(dayName as any, appointmentStartTime, appointmentEndTime)) {
+    if (
+      !staff.isTimeRangeWithinWorkingHours(dayName as any, appointmentStartTime, appointmentEndTime)
+    ) {
       errors.push(
         `Appointment time range (${appointmentStartTime} - ${appointmentEndTime}) is not fully within ` +
-        `staff working hours (${dayWorkingHours.startTime} - ${dayWorkingHours.endTime}) on ${dayName}`
+          `staff working hours (${dayWorkingHours.startTime} - ${dayWorkingHours.endTime}) on ${dayName}`,
       );
     }
 
     // Cross-validate: Staff working hours should be within store opening hours
     const storeDayHours = store.getDayOpeningHours(dayName as any);
-    if (storeDayHours && storeDayHours.isOpen && storeDayHours.openTime && storeDayHours.closeTime) {
-      if (!store.isTimeRangeWithinOpeningHours(dayName as any, dayWorkingHours.startTime, dayWorkingHours.endTime)) {
+    if (
+      storeDayHours &&
+      storeDayHours.isOpen &&
+      storeDayHours.openTime &&
+      storeDayHours.closeTime
+    ) {
+      if (
+        !store.isTimeRangeWithinOpeningHours(
+          dayName as any,
+          dayWorkingHours.startTime,
+          dayWorkingHours.endTime,
+        )
+      ) {
         warnings.push(
           `Staff working hours (${dayWorkingHours.startTime} - ${dayWorkingHours.endTime}) extend ` +
-          `beyond store opening hours (${storeDayHours.openTime} - ${storeDayHours.closeTime}) on ${dayName}`
+            `beyond store opening hours (${storeDayHours.openTime} - ${storeDayHours.closeTime}) on ${dayName}`,
         );
       }
     }
@@ -293,15 +304,12 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Validates that staff is assigned to the store.
-   * 
+   *
    * @param staff - The staff member
    * @param store - The store
    * @returns Validation result
    */
-  validateStaffStoreAssignment(
-    staff: User,
-    store: Store
-  ): SchedulingValidationResult {
+  validateStaffStoreAssignment(staff: User, store: Store): SchedulingValidationResult {
     const errors: string[] = [];
 
     if (!staff.isAssignedToStore(store.id)) {
@@ -317,15 +325,12 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Validates that the pet belongs to the customer in the appointment.
-   * 
+   *
    * @param appointment - The appointment
    * @param pet - The pet
    * @returns Validation result
    */
-  validatePetOwnership(
-    appointment: Appointment,
-    pet: Pet
-  ): SchedulingValidationResult {
+  validatePetOwnership(appointment: Appointment, pet: Pet): SchedulingValidationResult {
     const errors: string[] = [];
 
     if (pet.customerId !== appointment.customerId) {
@@ -345,29 +350,29 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Validates that there are no double-booking conflicts.
-   * 
+   *
    * Business Rule: Staff cannot be double-booked (same staff, same time, same store).
    * Business Rule: Pet cannot be double-booked (same pet, overlapping times).
-   * 
+   *
    * Only active appointments (not cancelled or completed) are considered for conflicts.
-   * 
+   *
    * @param appointment - The appointment to validate
    * @param existingAppointments - List of existing appointments to check against
    * @returns Validation result
    */
   validateNoDoubleBooking(
     appointment: Appointment,
-    existingAppointments: Appointment[]
+    existingAppointments: Appointment[],
   ): SchedulingValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
     // Filter out cancelled and completed appointments (they don't block scheduling)
-    const activeAppointments = existingAppointments.filter(apt => apt.isActive());
+    const activeAppointments = existingAppointments.filter((apt) => apt.isActive());
 
     // Check for staff double-booking
     if (appointment.staffId) {
-      const staffConflicts = activeAppointments.filter(existing => {
+      const staffConflicts = activeAppointments.filter((existing) => {
         // Skip self (for updates)
         if (existing.id === appointment.id) {
           return false;
@@ -390,13 +395,13 @@ export class AppointmentSchedulingDomainService {
       if (staffConflicts.length > 0) {
         errors.push(
           `Staff member is already booked for an overlapping appointment. ` +
-          `Conflicts with ${staffConflicts.length} existing appointment(s).`
+            `Conflicts with ${staffConflicts.length} existing appointment(s).`,
         );
       }
     }
 
     // Check for pet double-booking
-    const petConflicts = activeAppointments.filter(existing => {
+    const petConflicts = activeAppointments.filter((existing) => {
       // Skip self (for updates)
       if (existing.id === appointment.id) {
         return false;
@@ -414,7 +419,7 @@ export class AppointmentSchedulingDomainService {
     if (petConflicts.length > 0) {
       errors.push(
         `Pet is already booked for an overlapping appointment. ` +
-        `Conflicts with ${petConflicts.length} existing appointment(s).`
+          `Conflicts with ${petConflicts.length} existing appointment(s).`,
       );
     }
 
@@ -427,10 +432,10 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Validates recurring appointment constraints.
-   * 
+   *
    * Business Rule: Recurring appointments must materialize as distinct Appointment instances
    * linked via recurrence_id. Each instance must follow the same validation rules.
-   * 
+   *
    * @param appointments - List of appointments in the recurrence group
    * @param store - The store
    * @param pet - The pet
@@ -443,7 +448,7 @@ export class AppointmentSchedulingDomainService {
     store: Store,
     pet: Pet,
     staff: User | undefined,
-    allExistingAppointments: Appointment[]
+    allExistingAppointments: Appointment[],
   ): SchedulingValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -497,13 +502,13 @@ export class AppointmentSchedulingDomainService {
         store,
         pet,
         staff,
-        allExistingAppointments
+        allExistingAppointments,
       );
 
       if (!validation.isValid) {
         errors.push(`Appointment ${i + 1} in recurrence group: ${validation.errors.join('; ')}`);
       }
-      warnings.push(...validation.warnings.map(w => `Appointment ${i + 1}: ${w}`));
+      warnings.push(...validation.warnings.map((w) => `Appointment ${i + 1}: ${w}`));
     }
 
     return {
@@ -515,9 +520,9 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Checks if a staff member is available for an appointment at the given time.
-   * 
+   *
    * This is a convenience method that combines multiple validations.
-   * 
+   *
    * @param appointment - The appointment to check
    * @param store - The store
    * @param staff - The staff member
@@ -528,7 +533,7 @@ export class AppointmentSchedulingDomainService {
     appointment: Appointment,
     store: Store,
     staff: User,
-    existingAppointments: Appointment[]
+    existingAppointments: Appointment[],
   ): boolean {
     // Check if staff is assigned to store
     if (!staff.isAssignedToStore(store.id)) {
@@ -550,7 +555,7 @@ export class AppointmentSchedulingDomainService {
     const conflictValidation = this.validateNoDoubleBooking(appointment, existingAppointments);
     if (!conflictValidation.isValid) {
       // Check specifically for staff conflicts
-      const staffConflicts = conflictValidation.errors.filter(e => e.includes('Staff member'));
+      const staffConflicts = conflictValidation.errors.filter((e) => e.includes('Staff member'));
       if (staffConflicts.length > 0) {
         return false;
       }
@@ -561,19 +566,16 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Checks if a pet is available for an appointment at the given time.
-   * 
+   *
    * @param appointment - The appointment to check
    * @param existingAppointments - Existing appointments to check for conflicts
    * @returns True if pet is available
    */
-  isPetAvailable(
-    appointment: Appointment,
-    existingAppointments: Appointment[]
-  ): boolean {
+  isPetAvailable(appointment: Appointment, existingAppointments: Appointment[]): boolean {
     const conflictValidation = this.validateNoDoubleBooking(appointment, existingAppointments);
     if (!conflictValidation.isValid) {
       // Check specifically for pet conflicts
-      const petConflicts = conflictValidation.errors.filter(e => e.includes('Pet is already'));
+      const petConflicts = conflictValidation.errors.filter((e) => e.includes('Pet is already'));
       if (petConflicts.length > 0) {
         return false;
       }
@@ -586,7 +588,7 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Converts JavaScript day of week (0-6) to day name string.
-   * 
+   *
    * @param dayOfWeek - Day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
    * @returns Day name in lowercase (monday, tuesday, etc.)
    */
@@ -597,7 +599,7 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Formats a Date object to HH:mm time string.
-   * 
+   *
    * @param date - Date object
    * @returns Time string in HH:mm format
    */
@@ -609,7 +611,7 @@ export class AppointmentSchedulingDomainService {
 
   /**
    * Checks if two dates are on the same day.
-   * 
+   *
    * @param date1 - First date
    * @param date2 - Second date
    * @returns True if dates are on the same day
@@ -622,4 +624,3 @@ export class AppointmentSchedulingDomainService {
     );
   }
 }
-

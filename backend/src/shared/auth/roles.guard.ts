@@ -1,6 +1,6 @@
 /**
  * Roles Guard
- * 
+ *
  * NestJS guard that checks if a user has the required roles to access a route.
  * This guard should be used in combination with FirebaseAuthGuard.
  */
@@ -47,35 +47,27 @@ export class RolesGuard implements CanActivate {
     // Extract roles from Firebase token custom claims
     // Firebase custom claims are stored as an object: { Owner: true, Manager: true }
     let userRoles: Role[] = [];
-    
+
     if (user.roles) {
       if (typeof user.roles === 'object' && !Array.isArray(user.roles)) {
         // Extract role keys where value is true
-        userRoles = Object.keys(user.roles).filter(
-          key => user.roles[key] === true
-        ) as Role[];
+        userRoles = Object.keys(user.roles).filter((key) => user.roles[key] === true) as Role[];
       } else if (Array.isArray(user.roles)) {
         userRoles = user.roles as Role[];
       }
     }
-    
+
     const userPermissions = {
       userId: user.uid,
       roles: userRoles,
     };
 
-    const hasRequiredRole = this.permissionService.hasAnyRole(
-      userPermissions,
-      requiredRoles,
-    );
+    const hasRequiredRole = this.permissionService.hasAnyRole(userPermissions, requiredRoles);
 
     if (!hasRequiredRole) {
-      throw new ForbiddenException(
-        `Access denied. Required roles: ${requiredRoles.join(', ')}`,
-      );
+      throw new ForbiddenException(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
     }
 
     return true;
   }
 }
-

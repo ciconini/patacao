@@ -1,9 +1,9 @@
 /**
  * Create Invoice Draft Use Case (UC-FIN-001)
- * 
+ *
  * Application use case for creating a new invoice in draft status.
  * This use case orchestrates domain entities and domain services to create draft invoices.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, Accountant, or Owner role)
  * - Validate company, store, and customer existence
@@ -12,7 +12,7 @@
  * - Calculate invoice totals using InvoiceCalculationDomainService
  * - Persist invoice via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -114,7 +114,7 @@ export interface CreateInvoiceDraftResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -166,16 +166,16 @@ export class CreateInvoiceDraftUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create invoice draft use case
-   * 
+   *
    * @param input - Input data for creating invoice draft
    * @returns Result containing created invoice or error
    */
@@ -215,7 +215,7 @@ export class CreateInvoiceDraftUseCase {
         invoiceNumber,
         input.buyerCustomerId,
         validatedLines,
-        input.performedBy
+        input.performedBy,
       );
 
       // 10. Persist invoice via repository
@@ -239,12 +239,12 @@ export class CreateInvoiceDraftUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -255,7 +255,9 @@ export class CreateInvoiceDraftUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Manager, Accountant, or Owner role can create invoices');
+      throw new ForbiddenError(
+        'Only Staff, Manager, Accountant, or Owner role can create invoices',
+      );
     }
   }
 
@@ -281,7 +283,7 @@ export class CreateInvoiceDraftUseCase {
    */
   private async validateAndLoadCompany(companyId: string): Promise<Company> {
     const company = await this.companyRepository.findById(companyId);
-    
+
     if (!company) {
       throw new NotFoundError('Company not found');
     }
@@ -297,7 +299,7 @@ export class CreateInvoiceDraftUseCase {
    */
   private async validateAndLoadStore(storeId: string): Promise<Store> {
     const store = await this.storeRepository.findById(storeId);
-    
+
     if (!store) {
       throw new NotFoundError('Store not found');
     }
@@ -319,7 +321,7 @@ export class CreateInvoiceDraftUseCase {
    */
   private async validateAndLoadCustomer(customerId: string): Promise<Customer> {
     const customer = await this.customerRepository.findById(customerId);
-    
+
     if (!customer) {
       throw new NotFoundError('Customer not found');
     }
@@ -331,7 +333,7 @@ export class CreateInvoiceDraftUseCase {
    * Validates and normalizes invoice lines
    */
   private async validateAndNormalizeLines(
-    lines: CreateInvoiceDraftInput['lines']
+    lines: CreateInvoiceDraftInput['lines'],
   ): Promise<InvoiceLine[]> {
     const validatedLines: InvoiceLine[] = [];
 
@@ -368,7 +370,9 @@ export class CreateInvoiceDraftUseCase {
 
       // Validate product_id and service_id (not both, at least one optional)
       if (line.productId && line.serviceId) {
-        throw new ValidationError(`Line ${lineIndex}: Cannot specify both product_id and service_id`);
+        throw new ValidationError(
+          `Line ${lineIndex}: Cannot specify both product_id and service_id`,
+        );
       }
 
       // Validate product exists if provided
@@ -417,7 +421,7 @@ export class CreateInvoiceDraftUseCase {
     invoiceNumber: string,
     buyerCustomerId: string | undefined,
     lines: InvoiceLine[],
-    createdBy: string
+    createdBy: string,
   ): Invoice {
     const invoiceId = this.generateId();
     const now = new Date();
@@ -436,7 +440,7 @@ export class CreateInvoiceDraftUseCase {
       undefined, // paymentMethod - not set for draft
       undefined, // externalReference - not set for draft
       now,
-      now
+      now,
     );
   }
 
@@ -461,7 +465,7 @@ export class CreateInvoiceDraftUseCase {
             total: invoice.total,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -483,7 +487,7 @@ export class CreateInvoiceDraftUseCase {
       invoiceNumber: invoice.invoiceNumber,
       issuedAt: invoice.issuedAt,
       buyerCustomerId: invoice.buyerCustomerId,
-      lines: invoice.lines.map(line => ({ ...line })),
+      lines: invoice.lines.map((line) => ({ ...line })),
       subtotal: invoice.subtotal,
       vatTotal: invoice.vatTotal,
       total: invoice.total,
@@ -520,4 +524,3 @@ export class CreateInvoiceDraftUseCase {
     };
   }
 }
-

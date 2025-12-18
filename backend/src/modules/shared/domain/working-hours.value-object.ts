@@ -1,34 +1,34 @@
 /**
  * WorkingHours Value Object
- * 
+ *
  * Represents working hours for a single day in the petshop management system.
  * This is a pure domain value object that encapsulates working hours validation and business rules,
  * using 24-hour format (HH:mm) as per Portugal time conventions.
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates working hours state and time range
- * 
+ *
  * Business Rules:
  * - Working hours always have startTime and endTime in "HH:mm" format
  * - isAvailable indicates whether the person is available to work during the time range
  * - Start time must be before end time
  * - Times are represented as strings in "HH:mm" format (e.g., "09:00", "17:00")
  * - Even when not available, times are still defined (for tracking purposes)
- * 
+ *
  * Invariants:
  * - Start time and end time are always provided and valid
  * - Start time must be before end time
  * - Value object is immutable after creation
- * 
+ *
  * Equality Definition:
  * - Two WorkingHours instances are equal if startTime, endTime, and isAvailable are equal
  * - Equality is based on working hours values, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In User entity (daily working hours):
  *    export interface WeeklySchedule {
  *      readonly monday?: WorkingHours;
@@ -39,24 +39,24 @@
  *      readonly saturday?: WorkingHours;
  *      readonly sunday?: WorkingHours;
  *    }
- * 
+ *
  *    // Usage
  *    const mondayHours = WorkingHours.available("09:00", "17:00");
  *    const sundayHours = WorkingHours.unavailable("00:00", "00:00");
- * 
+ *
  * 2. Creating WorkingHours:
  *    const availableHours = WorkingHours.available("09:00", "17:00"); // Available 9 AM to 5 PM
  *    const unavailableHours = WorkingHours.unavailable("09:00", "17:00"); // Not available but times defined
  *    const fromStrings = WorkingHours.fromStrings("09:00", "17:00", true); // Available
  *    const fromTimeRange = WorkingHours.fromTimeRange(new TimeRange("09:00", "17:00"), true); // Available
- * 
+ *
  * 3. Checking status:
  *    const hours = WorkingHours.available("09:00", "17:00");
  *    hours.isAvailable; // true
  *    hours.isUnavailable(); // false
  *    hours.contains("12:00"); // true (person is available at noon)
  *    hours.contains("18:00"); // false (person is not available at 6 PM)
- * 
+ *
  * 4. Getting time information:
  *    const hours = WorkingHours.available("09:00", "17:00");
  *    hours.startTime; // "09:00"
@@ -64,16 +64,16 @@
  *    hours.timeRange; // TimeRange("09:00", "17:00")
  *    hours.getDurationMinutes(); // 480 (8 hours)
  *    hours.getDurationHours(); // 8.0
- * 
+ *
  * 5. Equality comparison:
  *    const hours1 = WorkingHours.available("09:00", "17:00");
  *    const hours2 = WorkingHours.available("09:00", "17:00");
  *    hours1.equals(hours2); // true
- * 
+ *
  * 6. String representation:
  *    const availableHours = WorkingHours.available("09:00", "17:00");
  *    availableHours.toString(); // "09:00 - 17:00 (Available)"
- * 
+ *
  *    const unavailableHours = WorkingHours.unavailable("09:00", "17:00");
  *    unavailableHours.toString(); // "09:00 - 17:00 (Unavailable)"
  */
@@ -88,7 +88,7 @@ export class WorkingHours {
 
   /**
    * Creates a new WorkingHours value object
-   * 
+   *
    * @param startTime - Start time in "HH:mm" format (e.g., "09:00")
    * @param endTime - End time in "HH:mm" format (e.g., "17:00")
    * @param isAvailable - Whether the person is available to work during this time range
@@ -104,7 +104,7 @@ export class WorkingHours {
 
   /**
    * Gets the start time
-   * 
+   *
    * @returns Start time in "HH:mm" format
    */
   get startTime(): string {
@@ -113,7 +113,7 @@ export class WorkingHours {
 
   /**
    * Gets the end time
-   * 
+   *
    * @returns End time in "HH:mm" format
    */
   get endTime(): string {
@@ -122,7 +122,7 @@ export class WorkingHours {
 
   /**
    * Gets whether the person is available to work
-   * 
+   *
    * @returns True if available, false if not available
    */
   get isAvailable(): boolean {
@@ -131,7 +131,7 @@ export class WorkingHours {
 
   /**
    * Gets the time range
-   * 
+   *
    * @returns TimeRange value object
    */
   get timeRange(): TimeRange {
@@ -140,7 +140,7 @@ export class WorkingHours {
 
   /**
    * Checks if the person is unavailable
-   * 
+   *
    * @returns True if unavailable, false if available
    */
   isUnavailable(): boolean {
@@ -149,7 +149,7 @@ export class WorkingHours {
 
   /**
    * Checks if the person is available at a specific time
-   * 
+   *
    * @param time - Time to check in "HH:mm" format
    * @returns True if available at the specified time, false otherwise
    */
@@ -162,7 +162,7 @@ export class WorkingHours {
 
   /**
    * Checks if the person is available at a specific time (inclusive of end time)
-   * 
+   *
    * @param time - Time to check in "HH:mm" format
    * @returns True if available at the specified time (inclusive), false otherwise
    */
@@ -175,7 +175,7 @@ export class WorkingHours {
 
   /**
    * Checks if a time range is completely within working hours
-   * 
+   *
    * @param timeRange - TimeRange to check
    * @returns True if the time range is completely within working hours and person is available, false otherwise
    */
@@ -188,7 +188,7 @@ export class WorkingHours {
 
   /**
    * Checks if working hours overlap with a time range
-   * 
+   *
    * @param timeRange - TimeRange to check
    * @returns True if working hours overlap with the time range and person is available, false otherwise
    */
@@ -201,7 +201,7 @@ export class WorkingHours {
 
   /**
    * Gets the duration of working hours in minutes
-   * 
+   *
    * @returns Duration in minutes
    */
   getDurationMinutes(): number {
@@ -210,7 +210,7 @@ export class WorkingHours {
 
   /**
    * Gets the duration of working hours in hours
-   * 
+   *
    * @returns Duration in hours (as decimal, e.g., 8.5 for 8 hours 30 minutes)
    */
   getDurationHours(): number {
@@ -219,9 +219,9 @@ export class WorkingHours {
 
   /**
    * Checks if this WorkingHours equals another WorkingHours
-   * 
+   *
    * Equality is determined by comparing startTime, endTime, and isAvailable.
-   * 
+   *
    * @param other - Other WorkingHours to compare
    * @returns True if startTime, endTime, and isAvailable are equal
    */
@@ -234,14 +234,16 @@ export class WorkingHours {
       return false;
     }
 
-    return this._startTime === other._startTime &&
-           this._endTime === other._endTime &&
-           this._isAvailable === other._isAvailable;
+    return (
+      this._startTime === other._startTime &&
+      this._endTime === other._endTime &&
+      this._isAvailable === other._isAvailable
+    );
   }
 
   /**
    * Checks if this WorkingHours is equal to another WorkingHours (alias for equals)
-   * 
+   *
    * @param other - Other WorkingHours to compare
    * @returns True if startTime, endTime, and isAvailable are equal
    */
@@ -251,9 +253,9 @@ export class WorkingHours {
 
   /**
    * Converts the WorkingHours to string representation
-   * 
+   *
    * Format: "startTime - endTime (Available)" or "startTime - endTime (Unavailable)"
-   * 
+   *
    * @returns WorkingHours string representation
    */
   toString(): string {
@@ -263,7 +265,7 @@ export class WorkingHours {
 
   /**
    * Creates a WorkingHours instance for available hours
-   * 
+   *
    * @param startTime - Start time in "HH:mm" format
    * @param endTime - End time in "HH:mm" format
    * @returns New WorkingHours instance (available)
@@ -275,7 +277,7 @@ export class WorkingHours {
 
   /**
    * Creates a WorkingHours instance for unavailable hours
-   * 
+   *
    * @param startTime - Start time in "HH:mm" format
    * @param endTime - End time in "HH:mm" format
    * @returns New WorkingHours instance (unavailable)
@@ -287,7 +289,7 @@ export class WorkingHours {
 
   /**
    * Creates a WorkingHours instance from a TimeRange
-   * 
+   *
    * @param timeRange - TimeRange for working hours
    * @param isAvailable - Whether the person is available (default true)
    * @returns New WorkingHours instance
@@ -298,15 +300,19 @@ export class WorkingHours {
 
   /**
    * Creates a WorkingHours instance from time strings, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param startTime - Start time in "HH:mm" format
    * @param endTime - End time in "HH:mm" format
    * @param isAvailable - Whether the person is available (default true)
    * @returns WorkingHours instance or null if invalid
    */
-  static fromStrings(startTime: string, endTime: string, isAvailable: boolean = true): WorkingHours | null {
+  static fromStrings(
+    startTime: string,
+    endTime: string,
+    isAvailable: boolean = true,
+  ): WorkingHours | null {
     try {
       return new WorkingHours(startTime, endTime, isAvailable);
     } catch {
@@ -316,15 +322,20 @@ export class WorkingHours {
 
   /**
    * Creates a WorkingHours instance from an object representation
-   * 
+   *
    * @param data - Object with startTime, endTime, and isAvailable
    * @returns WorkingHours instance or null if invalid
    */
-  static fromObject(data: {
-    startTime: string;
-    endTime: string;
-    isAvailable?: boolean;
-  } | null | undefined): WorkingHours | null {
+  static fromObject(
+    data:
+      | {
+          startTime: string;
+          endTime: string;
+          isAvailable?: boolean;
+        }
+      | null
+      | undefined,
+  ): WorkingHours | null {
     if (!data) {
       return null;
     }
@@ -337,7 +348,7 @@ export class WorkingHours {
       return new WorkingHours(
         data.startTime,
         data.endTime,
-        data.isAvailable !== undefined ? data.isAvailable : true
+        data.isAvailable !== undefined ? data.isAvailable : true,
       );
     } catch {
       return null;
@@ -346,36 +357,37 @@ export class WorkingHours {
 
   /**
    * Validates if working hours data is valid
-   * 
+   *
    * @param data - Working hours data to validate
    * @returns True if working hours data is valid
    */
-  static isValid(data: {
-    startTime: string;
-    endTime: string;
-    isAvailable?: boolean;
-  } | null | undefined): boolean {
+  static isValid(
+    data:
+      | {
+          startTime: string;
+          endTime: string;
+          isAvailable?: boolean;
+        }
+      | null
+      | undefined,
+  ): boolean {
     return WorkingHours.fromObject(data) !== null;
   }
 
   /**
    * Creates a copy of this WorkingHours with updated properties
-   * 
+   *
    * Since WorkingHours is immutable, this method creates a new instance with updated values.
-   * 
+   *
    * @param updates - Partial working hours data to update
    * @returns New WorkingHours instance with updated values
    */
-  with(updates: {
-    startTime?: string;
-    endTime?: string;
-    isAvailable?: boolean;
-  }): WorkingHours {
+  with(updates: { startTime?: string; endTime?: string; isAvailable?: boolean }): WorkingHours {
     const newStartTime = updates.startTime !== undefined ? updates.startTime : this._startTime;
     const newEndTime = updates.endTime !== undefined ? updates.endTime : this._endTime;
-    const newIsAvailable = updates.isAvailable !== undefined ? updates.isAvailable : this._isAvailable;
+    const newIsAvailable =
+      updates.isAvailable !== undefined ? updates.isAvailable : this._isAvailable;
 
     return new WorkingHours(newStartTime, newEndTime, newIsAvailable);
   }
 }
-

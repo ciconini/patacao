@@ -1,9 +1,9 @@
 /**
  * Create Pet Use Case (UC-ADMIN-008)
- * 
+ *
  * Application use case for creating a new pet record linked to an existing customer.
  * This use case orchestrates domain entities and domain services to create a pet.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, Veterinarian, or Owner role required)
  * - Validate customer exists
@@ -11,7 +11,7 @@
  * - Create Pet domain entity
  * - Persist pet via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -90,7 +90,7 @@ export interface CreatePetResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -144,16 +144,16 @@ export class CreatePetUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create pet use case
-   * 
+   *
    * @param input - Input data for creating pet
    * @returns Result containing created pet or error
    */
@@ -189,19 +189,19 @@ export class CreatePetUseCase {
 
   /**
    * Validates user authorization (must have Staff, Manager, Veterinarian, or Owner role)
-   * 
+   *
    * @param userId - User ID to validate
    * @throws UnauthorizedError if user not found
    * @throws ForbiddenError if user does not have required role
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.userRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -218,13 +218,13 @@ export class CreatePetUseCase {
 
   /**
    * Validates and loads customer
-   * 
+   *
    * @param customerId - Customer ID
    * @throws NotFoundError if customer not found
    */
   private async validateCustomer(customerId: string): Promise<void> {
     const customer = await this.customerRepository.findById(customerId);
-    
+
     if (!customer) {
       throw new NotFoundError('Customer not found');
     }
@@ -235,7 +235,7 @@ export class CreatePetUseCase {
 
   /**
    * Validates and normalizes input data
-   * 
+   *
    * @param input - Raw input data
    * @returns Validated and normalized input
    * @throws ValidationError if validation fails
@@ -364,7 +364,7 @@ export class CreatePetUseCase {
 
   /**
    * Creates Pet domain entity
-   * 
+   *
    * @param validatedInput - Validated input data
    * @param customerId - Customer ID
    * @returns Pet domain entity
@@ -379,7 +379,7 @@ export class CreatePetUseCase {
       medicalNotes?: string;
       vaccinationRecords: VaccinationRecord[];
     },
-    customerId: string
+    customerId: string,
   ): Pet {
     const petId = this.generateId();
     const now = new Date();
@@ -395,13 +395,13 @@ export class CreatePetUseCase {
       validatedInput.medicalNotes,
       validatedInput.vaccinationRecords,
       now,
-      now
+      now,
     );
   }
 
   /**
    * Persists pet via repository
-   * 
+   *
    * @param pet - Pet domain entity
    * @returns Persisted pet entity
    * @throws RepositoryError if persistence fails
@@ -416,7 +416,7 @@ export class CreatePetUseCase {
 
   /**
    * Creates audit log entry for pet creation
-   * 
+   *
    * @param pet - Created pet entity
    * @param performedBy - User ID who performed the action
    */
@@ -436,7 +436,7 @@ export class CreatePetUseCase {
             species: pet.species,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -449,7 +449,7 @@ export class CreatePetUseCase {
 
   /**
    * Maps Pet domain entity to output model
-   * 
+   *
    * @param pet - Pet domain entity
    * @returns Output model
    */
@@ -472,7 +472,7 @@ export class CreatePetUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -496,4 +496,3 @@ export class CreatePetUseCase {
     };
   }
 }
-

@@ -1,15 +1,15 @@
 /**
  * StoreRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for StoreRepository port.
  * This implementation handles persistence of Store domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map Store domain entities to Firestore documents
  * - Map Firestore documents to Store domain entities
  * - Implement repository interface methods
  * - Handle Firestore-specific operations (queries, transactions)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -53,13 +53,13 @@ export class FirestoreStoreRepository implements StoreRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a Store entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
-   * 
+   *
    * @param store - Store domain entity to save
    * @returns Saved Store entity
    */
@@ -74,7 +74,7 @@ export class FirestoreStoreRepository implements StoreRepository {
 
   /**
    * Updates a Store entity in Firestore
-   * 
+   *
    * @param store - Store domain entity to update
    * @returns Updated Store entity
    */
@@ -84,7 +84,7 @@ export class FirestoreStoreRepository implements StoreRepository {
 
   /**
    * Finds a Store by ID
-   * 
+   *
    * @param id - Store ID
    * @returns Store entity or null if not found
    */
@@ -101,7 +101,7 @@ export class FirestoreStoreRepository implements StoreRepository {
 
   /**
    * Converts Store domain entity to Firestore document
-   * 
+   *
    * @param store - Store domain entity
    * @returns Firestore document
    */
@@ -110,12 +110,14 @@ export class FirestoreStoreRepository implements StoreRepository {
       id: store.id,
       companyId: store.companyId,
       name: store.name,
-      address: store.address ? {
-        street: store.address.street,
-        city: store.address.city,
-        postalCode: store.address.postalCode,
-        country: store.address.country,
-      } : undefined,
+      address: store.address
+        ? {
+            street: store.address.street,
+            city: store.address.city,
+            postalCode: store.address.postalCode,
+            country: store.address.country,
+          }
+        : undefined,
       email: store.email,
       phone: store.phone,
       openingHours: this.copyOpeningHours(store.openingHours),
@@ -127,18 +129,20 @@ export class FirestoreStoreRepository implements StoreRepository {
 
   /**
    * Converts Firestore document to Store domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns Store domain entity
    */
   private toEntity(id: string, doc: StoreDocument): Store {
-    const address: Address | undefined = doc.address ? {
-      street: doc.address.street,
-      city: doc.address.city,
-      postalCode: doc.address.postalCode,
-      country: doc.address.country,
-    } : undefined;
+    const address: Address | undefined = doc.address
+      ? {
+          street: doc.address.street,
+          city: doc.address.city,
+          postalCode: doc.address.postalCode,
+          country: doc.address.country,
+        }
+      : undefined;
 
     const openingHours: WeeklyOpeningHours = this.copyOpeningHours(doc.openingHours);
 
@@ -152,21 +156,29 @@ export class FirestoreStoreRepository implements StoreRepository {
       doc.phone,
       doc.timezone,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
   /**
    * Deep copies opening hours structure
-   * 
+   *
    * @param hours - WeeklyOpeningHours to copy
    * @returns Deep copy of opening hours
    */
   private copyOpeningHours(hours: WeeklyOpeningHours): WeeklyOpeningHours {
     const result: any = {};
 
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
-    
+    const days = [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday',
+    ] as const;
+
     for (const day of days) {
       if (hours[day]) {
         result[day] = {
@@ -182,7 +194,7 @@ export class FirestoreStoreRepository implements StoreRepository {
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -192,7 +204,7 @@ export class FirestoreStoreRepository implements StoreRepository {
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -200,4 +212,3 @@ export class FirestoreStoreRepository implements StoreRepository {
     return timestamp.toDate();
   }
 }
-

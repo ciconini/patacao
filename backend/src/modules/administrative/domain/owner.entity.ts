@@ -1,10 +1,10 @@
 /**
  * Owner Domain Entity
- * 
+ *
  * Represents a business owner (proprietário) of the Company in the petshop management system.
  * This entity represents the legal/fiscal owner(s) of the business, distinct from system Users.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - An Owner must be linked to a Company (invariant)
  * - NIF (Portuguese tax ID) must be validated when provided
@@ -37,7 +37,7 @@ export class Owner {
 
   /**
    * Creates a new Owner entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param companyId - Company ID that this owner belongs to (required)
    * @param fullName - Owner's full name (required)
@@ -52,7 +52,7 @@ export class Owner {
    * @param notes - Additional notes
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if companyId is empty or invalid
    * @throws Error if fullName is empty
    * @throws Error if nif format is invalid (when provided)
@@ -72,12 +72,12 @@ export class Owner {
     nationality?: string,
     notes?: string,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateCompanyId(companyId);
     this.validateFullName(fullName);
-    
+
     if (nif) {
       this.validateNif(nif);
     }
@@ -159,7 +159,7 @@ export class Owner {
 
   /**
    * Updates the owner's full name
-   * 
+   *
    * @param fullName - New full name
    * @throws Error if name is empty
    */
@@ -171,7 +171,7 @@ export class Owner {
 
   /**
    * Updates or sets the NIF (Portuguese tax ID)
-   * 
+   *
    * @param nif - NIF number
    * @throws Error if NIF format is invalid
    */
@@ -185,7 +185,7 @@ export class Owner {
 
   /**
    * Updates the owner's address
-   * 
+   *
    * @param address - New address
    */
   updateAddress(address: Address | undefined): void {
@@ -200,7 +200,7 @@ export class Owner {
 
   /**
    * Updates the owner's email
-   * 
+   *
    * @param email - New email address
    * @throws Error if email format is invalid (when provided)
    */
@@ -214,7 +214,7 @@ export class Owner {
 
   /**
    * Updates the owner's phone number
-   * 
+   *
    * @param phone - New phone number
    */
   updatePhone(phone: string | undefined): void {
@@ -224,7 +224,7 @@ export class Owner {
 
   /**
    * Updates the ownership percentage
-   * 
+   *
    * @param percentage - New ownership percentage (0-100)
    * @throws Error if percentage is out of range
    */
@@ -236,7 +236,7 @@ export class Owner {
 
   /**
    * Sets or unsets the primary owner flag
-   * 
+   *
    * @param isPrimary - Whether this owner is the primary owner
    */
   setPrimaryOwner(isPrimary: boolean): void {
@@ -246,7 +246,7 @@ export class Owner {
 
   /**
    * Updates the date of birth
-   * 
+   *
    * @param dateOfBirth - Date of birth
    * @throws Error if date is in the future
    */
@@ -254,7 +254,7 @@ export class Owner {
     if (dateOfBirth) {
       const birthDate = new Date(dateOfBirth);
       const today = new Date();
-      
+
       if (birthDate > today) {
         throw new Error('Date of birth cannot be in the future');
       }
@@ -266,7 +266,7 @@ export class Owner {
 
   /**
    * Updates the nationality
-   * 
+   *
    * @param nationality - Nationality
    */
   updateNationality(nationality: string | undefined): void {
@@ -276,7 +276,7 @@ export class Owner {
 
   /**
    * Updates additional notes
-   * 
+   *
    * @param notes - Notes
    */
   updateNotes(notes: string | undefined): void {
@@ -295,10 +295,12 @@ export class Owner {
    * Checks if the owner has complete address information
    */
   hasCompleteAddress(): boolean {
-    return !!this._address && 
-           !!this._address.street && 
-           !!this._address.city && 
-           !!this._address.postalCode;
+    return (
+      !!this._address &&
+      !!this._address.street &&
+      !!this._address.city &&
+      !!this._address.postalCode
+    );
   }
 
   /**
@@ -357,7 +359,7 @@ export class Owner {
   /**
    * Validates Portuguese NIF (Número de Identificação Fiscal) format
    * NIF format: 9 digits, with a check digit algorithm
-   * 
+   *
    * @param nif - NIF to validate
    * @throws Error if format is invalid
    */
@@ -391,7 +393,7 @@ export class Owner {
 
     const digits = nif.split('').map(Number);
     const weights = [9, 8, 7, 6, 5, 4, 3, 2];
-    
+
     let sum = 0;
     for (let i = 0; i < 8; i++) {
       sum += digits[i] * weights[i];
@@ -399,7 +401,7 @@ export class Owner {
 
     const remainder = sum % 11;
     let checkDigit = 11 - remainder;
-    
+
     if (checkDigit >= 10) {
       checkDigit = 0;
     }
@@ -449,4 +451,3 @@ export class Owner {
     }
   }
 }
-

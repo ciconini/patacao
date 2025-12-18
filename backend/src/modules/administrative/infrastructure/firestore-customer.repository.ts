@@ -1,15 +1,15 @@
 /**
  * CustomerRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for CustomerRepository port.
  * This implementation handles persistence of Customer domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map Customer domain entities to Firestore documents
  * - Map Firestore documents to Customer domain entities
  * - Implement repository interface methods
  * - Handle Firestore-specific operations (queries, transactions, search)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -53,14 +53,14 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a Customer entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
    * Preserves archived flag if it exists.
-   * 
+   *
    * @param customer - Customer domain entity to save
    * @returns Saved Customer entity
    */
@@ -73,18 +73,24 @@ export class FirestoreCustomerRepository implements CustomerRepository {
     if (existingDoc.exists) {
       const existingData = existingDoc.data() as CustomerDocument;
       // Preserve archived fields if they exist
-      await docRef.set({
-        ...document,
-        archived: existingData.archived || false,
-        archivedAt: existingData.archivedAt,
-        archivedBy: existingData.archivedBy,
-      }, { merge: true });
+      await docRef.set(
+        {
+          ...document,
+          archived: existingData.archived || false,
+          archivedAt: existingData.archivedAt,
+          archivedBy: existingData.archivedBy,
+        },
+        { merge: true },
+      );
     } else {
       // New document - set archived to false by default
-      await docRef.set({
-        ...document,
-        archived: false,
-      }, { merge: true });
+      await docRef.set(
+        {
+          ...document,
+          archived: false,
+        },
+        { merge: true },
+      );
     }
 
     return customer;
@@ -92,7 +98,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   /**
    * Updates a Customer entity in Firestore
-   * 
+   *
    * @param customer - Customer domain entity to update
    * @returns Updated Customer entity
    */
@@ -102,7 +108,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   /**
    * Finds a Customer by ID
-   * 
+   *
    * @param id - Customer ID
    * @returns Customer entity or null if not found
    */
@@ -119,7 +125,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   /**
    * Finds a Customer by email
-   * 
+   *
    * @param email - Email address to search for
    * @returns Customer entity or null if not found
    */
@@ -141,7 +147,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   /**
    * Deletes a Customer (hard delete)
-   * 
+   *
    * @param id - Customer ID to delete
    */
   async delete(id: string): Promise<void> {
@@ -151,7 +157,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   /**
    * Checks if a Customer is archived
-   * 
+   *
    * @param id - Customer ID
    * @returns True if customer is archived
    */
@@ -169,7 +175,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   /**
    * Searches for customers with pagination
-   * 
+   *
    * @param criteria - Search criteria
    * @param pagination - Pagination parameters
    * @param sort - Sort parameters
@@ -178,7 +184,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
   async search(
     criteria: CustomerSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<Customer>> {
     let query: FirebaseFirestore.Query = this.firestore.collection(this.collectionName);
 
@@ -223,7 +229,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
     const snapshot = await query.get();
 
     // Convert to entities
-    const items = snapshot.docs.map(doc => {
+    const items = snapshot.docs.map((doc) => {
       return this.toEntity(doc.id, doc.data() as CustomerDocument);
     });
 
@@ -233,10 +239,12 @@ export class FirestoreCustomerRepository implements CustomerRepository {
     let filteredItems = items;
     if (criteria.q || criteria.fullName) {
       const searchTerm = (criteria.q || criteria.fullName || '').toLowerCase();
-      filteredItems = items.filter(customer => {
-        return customer.fullName.toLowerCase().includes(searchTerm) ||
-               (customer.email && customer.email.toLowerCase().includes(searchTerm)) ||
-               (customer.phone && customer.phone.includes(searchTerm));
+      filteredItems = items.filter((customer) => {
+        return (
+          customer.fullName.toLowerCase().includes(searchTerm) ||
+          (customer.email && customer.email.toLowerCase().includes(searchTerm)) ||
+          (customer.phone && customer.phone.includes(searchTerm))
+        );
       });
     }
 
@@ -261,22 +269,26 @@ export class FirestoreCustomerRepository implements CustomerRepository {
   /**
    * Converts Customer domain entity to Firestore document
    * Note: Archived flag is managed separately via update operations
-   * 
+   *
    * @param customer - Customer domain entity
    * @returns Firestore document (without archived fields, which are managed separately)
    */
-  private toDocument(customer: Customer): Omit<CustomerDocument, 'archived' | 'archivedAt' | 'archivedBy'> {
+  private toDocument(
+    customer: Customer,
+  ): Omit<CustomerDocument, 'archived' | 'archivedAt' | 'archivedBy'> {
     return {
       id: customer.id,
       fullName: customer.fullName,
       email: customer.email?.toLowerCase(),
       phone: customer.phone,
-      address: customer.address ? {
-        street: customer.address.street,
-        city: customer.address.city,
-        postalCode: customer.address.postalCode,
-        country: customer.address.country,
-      } : undefined,
+      address: customer.address
+        ? {
+            street: customer.address.street,
+            city: customer.address.city,
+            postalCode: customer.address.postalCode,
+            country: customer.address.country,
+          }
+        : undefined,
       consentMarketing: customer.consentMarketing,
       consentReminders: customer.consentReminders,
       createdAt: this.toTimestamp(customer.createdAt),
@@ -286,7 +298,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   /**
    * Marks a customer as archived
-   * 
+   *
    * @param id - Customer ID
    * @param archivedBy - User ID who archived the customer
    */
@@ -301,7 +313,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   /**
    * Marks a customer as not archived (unarchive)
-   * 
+   *
    * @param id - Customer ID
    */
   async markAsNotArchived(id: string): Promise<void> {
@@ -316,18 +328,20 @@ export class FirestoreCustomerRepository implements CustomerRepository {
   /**
    * Converts Firestore document to Customer domain entity
    * Note: Archived flag is stored in Firestore but not in domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns Customer domain entity
    */
   private toEntity(id: string, doc: CustomerDocument): Customer {
-    const address: Address | undefined = doc.address ? {
-      street: doc.address.street,
-      city: doc.address.city,
-      postalCode: doc.address.postalCode,
-      country: doc.address.country,
-    } : undefined;
+    const address: Address | undefined = doc.address
+      ? {
+          street: doc.address.street,
+          city: doc.address.city,
+          postalCode: doc.address.postalCode,
+          country: doc.address.country,
+        }
+      : undefined;
 
     return new Customer(
       id,
@@ -338,13 +352,13 @@ export class FirestoreCustomerRepository implements CustomerRepository {
       doc.consentMarketing,
       doc.consentReminders,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -354,7 +368,7 @@ export class FirestoreCustomerRepository implements CustomerRepository {
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -362,4 +376,3 @@ export class FirestoreCustomerRepository implements CustomerRepository {
     return timestamp.toDate();
   }
 }
-

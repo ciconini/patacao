@@ -1,9 +1,9 @@
 /**
  * Create Transaction Use Case (UC-FIN-006)
- * 
+ *
  * Application use case for creating a new transaction (POS checkout).
  * This use case orchestrates domain entities to create transactions and optionally draft invoices.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, Accountant, or Owner role)
  * - Validate store and customer existence
@@ -12,7 +12,7 @@
  * - Optionally create draft invoice
  * - Persist transaction via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -42,7 +42,9 @@ export interface CustomerRepository {
 }
 
 export interface ProductRepository {
-  findById(id: string): Promise<{ id: string; name: string; unitPrice: number; vatRate: number } | null>;
+  findById(
+    id: string,
+  ): Promise<{ id: string; name: string; unitPrice: number; vatRate: number } | null>;
 }
 
 export interface ServiceRepository {
@@ -103,7 +105,7 @@ export interface CreateTransactionResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -154,16 +156,16 @@ export class CreateTransactionUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create transaction use case
-   * 
+   *
    * @param input - Input data for creating transaction
    * @returns Result containing created transaction or error
    */
@@ -197,7 +199,7 @@ export class CreateTransactionUseCase {
           input.storeId,
           input.customerId,
           validatedLines,
-          input.performedBy
+          input.performedBy,
         );
       } else {
         // If no invoice, we still need an invoice ID for transaction
@@ -210,7 +212,7 @@ export class CreateTransactionUseCase {
         input.storeId,
         invoice.id,
         validatedLines,
-        input.performedBy
+        input.performedBy,
       );
 
       // 8. Persist transaction via repository
@@ -234,12 +236,12 @@ export class CreateTransactionUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -250,7 +252,9 @@ export class CreateTransactionUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Manager, Accountant, or Owner role can create transactions');
+      throw new ForbiddenError(
+        'Only Staff, Manager, Accountant, or Owner role can create transactions',
+      );
     }
   }
 
@@ -272,7 +276,7 @@ export class CreateTransactionUseCase {
    */
   private async validateAndLoadStore(storeId: string): Promise<Store> {
     const store = await this.storeRepository.findById(storeId);
-    
+
     if (!store) {
       throw new NotFoundError('Store not found');
     }
@@ -285,7 +289,7 @@ export class CreateTransactionUseCase {
    */
   private async validateAndLoadCustomer(customerId: string): Promise<Customer> {
     const customer = await this.customerRepository.findById(customerId);
-    
+
     if (!customer) {
       throw new NotFoundError('Customer not found');
     }
@@ -297,7 +301,7 @@ export class CreateTransactionUseCase {
    * Validates and normalizes transaction lines
    */
   private async validateAndNormalizeLines(
-    lines: CreateTransactionInput['lines']
+    lines: CreateTransactionInput['lines'],
   ): Promise<TransactionLineItem[]> {
     const validatedLines: TransactionLineItem[] = [];
 
@@ -317,11 +321,15 @@ export class CreateTransactionUseCase {
 
       // Validate product_id and service_id (not both, at least one)
       if (!line.productId && !line.serviceId) {
-        throw new ValidationError(`Line ${lineIndex}: Must specify either product_id or service_id`);
+        throw new ValidationError(
+          `Line ${lineIndex}: Must specify either product_id or service_id`,
+        );
       }
 
       if (line.productId && line.serviceId) {
-        throw new ValidationError(`Line ${lineIndex}: Cannot specify both product_id and service_id`);
+        throw new ValidationError(
+          `Line ${lineIndex}: Cannot specify both product_id and service_id`,
+        );
       }
 
       // Validate product exists if provided
@@ -360,7 +368,7 @@ export class CreateTransactionUseCase {
     storeId: string,
     customerId: string | undefined,
     lines: TransactionLineItem[],
-    createdBy: string
+    createdBy: string,
   ): Promise<Invoice> {
     // Convert transaction lines to invoice lines
     const invoiceLines: InvoiceLine[] = [];
@@ -418,7 +426,7 @@ export class CreateTransactionUseCase {
       undefined, // paymentMethod
       undefined, // externalReference
       now,
-      now
+      now,
     );
 
     return await this.invoiceRepository.save(invoice);
@@ -439,7 +447,7 @@ export class CreateTransactionUseCase {
     storeId: string,
     invoiceId: string,
     lines: TransactionLineItem[],
-    createdBy: string
+    createdBy: string,
   ): Transaction {
     const transactionId = this.generateId();
     const now = new Date();
@@ -452,7 +460,7 @@ export class CreateTransactionUseCase {
       lines,
       PaymentStatus.PENDING,
       now,
-      now
+      now,
     );
   }
 
@@ -476,7 +484,7 @@ export class CreateTransactionUseCase {
             paymentStatus: transaction.paymentStatus,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -495,7 +503,7 @@ export class CreateTransactionUseCase {
       id: transaction.id,
       storeId: transaction.storeId,
       invoiceId: transaction.invoiceId,
-      lines: transaction.lineItems.map(item => ({ ...item })),
+      lines: transaction.lineItems.map((item) => ({ ...item })),
       totalAmount: transaction.totalAmount,
       paymentStatus: transaction.paymentStatus,
       createdBy: transaction.createdBy,
@@ -527,4 +535,3 @@ export class CreateTransactionUseCase {
     };
   }
 }
-

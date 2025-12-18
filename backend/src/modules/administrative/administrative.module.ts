@@ -1,9 +1,9 @@
 /**
  * Administrative Module
- * 
+ *
  * Main NestJS module for the Administrative domain.
  * Consolidates Application, Presentation, and Infrastructure layers.
- * 
+ *
  * This module:
  * - Imports all Administrative sub-modules (Application, Presentation, Infrastructure)
  * - Provides a single entry point for the Administrative domain
@@ -18,8 +18,8 @@ import { AdministrativeInfrastructureModule } from './infrastructure/administrat
 @Module({
   imports: [
     AdministrativeInfrastructureModule, // Infrastructure first (repositories)
-    AdministrativeApplicationModule,   // Then application (use cases depend on repositories)
-    AdministrativePresentationModule,  // Finally presentation (controllers depend on use cases)
+    AdministrativeApplicationModule, // Then application (use cases depend on repositories)
+    AdministrativePresentationModule, // Finally presentation (controllers depend on use cases)
   ],
   exports: [
     // Export infrastructure for other modules that need repositories
@@ -29,4 +29,3 @@ import { AdministrativeInfrastructureModule } from './infrastructure/administrat
   ],
 })
 export class AdministrativeModule {}
-

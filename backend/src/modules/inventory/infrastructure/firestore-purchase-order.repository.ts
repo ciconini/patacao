@@ -1,12 +1,16 @@
 /**
  * PurchaseOrderRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for PurchaseOrderRepository port.
  */
 
 import { Injectable, Inject } from '@nestjs/common';
 import { Firestore } from 'firebase-admin/firestore';
-import { PurchaseOrder, PurchaseOrderStatus, PurchaseOrderLine } from '../domain/purchase-order.entity';
+import {
+  PurchaseOrder,
+  PurchaseOrderStatus,
+  PurchaseOrderLine,
+} from '../domain/purchase-order.entity';
 import { PurchaseOrderRepository } from '../ports/purchase-order.repository.port';
 
 interface PurchaseOrderDocument {
@@ -30,7 +34,7 @@ export class FirestorePurchaseOrderRepository implements PurchaseOrderRepository
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   async save(purchaseOrder: PurchaseOrder): Promise<PurchaseOrder> {
@@ -58,7 +62,7 @@ export class FirestorePurchaseOrderRepository implements PurchaseOrderRepository
       id: po.id,
       supplierId: po.supplierId,
       storeId: po.storeId,
-      orderLines: po.orderLines.map(line => ({
+      orderLines: po.orderLines.map((line) => ({
         productId: line.productId,
         quantity: line.quantity,
         unitPrice: line.unitPrice,
@@ -71,7 +75,7 @@ export class FirestorePurchaseOrderRepository implements PurchaseOrderRepository
   }
 
   private toEntity(id: string, doc: PurchaseOrderDocument): PurchaseOrder {
-    const orderLines: PurchaseOrderLine[] = doc.orderLines.map(line => ({
+    const orderLines: PurchaseOrderLine[] = doc.orderLines.map((line) => ({
       productId: line.productId,
       quantity: line.quantity,
       unitPrice: line.unitPrice,
@@ -85,7 +89,7 @@ export class FirestorePurchaseOrderRepository implements PurchaseOrderRepository
       doc.storeId,
       doc.status,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
@@ -97,4 +101,3 @@ export class FirestorePurchaseOrderRepository implements PurchaseOrderRepository
     return timestamp.toDate();
   }
 }
-

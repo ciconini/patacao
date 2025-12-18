@@ -1,6 +1,6 @@
 /**
  * Appointment Controller
- * 
+ *
  * REST API controller for Appointment management endpoints.
  */
 
@@ -17,16 +17,49 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+  ApiExtraModels,
+} from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { CreateAppointmentDto, AppointmentResponseDto } from '../dto/appointment.dto';
-import { PaginatedResponseDto } from '../../../../shared/presentation/dto/pagination.dto';
-import { CreateAppointmentUseCase, CreateAppointmentInput } from '../../application/create-appointment.use-case';
-import { ConfirmAppointmentUseCase, ConfirmAppointmentInput } from '../../application/confirm-appointment.use-case';
-import { CompleteAppointmentUseCase, CompleteAppointmentInput } from '../../application/complete-appointment.use-case';
-import { CancelAppointmentUseCase, CancelAppointmentInput } from '../../application/cancel-appointment.use-case';
-import { SearchAppointmentsUseCase, SearchAppointmentsInput } from '../../application/search-appointments.use-case';
+import { PaginatedResponseDto, PaginationMetaDto } from '../../../../shared/presentation/dto/pagination.dto';
+import {
+  CreateAppointmentUseCase,
+  CreateAppointmentInput,
+} from '../../application/create-appointment.use-case';
+import {
+  ConfirmAppointmentUseCase,
+  ConfirmAppointmentInput,
+} from '../../application/confirm-appointment.use-case';
+import {
+  CompleteAppointmentUseCase,
+  CompleteAppointmentInput,
+} from '../../application/complete-appointment.use-case';
+import {
+  CancelAppointmentUseCase,
+  CancelAppointmentInput,
+} from '../../application/cancel-appointment.use-case';
+import {
+  SearchAppointmentsUseCase,
+  SearchAppointmentsInput,
+} from '../../application/search-appointments.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Services')
+@ApiBearerAuth('JWT-auth')
+@ApiTags('Services')
+@ApiBearerAuth('JWT-auth')
+@ApiExtraModels(PaginatedResponseDto, PaginationMetaDto)
 @Controller('api/v1/appointments')
 @UseGuards(FirebaseAuthGuard)
 export class AppointmentController {
@@ -44,6 +77,20 @@ export class AppointmentController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create appointment',
+    description: 'Creates a new appointment for a customer and pet',
+  })
+  @ApiBody({ type: CreateAppointmentDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Appointment created successfully',
+    type: AppointmentResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data or scheduling conflict' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Customer, pet, store, or staff not found' })
   async create(
     @Body() createDto: CreateAppointmentDto,
     @Request() req: AuthenticatedRequest,
@@ -62,7 +109,7 @@ export class AppointmentController {
       staffId: createDto.staffId,
       services: createDto.services,
       notes: createDto.notes,
-        // recurrence is not supported in the current implementation
+      // recurrence is not supported in the current implementation
       performedBy: userId,
     };
 
@@ -80,6 +127,18 @@ export class AppointmentController {
    * PUT /api/v1/appointments/:id
    */
   @Put(':id')
+  @ApiOperation({ summary: 'Update appointment', description: 'Updates an existing appointment' })
+  @ApiParam({ name: 'id', description: 'Appointment UUID', type: String })
+  @ApiBody({ type: CreateAppointmentDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Appointment updated successfully',
+    type: AppointmentResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
   async update(
     @Param('id') id: string,
     @Body() updateDto: CreateAppointmentDto,
@@ -94,6 +153,19 @@ export class AppointmentController {
    * GET /api/v1/appointments/:id
    */
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get appointment by ID',
+    description: 'Retrieves an appointment by its ID',
+  })
+  @ApiParam({ name: 'id', description: 'Appointment UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Appointment retrieved successfully',
+    type: AppointmentResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
   async findOne(@Param('id') id: string): Promise<AppointmentResponseDto> {
     // TODO: Implement GetAppointmentUseCase
     throw new Error('Not implemented yet');
@@ -104,6 +176,63 @@ export class AppointmentController {
    * GET /api/v1/appointments
    */
   @Get()
+  @ApiOperation({
+    summary: 'Search appointments',
+    description: 'Searches and filters appointments with pagination support',
+  })
+  @ApiQuery({ name: 'storeId', required: false, type: String, description: 'Filter by store ID' })
+  @ApiQuery({ name: 'staffId', required: false, type: String, description: 'Filter by staff ID' })
+  @ApiQuery({
+    name: 'customerId',
+    required: false,
+    type: String,
+    description: 'Filter by customer ID',
+  })
+  @ApiQuery({ name: 'petId', required: false, type: String, description: 'Filter by pet ID' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Filter by start date (ISO string)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'Filter by end date (ISO string)',
+  })
+  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1, description: 'Page number' })
+  @ApiQuery({
+    name: 'perPage',
+    required: false,
+    type: Number,
+    example: 20,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    type: String,
+    description: 'Sort field and direction',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Appointments retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/AppointmentResponseDto' },
+        },
+        meta: { $ref: '#/components/schemas/PaginationMetaDto' },
+      },
+      required: ['items', 'meta'],
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   async search(
     @Query('storeId') storeId?: string,
     @Query('staffId') staffId?: string,
@@ -143,7 +272,7 @@ export class AppointmentController {
     }
 
     return {
-      items: result.data.items.map(item => this.mapToResponseDto(item)),
+      items: result.data.items.map((item) => this.mapToResponseDto(item)),
       meta: result.data.meta,
     };
   }
@@ -153,6 +282,17 @@ export class AppointmentController {
    * POST /api/v1/appointments/:id/confirm
    */
   @Post(':id/confirm')
+  @ApiOperation({ summary: 'Confirm appointment', description: 'Confirms a pending appointment' })
+  @ApiParam({ name: 'id', description: 'Appointment UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Appointment confirmed successfully',
+    type: AppointmentResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Appointment cannot be confirmed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
   async confirm(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
@@ -181,6 +321,20 @@ export class AppointmentController {
    * POST /api/v1/appointments/:id/complete
    */
   @Post(':id/complete')
+  @ApiOperation({
+    summary: 'Complete appointment',
+    description: 'Marks an appointment as completed',
+  })
+  @ApiParam({ name: 'id', description: 'Appointment UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Appointment completed successfully',
+    type: AppointmentResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Appointment cannot be completed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
   async complete(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
@@ -209,6 +363,21 @@ export class AppointmentController {
    * POST /api/v1/appointments/:id/cancel
    */
   @Post(':id/cancel')
+  @ApiOperation({
+    summary: 'Cancel appointment',
+    description: 'Cancels an appointment with an optional reason',
+  })
+  @ApiParam({ name: 'id', description: 'Appointment UUID', type: String })
+  @ApiBody({ schema: { type: 'object', properties: { reason: { type: 'string' } } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Appointment cancelled successfully',
+    type: AppointmentResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Appointment cannot be cancelled' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
   async cancel(
     @Param('id') id: string,
     @Body('reason') reason: string,
@@ -255,4 +424,3 @@ export class AppointmentController {
     };
   }
 }
-

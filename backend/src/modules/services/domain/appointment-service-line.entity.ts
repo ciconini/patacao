@@ -1,11 +1,11 @@
 /**
  * AppointmentServiceLine Domain Entity
- * 
+ *
  * Represents a join entity linking an Appointment to a Service.
  * This entity tracks which services are included in an appointment, along with quantities
  * and optional price overrides for flexible pricing.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - An AppointmentServiceLine must be linked to an Appointment and a Service (invariants)
  * - Quantity must be positive
@@ -24,7 +24,7 @@ export class AppointmentServiceLine {
 
   /**
    * Creates a new AppointmentServiceLine entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param appointmentId - Appointment ID this line belongs to (required)
    * @param serviceId - Service ID this line references (required)
@@ -32,7 +32,7 @@ export class AppointmentServiceLine {
    * @param priceOverride - Optional price override (must be non-negative if provided)
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if appointmentId is empty
    * @throws Error if serviceId is empty
    * @throws Error if quantity is not positive
@@ -45,7 +45,7 @@ export class AppointmentServiceLine {
     quantity: number = 1,
     priceOverride?: number,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateAppointmentId(appointmentId);
@@ -96,7 +96,7 @@ export class AppointmentServiceLine {
 
   /**
    * Updates the quantity
-   * 
+   *
    * @param quantity - New quantity
    * @throws Error if quantity is not positive
    */
@@ -108,7 +108,7 @@ export class AppointmentServiceLine {
 
   /**
    * Updates the price override
-   * 
+   *
    * @param priceOverride - New price override (undefined to remove override)
    * @throws Error if priceOverride is negative
    */
@@ -130,7 +130,7 @@ export class AppointmentServiceLine {
 
   /**
    * Checks if a price override is set
-   * 
+   *
    * @returns True if price override is set
    */
   hasPriceOverride(): boolean {
@@ -140,7 +140,7 @@ export class AppointmentServiceLine {
   /**
    * Calculates the line total using the effective price
    * Effective price is price_override if set, otherwise uses the provided service price
-   * 
+   *
    * @param servicePrice - The service's base price (used if no override is set)
    * @returns Line total (quantity * effective price)
    * @throws Error if servicePrice is negative
@@ -150,9 +150,7 @@ export class AppointmentServiceLine {
       throw new Error('Service price cannot be negative');
     }
 
-    const effectivePrice = this._priceOverride !== undefined 
-      ? this._priceOverride 
-      : servicePrice;
+    const effectivePrice = this._priceOverride !== undefined ? this._priceOverride : servicePrice;
 
     return this._quantity * effectivePrice;
   }
@@ -160,7 +158,7 @@ export class AppointmentServiceLine {
   /**
    * Gets the effective price for this line
    * Effective price is price_override if set, otherwise uses the provided service price
-   * 
+   *
    * @param servicePrice - The service's base price (used if no override is set)
    * @returns Effective price per unit
    * @throws Error if servicePrice is negative
@@ -183,13 +181,17 @@ export class AppointmentServiceLine {
 
   private validateAppointmentId(appointmentId: string): void {
     if (!appointmentId || appointmentId.trim().length === 0) {
-      throw new Error('Appointment ID is required - an AppointmentServiceLine must be linked to an Appointment');
+      throw new Error(
+        'Appointment ID is required - an AppointmentServiceLine must be linked to an Appointment',
+      );
     }
   }
 
   private validateServiceId(serviceId: string): void {
     if (!serviceId || serviceId.trim().length === 0) {
-      throw new Error('Service ID is required - an AppointmentServiceLine must be linked to a Service');
+      throw new Error(
+        'Service ID is required - an AppointmentServiceLine must be linked to a Service',
+      );
     }
   }
 
@@ -205,4 +207,3 @@ export class AppointmentServiceLine {
     }
   }
 }
-

@@ -1,9 +1,9 @@
 /**
  * StockMovementRepository Port (Interface)
- * 
+ *
  * Repository interface for StockMovement domain entity persistence.
  * This is a port in the Hexagonal Architecture pattern.
- * 
+ *
  * Implementations should be provided in the Infrastructure layer.
  */
 
@@ -47,7 +47,7 @@ export interface StockMovementRepository {
   /**
    * Saves a StockMovement entity
    * Note: StockMovements are immutable and cannot be updated or deleted
-   * 
+   *
    * @param movement - StockMovement domain entity to save
    * @returns Saved StockMovement entity
    */
@@ -55,7 +55,7 @@ export interface StockMovementRepository {
 
   /**
    * Searches for stock movements with pagination
-   * 
+   *
    * @param criteria - Search criteria
    * @param pagination - Pagination parameters
    * @param sort - Sort parameters
@@ -64,7 +64,6 @@ export interface StockMovementRepository {
   search(
     criteria: StockMovementSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<StockMovement>>;
 }
-

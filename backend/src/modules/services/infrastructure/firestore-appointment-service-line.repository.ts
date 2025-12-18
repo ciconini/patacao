@@ -1,6 +1,6 @@
 /**
  * AppointmentServiceLineRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for AppointmentServiceLineRepository port.
  */
 
@@ -25,10 +25,13 @@ export class FirestoreAppointmentServiceLineRepository implements AppointmentSer
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
-  async saveLines(appointmentId: string, lines: AppointmentServiceLine[]): Promise<AppointmentServiceLine[]> {
+  async saveLines(
+    appointmentId: string,
+    lines: AppointmentServiceLine[],
+  ): Promise<AppointmentServiceLine[]> {
     // Delete existing lines for this appointment
     const existingSnapshot = await this.firestore
       .collection(this.collectionName)
@@ -36,12 +39,12 @@ export class FirestoreAppointmentServiceLineRepository implements AppointmentSer
       .get();
 
     const batch = this.firestore.batch();
-    existingSnapshot.docs.forEach(doc => {
+    existingSnapshot.docs.forEach((doc) => {
       batch.delete(doc.ref);
     });
 
     // Add new lines
-    lines.forEach(line => {
+    lines.forEach((line) => {
       const docRef = this.firestore.collection(this.collectionName).doc(line.id);
       const document = this.toDocument(line);
       batch.set(docRef, document);
@@ -51,16 +54,18 @@ export class FirestoreAppointmentServiceLineRepository implements AppointmentSer
     return lines;
   }
 
-  async findByAppointmentId(appointmentId: string): Promise<Array<{
-    serviceId: string;
-    quantity: number;
-  }>> {
+  async findByAppointmentId(appointmentId: string): Promise<
+    Array<{
+      serviceId: string;
+      quantity: number;
+    }>
+  > {
     const snapshot = await this.firestore
       .collection(this.collectionName)
       .where('appointmentId', '==', appointmentId)
       .get();
 
-    return snapshot.docs.map(doc => {
+    return snapshot.docs.map((doc) => {
       const data = doc.data() as AppointmentServiceLineDocument;
       return {
         serviceId: data.serviceId,
@@ -89,7 +94,7 @@ export class FirestoreAppointmentServiceLineRepository implements AppointmentSer
       doc.quantity,
       doc.priceOverride,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
@@ -101,4 +106,3 @@ export class FirestoreAppointmentServiceLineRepository implements AppointmentSer
     return timestamp.toDate();
   }
 }
-

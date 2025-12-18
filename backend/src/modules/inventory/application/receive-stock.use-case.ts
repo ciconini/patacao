@@ -1,10 +1,10 @@
 /**
  * Receive Stock Use Case (UC-INV-001)
- * 
+ *
  * Application use case for receiving stock at a store.
  * This use case orchestrates domain entities to record incoming stock, create stock batches,
  * and create stock movements.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, or Owner role)
  * - Validate store, supplier, and purchase order existence
@@ -13,7 +13,7 @@
  * - Create stock movements with reason RECEIPT
  * - Persist all changes via repositories
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -136,7 +136,7 @@ export interface ReceiveStockResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -197,16 +197,16 @@ export class ReceiveStockUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the receive stock use case
-   * 
+   *
    * @param input - Input data for receiving stock
    * @returns Result containing receipt details or error
    */
@@ -224,7 +224,7 @@ export class ReceiveStockUseCase {
       // 4. Validate user has store access
       const hasAccess = await this.currentUserRepository.hasStoreAccess(
         input.performedBy,
-        input.storeId
+        input.storeId,
       );
       if (!hasAccess) {
         throw new ForbiddenError('You do not have access to this store');
@@ -271,7 +271,7 @@ export class ReceiveStockUseCase {
           batch.id,
           receiptId,
           input.purchaseOrderId,
-          input.performedBy
+          input.performedBy,
         );
 
         // Validate movement using domain service
@@ -282,12 +282,12 @@ export class ReceiveStockUseCase {
 
         const validationResult = this.stockMovementDomainService.validateMovementLegality(
           movement,
-          product
+          product,
         );
 
         if (!validationResult.isValid) {
           throw new ValidationError(
-            `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`
+            `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`,
           );
         }
 
@@ -311,7 +311,7 @@ export class ReceiveStockUseCase {
           stockBatches,
           stockMovements,
           validatedLines,
-          now
+          now,
         ),
       };
     } catch (error) {
@@ -324,12 +324,12 @@ export class ReceiveStockUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -362,7 +362,7 @@ export class ReceiveStockUseCase {
    */
   private async validateAndLoadStore(storeId: string): Promise<Store> {
     const store = await this.storeRepository.findById(storeId);
-    
+
     if (!store) {
       throw new NotFoundError('Store not found');
     }
@@ -375,7 +375,7 @@ export class ReceiveStockUseCase {
    */
   private async validateAndLoadSupplier(supplierId: string): Promise<Supplier> {
     const supplier = await this.supplierRepository.findById(supplierId);
-    
+
     if (!supplier) {
       throw new NotFoundError('Supplier not found');
     }
@@ -388,13 +388,15 @@ export class ReceiveStockUseCase {
    */
   private async validateAndLoadPurchaseOrder(purchaseOrderId: string): Promise<PurchaseOrder> {
     const purchaseOrder = await this.purchaseOrderRepository.findById(purchaseOrderId);
-    
+
     if (!purchaseOrder) {
       throw new NotFoundError('Purchase order not found');
     }
 
     if (!purchaseOrder.canBeReceived()) {
-      throw new ConflictError('Purchase order cannot be received. Only ordered purchase orders can be received');
+      throw new ConflictError(
+        'Purchase order cannot be received. Only ordered purchase orders can be received',
+      );
     }
 
     return purchaseOrder;
@@ -405,7 +407,7 @@ export class ReceiveStockUseCase {
    */
   private async validateReceiptLines(
     lines: ReceiveStockInput['lines'],
-    storeId: string
+    storeId: string,
   ): Promise<ReceiveStockInput['lines']> {
     const validatedLines: ReceiveStockInput['lines'] = [];
 
@@ -429,9 +431,12 @@ export class ReceiveStockUseCase {
       }
 
       // Validate batch number length
-      if (line.batchNumber && line.batchNumber.length > ReceiveStockUseCase.MAX_BATCH_NUMBER_LENGTH) {
+      if (
+        line.batchNumber &&
+        line.batchNumber.length > ReceiveStockUseCase.MAX_BATCH_NUMBER_LENGTH
+      ) {
         throw new ValidationError(
-          `Line ${lineIndex}: Batch number cannot exceed ${ReceiveStockUseCase.MAX_BATCH_NUMBER_LENGTH} characters`
+          `Line ${lineIndex}: Batch number cannot exceed ${ReceiveStockUseCase.MAX_BATCH_NUMBER_LENGTH} characters`,
         );
       }
 
@@ -466,7 +471,7 @@ export class ReceiveStockUseCase {
     batchId: string | undefined,
     receiptId: string,
     purchaseOrderId: string | undefined,
-    performedBy: string
+    performedBy: string,
   ): StockMovement {
     const movementId = this.generateId();
     const now = new Date();
@@ -480,7 +485,7 @@ export class ReceiveStockUseCase {
       locationId,
       batchId,
       purchaseOrderId || receiptId, // Reference to PO if exists, otherwise receipt ID
-      now
+      now,
     );
   }
 
@@ -492,7 +497,7 @@ export class ReceiveStockUseCase {
     input: ReceiveStockInput,
     stockBatches: StockBatch[],
     stockMovements: StockMovement[],
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -512,7 +517,7 @@ export class ReceiveStockUseCase {
             movementsCount: stockMovements.length,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -532,7 +537,7 @@ export class ReceiveStockUseCase {
     stockBatches: StockBatch[],
     stockMovements: StockMovement[],
     validatedLines: ReceiveStockInput['lines'],
-    createdAt: Date
+    createdAt: Date,
   ): ReceiveStockOutput {
     return {
       receiptId,
@@ -546,14 +551,14 @@ export class ReceiveStockUseCase {
         batchNumber: line.batchNumber,
         expiryDate: line.expiryDate,
       })),
-      stockBatches: stockBatches.map(batch => ({
+      stockBatches: stockBatches.map((batch) => ({
         id: batch.id,
         productId: batch.productId,
         batchNumber: batch.batchNumber,
         expiryDate: batch.expiryDate,
         quantity: batch.quantity,
       })),
-      stockMovements: stockMovements.map(movement => ({
+      stockMovements: stockMovements.map((movement) => ({
         id: movement.id,
         productId: movement.productId,
         quantityChange: movement.quantityChange,
@@ -589,4 +594,3 @@ export class ReceiveStockUseCase {
     };
   }
 }
-

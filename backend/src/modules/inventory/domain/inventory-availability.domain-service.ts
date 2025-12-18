@@ -1,22 +1,22 @@
 /**
  * InventoryAvailabilityDomainService
- * 
+ *
  * Domain service responsible for validating inventory availability for services.
  * This service checks if products required by services are available in stock,
  * respecting reservations and handling both stock-tracked and non-tracked products.
- * 
+ *
  * Responsibilities:
  * - Validate inventory availability for services
  * - Respect active reservations (reduce available stock)
  * - Handle stock_tracked and non-tracked products
  * - Calculate available stock considering reservations
  * - Provide detailed availability information
- * 
+ *
  * Collaborating Entities:
  * - Product: Provides product information and stock tracking status
  * - InventoryReservation: Represents reserved quantities that reduce available stock
  * - Service: Provides consumed items that need to be checked for availability
- * 
+ *
  * Business Rules Enforced:
  * - BR: If `stock_tracked` is true, reservations and decrements apply
  * - BR: Reservation reduces available stock for other operations but final decrement happens at sale completion
@@ -24,13 +24,13 @@
  * - BR: Expired reservations do not reduce available stock
  * - BR: Non-tracked products are always considered available
  * - BR: Available stock = current stock - active reserved quantity
- * 
+ *
  * Invariants:
  * - Current stock levels must be non-negative
  * - Reserved quantities must be non-negative
  * - Service consumed items must reference valid products
  * - Only active (non-expired) reservations reduce available stock
- * 
+ *
  * Edge Cases:
  * - Product with stock_tracked = false (always available)
  * - Product with no current stock but has reservations
@@ -70,12 +70,12 @@ export interface ServiceAvailabilityResult {
 export class InventoryAvailabilityDomainService {
   /**
    * Validates if a service can be fulfilled based on inventory availability.
-   * 
+   *
    * This method checks all consumed items of the service against available stock,
    * respecting reservations and stock tracking settings.
-   * 
+   *
    * Business Rule: If `stock_tracked` is true, reservations and decrements apply.
-   * 
+   *
    * @param service - The service to check availability for
    * @param products - Map of product ID to Product entity
    * @param currentStockLevels - Map of product ID to current stock quantity
@@ -89,7 +89,7 @@ export class InventoryAvailabilityDomainService {
     products: Map<string, Product>,
     currentStockLevels: Map<string, number>,
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): ServiceAvailabilityResult {
     if (!service) {
       throw new Error('Service entity is required');
@@ -113,7 +113,7 @@ export class InventoryAvailabilityDomainService {
     // Check each consumed item
     for (const consumedItem of service.consumedItems) {
       const product = products.get(consumedItem.productId);
-      
+
       if (!product) {
         // Product not found - treat as unavailable
         productAvailabilities.push({
@@ -137,7 +137,7 @@ export class InventoryAvailabilityDomainService {
         consumedItem.quantity,
         currentStockLevels.get(product.id) || 0,
         reservations,
-        referenceDate
+        referenceDate,
       );
 
       productAvailabilities.push(availability);
@@ -161,11 +161,11 @@ export class InventoryAvailabilityDomainService {
 
   /**
    * Calculates availability for a single product considering reservations.
-   * 
+   *
    * Business Rule: Available stock = current stock - active reserved quantity
    * Business Rule: Expired reservations do not reduce available stock
    * Business Rule: Non-tracked products are always considered available
-   * 
+   *
    * @param product - The product to check
    * @param requiredQuantity - Quantity required
    * @param currentStock - Current stock level for the product
@@ -178,7 +178,7 @@ export class InventoryAvailabilityDomainService {
     requiredQuantity: number,
     currentStock: number,
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): ProductAvailability {
     if (!product) {
       throw new Error('Product entity is required');
@@ -211,7 +211,7 @@ export class InventoryAvailabilityDomainService {
     const reservedQuantity = this.calculateReservedQuantity(
       product.id,
       reservations,
-      referenceDate
+      referenceDate,
     );
 
     // Available stock = current stock - reserved quantity
@@ -236,9 +236,9 @@ export class InventoryAvailabilityDomainService {
 
   /**
    * Calculates the total reserved quantity for a product from active reservations.
-   * 
+   *
    * Business Rule: Only active (non-expired) reservations reduce available stock
-   * 
+   *
    * @param productId - Product ID to calculate reserved quantity for
    * @param reservations - List of all reservations
    * @param referenceDate - Date to check reservation expiry against
@@ -247,7 +247,7 @@ export class InventoryAvailabilityDomainService {
   calculateReservedQuantity(
     productId: string,
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): number {
     if (!productId || productId.trim().length === 0) {
       throw new Error('Product ID is required');
@@ -272,7 +272,7 @@ export class InventoryAvailabilityDomainService {
 
   /**
    * Checks if a specific quantity of a product is available.
-   * 
+   *
    * @param product - The product to check
    * @param requiredQuantity - Quantity required
    * @param currentStock - Current stock level
@@ -285,14 +285,14 @@ export class InventoryAvailabilityDomainService {
     requiredQuantity: number,
     currentStock: number,
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): boolean {
     const availability = this.calculateProductAvailability(
       product,
       requiredQuantity,
       currentStock,
       reservations,
-      referenceDate
+      referenceDate,
     );
 
     return availability.isAvailable;
@@ -300,7 +300,7 @@ export class InventoryAvailabilityDomainService {
 
   /**
    * Validates availability for multiple services.
-   * 
+   *
    * @param services - List of services to check
    * @param products - Map of product ID to Product entity
    * @param currentStockLevels - Map of product ID to current stock quantity
@@ -313,7 +313,7 @@ export class InventoryAvailabilityDomainService {
     products: Map<string, Product>,
     currentStockLevels: Map<string, number>,
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): Map<string, ServiceAvailabilityResult> {
     const results = new Map<string, ServiceAvailabilityResult>();
 
@@ -323,7 +323,7 @@ export class InventoryAvailabilityDomainService {
         products,
         currentStockLevels,
         reservations,
-        referenceDate
+        referenceDate,
       );
       results.set(service.id, result);
     }
@@ -333,14 +333,14 @@ export class InventoryAvailabilityDomainService {
 
   /**
    * Gets the total reserved quantity across all products.
-   * 
+   *
    * @param reservations - List of reservations
    * @param referenceDate - Date to check reservation expiry against
    * @returns Map of product ID to total reserved quantity
    */
   getTotalReservedQuantities(
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): Map<string, number> {
     const reservedQuantities = new Map<string, number>();
 
@@ -359,9 +359,9 @@ export class InventoryAvailabilityDomainService {
 
   /**
    * Calculates available stock for a product considering reservations.
-   * 
+   *
    * This is a convenience method that combines current stock and reserved quantity.
-   * 
+   *
    * @param product - The product
    * @param currentStock - Current stock level
    * @param reservations - List of reservations
@@ -372,7 +372,7 @@ export class InventoryAvailabilityDomainService {
     product: Product,
     currentStock: number,
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): number {
     if (!product.stockTracked) {
       return Infinity; // Non-tracked products have unlimited availability
@@ -381,7 +381,7 @@ export class InventoryAvailabilityDomainService {
     const reservedQuantity = this.calculateReservedQuantity(
       product.id,
       reservations,
-      referenceDate
+      referenceDate,
     );
 
     return Math.max(0, currentStock - reservedQuantity);
@@ -389,53 +389,53 @@ export class InventoryAvailabilityDomainService {
 
   /**
    * Filters reservations to only include active (non-expired) ones.
-   * 
+   *
    * @param reservations - List of reservations
    * @param referenceDate - Date to check expiry against
    * @returns List of active reservations
    */
   getActiveReservations(
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): InventoryReservation[] {
-    return reservations.filter(reservation => reservation.isActive(referenceDate));
+    return reservations.filter((reservation) => reservation.isActive(referenceDate));
   }
 
   /**
    * Filters reservations to only include expired ones.
-   * 
+   *
    * @param reservations - List of reservations
    * @param referenceDate - Date to check expiry against
    * @returns List of expired reservations
    */
   getExpiredReservations(
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): InventoryReservation[] {
-    return reservations.filter(reservation => reservation.isExpired(referenceDate));
+    return reservations.filter((reservation) => reservation.isExpired(referenceDate));
   }
 
   /**
    * Gets reservations for a specific product.
-   * 
+   *
    * @param productId - Product ID
    * @param reservations - List of reservations
    * @returns List of reservations for the product
    */
   getReservationsForProduct(
     productId: string,
-    reservations: InventoryReservation[]
+    reservations: InventoryReservation[],
   ): InventoryReservation[] {
     if (!productId || productId.trim().length === 0) {
       throw new Error('Product ID is required');
     }
 
-    return reservations.filter(reservation => reservation.productId === productId);
+    return reservations.filter((reservation) => reservation.productId === productId);
   }
 
   /**
    * Gets active reservations for a specific product.
-   * 
+   *
    * @param productId - Product ID
    * @param reservations - List of reservations
    * @param referenceDate - Date to check expiry against
@@ -444,10 +444,9 @@ export class InventoryAvailabilityDomainService {
   getActiveReservationsForProduct(
     productId: string,
     reservations: InventoryReservation[],
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): InventoryReservation[] {
     const productReservations = this.getReservationsForProduct(productId, reservations);
     return this.getActiveReservations(productReservations, referenceDate);
   }
 }
-

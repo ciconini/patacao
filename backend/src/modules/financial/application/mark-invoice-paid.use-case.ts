@@ -1,16 +1,16 @@
 /**
  * Mark Invoice Paid Use Case (UC-FIN-003)
- * 
+ *
  * Application use case for recording manual payment for an issued invoice.
  * This use case orchestrates domain entities to mark invoices as paid.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, Accountant, or Owner role)
  * - Validate invoice is in issued status
  * - Validate payment information
  * - Mark invoice as paid using domain entity method
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -71,7 +71,7 @@ export interface MarkInvoicePaidResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -124,16 +124,16 @@ export class MarkInvoicePaidUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the mark invoice paid use case
-   * 
+   *
    * @param input - Input data for marking invoice as paid
    * @returns Result containing updated invoice or error
    */
@@ -158,7 +158,9 @@ export class MarkInvoicePaidUseCase {
       if (invoice.status === InvoiceStatus.PAID) {
         const canOverride = this.canOverridePayment(currentUser.roleIds);
         if (!canOverride) {
-          throw new ConflictError('Invoice is already marked as paid. Only Manager/Accountant/Owner can override');
+          throw new ConflictError(
+            'Invoice is already marked as paid. Only Manager/Accountant/Owner can override',
+          );
         }
       } else if (invoice.status !== InvoiceStatus.ISSUED) {
         throw new ValidationError('Only issued invoices can be marked as paid');
@@ -186,14 +188,16 @@ export class MarkInvoicePaidUseCase {
   /**
    * Validates user authorization (must have Staff, Manager, Accountant, or Owner role)
    */
-  private async validateUserAuthorization(userId: string): Promise<{ id: string; roleIds: string[] }> {
+  private async validateUserAuthorization(
+    userId: string,
+  ): Promise<{ id: string; roleIds: string[] }> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -204,7 +208,9 @@ export class MarkInvoicePaidUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Manager, Accountant, or Owner role can mark invoices as paid');
+      throw new ForbiddenError(
+        'Only Staff, Manager, Accountant, or Owner role can mark invoices as paid',
+      );
     }
 
     return user;
@@ -214,7 +220,7 @@ export class MarkInvoicePaidUseCase {
    * Checks if user can override existing payments
    */
   private canOverridePayment(roleIds: string[]): boolean {
-    return roleIds.some(roleId => {
+    return roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -281,7 +287,7 @@ export class MarkInvoicePaidUseCase {
             status: invoice.status,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -330,4 +336,3 @@ export class MarkInvoicePaidUseCase {
     };
   }
 }
-

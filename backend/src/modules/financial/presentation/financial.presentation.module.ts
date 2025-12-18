@@ -1,6 +1,6 @@
 /**
  * Financial Presentation Module
- * 
+ *
  * NestJS module that registers all controllers for the Financial module.
  */
 
@@ -21,4 +21,3 @@ import { FinancialExportController } from './controllers/financial-export.contro
   ],
 })
 export class FinancialPresentationModule {}
-

@@ -1,9 +1,9 @@
 /**
  * Create Supplier Use Case (UC-INV-008)
- * 
+ *
  * Application use case for creating a new supplier record.
  * This use case orchestrates domain entities to create suppliers with contact information.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role)
  * - Validate input data and business rules
@@ -11,7 +11,7 @@
  * - Create Supplier domain entity
  * - Persist supplier via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -73,7 +73,7 @@ export interface CreateSupplierResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -114,16 +114,16 @@ export class CreateSupplierUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create supplier use case
-   * 
+   *
    * @param input - Input data for creating supplier
    * @returns Result containing created supplier or error
    */
@@ -162,12 +162,12 @@ export class CreateSupplierUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -200,7 +200,9 @@ export class CreateSupplierUseCase {
     }
 
     if (input.name.length > CreateSupplierUseCase.MAX_NAME_LENGTH) {
-      throw new ValidationError(`Supplier name cannot exceed ${CreateSupplierUseCase.MAX_NAME_LENGTH} characters`);
+      throw new ValidationError(
+        `Supplier name cannot exceed ${CreateSupplierUseCase.MAX_NAME_LENGTH} characters`,
+      );
     }
 
     // Validate email format using EmailAddress value object
@@ -243,7 +245,7 @@ export class CreateSupplierUseCase {
       input.phone?.trim(),
       input.defaultLeadTimeDays,
       now,
-      now
+      now,
     );
   }
 
@@ -267,7 +269,7 @@ export class CreateSupplierUseCase {
             defaultLeadTimeDays: supplier.defaultLeadTimeDays,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -316,4 +318,3 @@ export class CreateSupplierUseCase {
     };
   }
 }
-

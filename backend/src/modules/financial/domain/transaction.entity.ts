@@ -1,12 +1,12 @@
 /**
  * Transaction Domain Entity
- * 
+ *
  * Represents a transaction (sale) in the petshop management system.
  * Transactions represent POS/cart sales and are linked to invoices.
  * When completed with products, transactions trigger StockMovement decrements for tracked products.
  * Payment is recorded manually and payment_status reflects manual entries.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - Transaction must be linked to a Store and Invoice (invariants)
  * - Total amount must be calculated from line items
@@ -41,7 +41,7 @@ export class Transaction {
 
   /**
    * Creates a new Transaction entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param storeId - Store ID where transaction occurred (required)
    * @param invoiceId - Invoice ID this transaction is linked to (required)
@@ -50,7 +50,7 @@ export class Transaction {
    * @param paymentStatus - Payment status (default PENDING)
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if storeId is empty
    * @throws Error if invoiceId is empty
@@ -65,7 +65,7 @@ export class Transaction {
     lineItems: TransactionLineItem[] = [],
     paymentStatus: PaymentStatus = PaymentStatus.PENDING,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateStoreId(storeId);
@@ -79,7 +79,7 @@ export class Transaction {
     this._id = id;
     this._storeId = storeId;
     this._invoiceId = invoiceId;
-    this._lineItems = lineItems.map(item => ({ ...item }));
+    this._lineItems = lineItems.map((item) => ({ ...item }));
     this._paymentStatus = paymentStatus;
     this._createdBy = createdBy;
     this._createdAt = createdAt ? new Date(createdAt) : new Date();
@@ -103,7 +103,7 @@ export class Transaction {
   }
 
   get lineItems(): ReadonlyArray<TransactionLineItem> {
-    return this._lineItems.map(item => ({ ...item }));
+    return this._lineItems.map((item) => ({ ...item }));
   }
 
   get totalAmount(): number {
@@ -128,7 +128,7 @@ export class Transaction {
 
   /**
    * Adds a line item to the transaction
-   * 
+   *
    * @param item - Line item to add
    * @throws Error if item is invalid
    */
@@ -141,7 +141,7 @@ export class Transaction {
 
   /**
    * Removes a line item by index
-   * 
+   *
    * @param index - Index of the line item to remove
    * @throws Error if index is out of bounds
    */
@@ -156,7 +156,7 @@ export class Transaction {
 
   /**
    * Updates a line item by index
-   * 
+   *
    * @param index - Index of the line item to update
    * @param item - New line item data
    * @throws Error if index is out of bounds or item is invalid
@@ -173,13 +173,13 @@ export class Transaction {
 
   /**
    * Sets all line items
-   * 
+   *
    * @param lineItems - New list of line items
    * @throws Error if any line item is invalid
    */
   setLineItems(lineItems: TransactionLineItem[]): void {
     this.validateLineItems(lineItems);
-    this._lineItems = lineItems.map(item => ({ ...item }));
+    this._lineItems = lineItems.map((item) => ({ ...item }));
     this.recalculateTotal();
     this._updatedAt = new Date();
   }
@@ -213,13 +213,13 @@ export class Transaction {
    */
   private recalculateTotal(): void {
     this._totalAmount = this._lineItems.reduce((total, item) => {
-      return total + (item.quantity * item.unitPrice);
+      return total + item.quantity * item.unitPrice;
     }, 0);
   }
 
   /**
    * Gets the number of line items
-   * 
+   *
    * @returns Number of line items
    */
   getLineItemCount(): number {
@@ -228,7 +228,7 @@ export class Transaction {
 
   /**
    * Gets the total quantity of all items in the transaction
-   * 
+   *
    * @returns Sum of all quantities
    */
   getTotalQuantity(): number {
@@ -237,47 +237,47 @@ export class Transaction {
 
   /**
    * Gets line items that are products (have productId)
-   * 
+   *
    * @returns Array of line items that are products
    */
   getProductLineItems(): ReadonlyArray<TransactionLineItem> {
     return this._lineItems
-      .filter(item => item.productId !== undefined)
-      .map(item => ({ ...item }));
+      .filter((item) => item.productId !== undefined)
+      .map((item) => ({ ...item }));
   }
 
   /**
    * Gets line items that are services (have serviceId)
-   * 
+   *
    * @returns Array of line items that are services
    */
   getServiceLineItems(): ReadonlyArray<TransactionLineItem> {
     return this._lineItems
-      .filter(item => item.serviceId !== undefined)
-      .map(item => ({ ...item }));
+      .filter((item) => item.serviceId !== undefined)
+      .map((item) => ({ ...item }));
   }
 
   /**
    * Checks if the transaction has product line items
-   * 
+   *
    * @returns True if transaction has at least one product line item
    */
   hasProducts(): boolean {
-    return this._lineItems.some(item => item.productId !== undefined);
+    return this._lineItems.some((item) => item.productId !== undefined);
   }
 
   /**
    * Checks if the transaction has service line items
-   * 
+   *
    * @returns True if transaction has at least one service line item
    */
   hasServices(): boolean {
-    return this._lineItems.some(item => item.serviceId !== undefined);
+    return this._lineItems.some((item) => item.serviceId !== undefined);
   }
 
   /**
    * Checks if the transaction is pending payment
-   * 
+   *
    * @returns True if payment status is PENDING
    */
   isPending(): boolean {
@@ -286,7 +286,7 @@ export class Transaction {
 
   /**
    * Checks if the transaction is paid
-   * 
+   *
    * @returns True if payment status is PAID_MANUAL
    */
   isPaid(): boolean {
@@ -295,7 +295,7 @@ export class Transaction {
 
   /**
    * Checks if the transaction is refunded
-   * 
+   *
    * @returns True if payment status is REFUNDED
    */
   isRefunded(): boolean {
@@ -305,7 +305,7 @@ export class Transaction {
   /**
    * Checks if the transaction can be completed
    * Completing a Transaction with products triggers StockMovement decrements for tracked products
-   * 
+   *
    * @returns True if transaction can be completed (has line items and is paid)
    */
   canBeCompleted(): boolean {
@@ -364,4 +364,3 @@ export class Transaction {
     }
   }
 }
-

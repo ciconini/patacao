@@ -1,10 +1,10 @@
 /**
  * Firebase Authentication Guard
- * 
+ *
  * NestJS guard that verifies Firebase ID tokens from incoming requests.
  * This guard extracts the Bearer token from the Authorization header,
  * verifies it using Firebase Admin SDK, and attaches user information to the request.
- * 
+ *
  * Usage:
  * - Apply to controllers or routes: @UseGuards(FirebaseAuthGuard)
  * - Access user info in controllers: @Request() req (req.user will contain token payload)
@@ -29,9 +29,7 @@ export interface AuthenticatedRequest extends Request {
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
-  constructor(
-    private readonly firebaseAuthService: FirebaseAuthService
-  ) {}
+  constructor(private readonly firebaseAuthService: FirebaseAuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
@@ -44,9 +42,7 @@ export class FirebaseAuthGuard implements CanActivate {
     const verificationResult = await this.firebaseAuthService.verifyIdToken(token);
 
     if (!verificationResult.valid || !verificationResult.payload) {
-      throw new UnauthorizedException(
-        verificationResult.error || 'Invalid authentication token'
-      );
+      throw new UnauthorizedException(verificationResult.error || 'Invalid authentication token');
     }
 
     // Attach user information to request
@@ -58,7 +54,7 @@ export class FirebaseAuthGuard implements CanActivate {
 
   /**
    * Extracts the Bearer token from the Authorization header
-   * 
+   *
    * @param request - HTTP request object
    * @returns Token string or null if not found
    */
@@ -74,4 +70,3 @@ export class FirebaseAuthGuard implements CanActivate {
     return type === 'Bearer' ? token : null;
   }
 }
-

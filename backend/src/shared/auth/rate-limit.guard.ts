@@ -1,6 +1,6 @@
 /**
  * Rate Limit Guard
- * 
+ *
  * NestJS guard that applies rate limiting to routes.
  * This guard should be used on authentication endpoints to prevent brute force attacks.
  */
@@ -39,10 +39,10 @@ export class RateLimitGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<Request>();
-    
+
     // Get identifier (IP address or email from body)
     let identifier: string;
-    
+
     if (action === 'login' || action === 'password_reset') {
       // For login/password reset, use email from body if available, otherwise use IP
       const body = request.body || {};
@@ -71,4 +71,3 @@ export class RateLimitGuard implements CanActivate {
     return true;
   }
 }
-

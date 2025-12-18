@@ -1,6 +1,6 @@
 /**
  * Transaction Controller
- * 
+ *
  * REST API controller for Transaction management endpoints.
  */
 
@@ -15,12 +15,40 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
-import { CreateTransactionDto, CompleteTransactionDto, TransactionResponseDto, CompleteTransactionResponseDto } from '../dto/transaction.dto';
-import { CreateTransactionUseCase, CreateTransactionInput } from '../../application/create-transaction.use-case';
-import { CompleteTransactionUseCase, CompleteTransactionInput } from '../../application/complete-transaction.use-case';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiParam,
+  ApiExtraModels,
+} from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
+import {
+  CreateTransactionDto,
+  CompleteTransactionDto,
+  TransactionResponseDto,
+  CompleteTransactionResponseDto,
+  TransactionLineItemDto,
+  StockMovementResponseDto,
+} from '../dto/transaction.dto';
+import {
+  CreateTransactionUseCase,
+  CreateTransactionInput,
+} from '../../application/create-transaction.use-case';
+import {
+  CompleteTransactionUseCase,
+  CompleteTransactionInput,
+} from '../../application/complete-transaction.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Financial')
+@ApiBearerAuth('JWT-auth')
+@ApiExtraModels(TransactionLineItemDto, StockMovementResponseDto)
 @Controller('api/v1/transactions')
 @UseGuards(FirebaseAuthGuard)
 export class TransactionController {
@@ -35,6 +63,17 @@ export class TransactionController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create transaction', description: 'Creates a new POS transaction' })
+  @ApiBody({ type: CreateTransactionDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Transaction created successfully',
+    type: TransactionResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Store or customer not found' })
   async create(
     @Body() createDto: CreateTransactionDto,
     @Request() req: AuthenticatedRequest,
@@ -66,6 +105,21 @@ export class TransactionController {
    * POST /api/v1/transactions/:id/complete
    */
   @Post(':id/complete')
+  @ApiOperation({
+    summary: 'Complete transaction',
+    description: 'Completes a transaction and processes payment',
+  })
+  @ApiParam({ name: 'id', description: 'Transaction UUID', type: String })
+  @ApiBody({ type: CompleteTransactionDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction completed successfully',
+    type: CompleteTransactionResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Transaction cannot be completed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Transaction not found' })
   async complete(
     @Param('id') id: string,
     @Body() completeDto: CompleteTransactionDto,
@@ -133,4 +187,3 @@ export class TransactionController {
     };
   }
 }
-

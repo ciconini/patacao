@@ -1,6 +1,6 @@
 /**
  * Configuration Service
- * 
+ *
  * Provides typed access to validated configuration values.
  * All configuration values are validated against the schema on startup.
  */
@@ -122,15 +122,20 @@ export class AppConfigService {
     return this.configService.get('LOCKOUT_DURATION_MINUTES', { infer: true })!;
   }
 
+  // Event Bus
+  get useQueueEventBus(): boolean {
+    return this.configService.get('USE_QUEUE_EVENT_BUS', { infer: true })!;
+  }
+
   /**
    * Gets a configuration value by key
-   * 
+   *
    * @param key - Configuration key
    * @param defaultValue - Default value if not found
    * @returns Configuration value
    */
   get<T extends keyof ConfigSchema>(key: T, defaultValue?: ConfigSchema[T]): ConfigSchema[T] {
-    return this.configService.get(key, defaultValue);
+    const value = this.configService.get(key, { infer: true });
+    return value !== undefined ? value : (defaultValue as ConfigSchema[T]);
   }
 }
-

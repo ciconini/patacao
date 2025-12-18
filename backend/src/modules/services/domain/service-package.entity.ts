@@ -1,11 +1,11 @@
 /**
  * ServicePackage Domain Entity
- * 
+ *
  * Represents a package/bundle of services offered by the petshop.
  * Service packages allow grouping multiple services together, often with a bundle price.
  * When booked, packages create separate AppointmentServiceLine entries for each included Service.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - Package name is required
  * - Services list must contain at least one service
@@ -29,7 +29,7 @@ export class ServicePackage {
 
   /**
    * Creates a new ServicePackage entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param name - Package name (required)
    * @param services - Ordered list of services with quantities (required, must have at least one)
@@ -37,7 +37,7 @@ export class ServicePackage {
    * @param bundlePrice - Bundle price (optional, must be non-negative if provided)
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if name is empty
    * @throws Error if services list is empty
@@ -50,7 +50,7 @@ export class ServicePackage {
     description?: string,
     bundlePrice?: number,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateName(name);
@@ -63,7 +63,7 @@ export class ServicePackage {
     this._id = id;
     this._name = name;
     this._description = description;
-    this._services = services.map(item => ({ ...item }));
+    this._services = services.map((item) => ({ ...item }));
     this._bundlePrice = bundlePrice;
     this._createdAt = createdAt ? new Date(createdAt) : new Date();
     this._updatedAt = updatedAt ? new Date(updatedAt) : new Date();
@@ -83,7 +83,7 @@ export class ServicePackage {
   }
 
   get services(): ReadonlyArray<ServicePackageItem> {
-    return this._services.map(item => ({ ...item }));
+    return this._services.map((item) => ({ ...item }));
   }
 
   get bundlePrice(): number | undefined {
@@ -100,7 +100,7 @@ export class ServicePackage {
 
   /**
    * Updates the package name
-   * 
+   *
    * @param name - New package name
    * @throws Error if name is empty
    */
@@ -112,7 +112,7 @@ export class ServicePackage {
 
   /**
    * Updates the package description
-   * 
+   *
    * @param description - New description
    */
   updateDescription(description: string | undefined): void {
@@ -122,7 +122,7 @@ export class ServicePackage {
 
   /**
    * Updates the bundle price
-   * 
+   *
    * @param bundlePrice - New bundle price
    * @throws Error if bundlePrice is negative
    */
@@ -136,7 +136,7 @@ export class ServicePackage {
 
   /**
    * Adds a service to the package
-   * 
+   *
    * @param serviceId - Service ID to add
    * @param quantity - Quantity of the service (default 1)
    * @throws Error if serviceId is empty or quantity is not positive
@@ -150,13 +150,13 @@ export class ServicePackage {
       throw new Error('Service quantity must be a positive integer');
     }
 
-    const existingIndex = this._services.findIndex(item => item.serviceId === serviceId);
+    const existingIndex = this._services.findIndex((item) => item.serviceId === serviceId);
 
     if (existingIndex > -1) {
       // Update existing service quantity
       this._services[existingIndex] = {
         serviceId,
-        quantity: this._services[existingIndex].quantity + quantity
+        quantity: this._services[existingIndex].quantity + quantity,
       };
     } else {
       // Add new service
@@ -168,19 +168,21 @@ export class ServicePackage {
 
   /**
    * Removes a service from the package
-   * 
+   *
    * @param serviceId - Service ID to remove
    * @throws Error if serviceId not found or if removing would leave package empty
    */
   removeService(serviceId: string): void {
-    const index = this._services.findIndex(item => item.serviceId === serviceId);
-    
+    const index = this._services.findIndex((item) => item.serviceId === serviceId);
+
     if (index === -1) {
       throw new Error(`Service with ID ${serviceId} not found in package`);
     }
 
     if (this._services.length === 1) {
-      throw new Error('Cannot remove the last service from package - package must have at least one service');
+      throw new Error(
+        'Cannot remove the last service from package - package must have at least one service',
+      );
     }
 
     this._services.splice(index, 1);
@@ -189,7 +191,7 @@ export class ServicePackage {
 
   /**
    * Updates the quantity of a service in the package
-   * 
+   *
    * @param serviceId - Service ID
    * @param quantity - New quantity
    * @throws Error if serviceId not found or quantity is not positive
@@ -199,8 +201,8 @@ export class ServicePackage {
       throw new Error('Service quantity must be a positive integer');
     }
 
-    const index = this._services.findIndex(item => item.serviceId === serviceId);
-    
+    const index = this._services.findIndex((item) => item.serviceId === serviceId);
+
     if (index === -1) {
       throw new Error(`Service with ID ${serviceId} not found in package`);
     }
@@ -211,28 +213,28 @@ export class ServicePackage {
 
   /**
    * Gets the quantity for a specific service in the package
-   * 
+   *
    * @param serviceId - Service ID
    * @returns Quantity of the service, or 0 if service is not in package
    */
   getServiceQuantity(serviceId: string): number {
-    const item = this._services.find(item => item.serviceId === serviceId);
+    const item = this._services.find((item) => item.serviceId === serviceId);
     return item ? item.quantity : 0;
   }
 
   /**
    * Checks if the package contains a specific service
-   * 
+   *
    * @param serviceId - Service ID to check
    * @returns True if service is in the package
    */
   containsService(serviceId: string): boolean {
-    return this._services.some(item => item.serviceId === serviceId);
+    return this._services.some((item) => item.serviceId === serviceId);
   }
 
   /**
    * Gets the total number of services in the package
-   * 
+   *
    * @returns Number of unique services in the package
    */
   getServiceCount(): number {
@@ -241,7 +243,7 @@ export class ServicePackage {
 
   /**
    * Gets the total quantity of all services in the package
-   * 
+   *
    * @returns Sum of all service quantities
    */
   getTotalServiceQuantity(): number {
@@ -250,19 +252,19 @@ export class ServicePackage {
 
   /**
    * Sets all services in the package
-   * 
+   *
    * @param services - New list of services with quantities
    * @throws Error if services list is empty or invalid
    */
   setServices(services: ServicePackageItem[]): void {
     this.validateServices(services);
-    this._services = services.map(item => ({ ...item }));
+    this._services = services.map((item) => ({ ...item }));
     this._updatedAt = new Date();
   }
 
   /**
    * Checks if the package has a bundle price
-   * 
+   *
    * @returns True if bundle price is set
    */
   hasBundlePrice(): boolean {
@@ -303,7 +305,7 @@ export class ServicePackage {
     }
 
     // Check for duplicate service IDs
-    const serviceIds = services.map(item => item.serviceId);
+    const serviceIds = services.map((item) => item.serviceId);
     const uniqueServiceIds = new Set(serviceIds);
     if (uniqueServiceIds.size !== serviceIds.length) {
       throw new Error('ServicePackage cannot have duplicate service IDs');
@@ -316,4 +318,3 @@ export class ServicePackage {
     }
   }
 }
-

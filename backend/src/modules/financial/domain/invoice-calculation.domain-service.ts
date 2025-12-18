@@ -1,21 +1,21 @@
 /**
  * InvoiceCalculationDomainService
- * 
+ *
  * Domain service responsible for calculating invoice totals.
  * This service handles calculation of subtotal, VAT total, and grand total
  * for invoices with mixed product and service lines, respecting VAT rates per line.
- * 
+ *
  * Responsibilities:
  * - Calculate subtotal from invoice lines
  * - Calculate VAT total respecting per-line VAT rates
  * - Calculate grand total (subtotal + VAT total)
  * - Handle mixed product/service lines
  * - Provide detailed calculation breakdowns
- * 
+ *
  * Collaborating Entities:
  * - Invoice: The invoice entity containing lines to calculate
  * - InvoiceLine: Individual line items with product/service references, quantities, prices, and VAT rates
- * 
+ *
  * Business Rules Enforced:
  * - BR: Totals (subtotal, vat_total, total) must be calculated from lines
  * - BR: Each line can have its own VAT rate (0-100)
@@ -24,14 +24,14 @@
  * - BR: VAT total = sum of (lineSubtotal * vatRate / 100) for all lines
  * - BR: Grand total = subtotal + VAT total
  * - BR: VAT calculation is per-line, not aggregated
- * 
+ *
  * Invariants:
  * - Invoice must have at least one line for non-zero totals
  * - Line quantities must be positive
  * - Line unit prices must be non-negative
  * - Line VAT rates must be between 0 and 100
  * - Calculation results must be non-negative
- * 
+ *
  * Edge Cases:
  * - Invoice with no lines (all totals = 0)
  * - Lines with zero quantity (contribute 0 to totals)
@@ -70,13 +70,13 @@ export interface InvoiceCalculationResult {
 export class InvoiceCalculationDomainService {
   /**
    * Calculates all totals for an invoice.
-   * 
+   *
    * This method calculates subtotal, VAT total, and grand total from invoice lines,
    * respecting per-line VAT rates and handling mixed product/service lines.
-   * 
+   *
    * Business Rule: Totals must be calculated from lines
    * Business Rule: VAT calculation is per-line, not aggregated
-   * 
+   *
    * @param invoice - The invoice to calculate totals for
    * @returns Calculation result with subtotal, VAT total, total, and line breakdowns
    * @throws Error if invoice is not provided
@@ -88,7 +88,7 @@ export class InvoiceCalculationDomainService {
 
     const lines = invoice.lines;
     const lineCalculations: LineCalculation[] = [];
-    
+
     let subtotal = 0;
     let vatTotal = 0;
 
@@ -96,7 +96,7 @@ export class InvoiceCalculationDomainService {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const lineCalc = this.calculateLineTotals(line, i);
-      
+
       lineCalculations.push(lineCalc);
       subtotal += lineCalc.lineSubtotal;
       vatTotal += lineCalc.vatAmount;
@@ -115,11 +115,11 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Calculates totals for a single invoice line.
-   * 
+   *
    * Business Rule: Line subtotal = quantity * unitPrice
    * Business Rule: Line VAT amount = lineSubtotal * vatRate / 100
    * Business Rule: Line total = lineSubtotal + vatAmount
-   * 
+   *
    * @param line - The invoice line to calculate
    * @param lineIndex - Index of the line (for reference)
    * @returns Line calculation breakdown
@@ -155,9 +155,9 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Calculates only the subtotal for an invoice.
-   * 
+   *
    * Business Rule: Subtotal = sum of (quantity * unitPrice) for all lines
-   * 
+   *
    * @param invoice - The invoice to calculate subtotal for
    * @returns Subtotal amount
    */
@@ -177,9 +177,9 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Calculates only the VAT total for an invoice.
-   * 
+   *
    * Business Rule: VAT total = sum of (lineSubtotal * vatRate / 100) for all lines
-   * 
+   *
    * @param invoice - The invoice to calculate VAT total for
    * @returns VAT total amount
    */
@@ -201,9 +201,9 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Calculates only the grand total for an invoice.
-   * 
+   *
    * Business Rule: Grand total = subtotal + VAT total
-   * 
+   *
    * @param invoice - The invoice to calculate total for
    * @returns Grand total amount
    */
@@ -220,7 +220,7 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Calculates totals for multiple invoices.
-   * 
+   *
    * @param invoices - List of invoices to calculate totals for
    * @returns Map of invoice ID to calculation result
    */
@@ -237,9 +237,9 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Calculates the total VAT amount for a specific VAT rate across all lines.
-   * 
+   *
    * This is useful for grouping VAT by rate (e.g., for reporting).
-   * 
+   *
    * @param invoice - The invoice to calculate VAT for
    * @param vatRate - VAT rate to filter by
    * @returns Total VAT amount for lines with this VAT rate
@@ -268,7 +268,7 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Gets all unique VAT rates used in the invoice.
-   * 
+   *
    * @param invoice - The invoice to analyze
    * @returns Set of unique VAT rates
    */
@@ -288,9 +288,9 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Calculates VAT breakdown by rate.
-   * 
+   *
    * Returns a map of VAT rate to total VAT amount for that rate.
-   * 
+   *
    * @param invoice - The invoice to analyze
    * @returns Map of VAT rate to total VAT amount
    */
@@ -312,7 +312,7 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Calculates the total quantity of items in the invoice.
-   * 
+   *
    * @param invoice - The invoice to calculate quantity for
    * @returns Total quantity across all lines
    */
@@ -332,7 +332,7 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Calculates the number of lines that reference products.
-   * 
+   *
    * @param invoice - The invoice to analyze
    * @returns Number of lines with productId
    */
@@ -341,12 +341,12 @@ export class InvoiceCalculationDomainService {
       throw new Error('Invoice entity is required');
     }
 
-    return invoice.lines.filter(line => line.productId !== undefined).length;
+    return invoice.lines.filter((line) => line.productId !== undefined).length;
   }
 
   /**
    * Calculates the number of lines that reference services.
-   * 
+   *
    * @param invoice - The invoice to analyze
    * @returns Number of lines with serviceId
    */
@@ -355,12 +355,12 @@ export class InvoiceCalculationDomainService {
       throw new Error('Invoice entity is required');
     }
 
-    return invoice.lines.filter(line => line.serviceId !== undefined).length;
+    return invoice.lines.filter((line) => line.serviceId !== undefined).length;
   }
 
   /**
    * Calculates the number of lines that don't reference products or services.
-   * 
+   *
    * @param invoice - The invoice to analyze
    * @returns Number of lines without productId or serviceId
    */
@@ -370,15 +370,15 @@ export class InvoiceCalculationDomainService {
     }
 
     return invoice.lines.filter(
-      line => line.productId === undefined && line.serviceId === undefined
+      (line) => line.productId === undefined && line.serviceId === undefined,
     ).length;
   }
 
   /**
    * Validates that invoice totals match the calculated totals.
-   * 
+   *
    * This is useful for verifying invoice integrity.
-   * 
+   *
    * @param invoice - The invoice to validate
    * @returns True if invoice totals match calculated totals
    */
@@ -398,9 +398,9 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Gets the difference between invoice totals and calculated totals.
-   * 
+   *
    * Useful for identifying discrepancies.
-   * 
+   *
    * @param invoice - The invoice to compare
    * @returns Object with differences for each total
    */
@@ -424,9 +424,9 @@ export class InvoiceCalculationDomainService {
 
   /**
    * Rounds a number to two decimal places.
-   * 
+   *
    * This ensures currency values are properly formatted.
-   * 
+   *
    * @param value - Value to round
    * @returns Rounded value with 2 decimal places
    */
@@ -434,4 +434,3 @@ export class InvoiceCalculationDomainService {
     return Math.round(value * 100) / 100;
   }
 }
-

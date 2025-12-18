@@ -1,9 +1,9 @@
 /**
  * Timezone Validator
- * 
+ *
  * Custom validator for IANA timezone identifiers.
  * Validates that a string is a valid IANA timezone identifier.
- * 
+ *
  * Usage:
  * @IsTimezone()
  * timezone: string;
@@ -113,7 +113,7 @@ export class IsTimezoneConstraint implements ValidatorConstraintInterface {
 
 /**
  * Validates that a string is a valid IANA timezone identifier
- * 
+ *
  * @param validationOptions - Optional validation options
  * @returns Property decorator
  */
@@ -128,4 +128,3 @@ export function IsTimezone(validationOptions?: ValidationOptions) {
     });
   };
 }
-

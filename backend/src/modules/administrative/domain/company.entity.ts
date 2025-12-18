@@ -1,10 +1,10 @@
 /**
  * Company Domain Entity
- * 
+ *
  * Represents the business profile (company) in the petshop management system.
  * This entity represents the legal business entity that operates the petshop stores.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - Company name is required
  * - NIF (Portuguese tax ID) must be validated when provided
@@ -36,7 +36,7 @@ export class Company {
 
   /**
    * Creates a new Company entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param name - Company name (required)
    * @param nif - Portuguese NIF (tax identification number) (required)
@@ -48,7 +48,7 @@ export class Company {
    * @param website - Company website
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if name is empty
    * @throws Error if nif is empty or invalid format
    * @throws Error if address is invalid
@@ -66,7 +66,7 @@ export class Company {
     email?: string,
     website?: string,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateName(name);
@@ -142,7 +142,7 @@ export class Company {
 
   /**
    * Updates the company name
-   * 
+   *
    * @param name - New company name
    * @throws Error if name is empty
    */
@@ -155,7 +155,7 @@ export class Company {
   /**
    * Updates the NIF (Portuguese tax ID)
    * Note: This is a core fiscal field - should only be updated by Owner role users
-   * 
+   *
    * @param nif - New NIF number
    * @throws Error if NIF format is invalid
    */
@@ -167,7 +167,7 @@ export class Company {
 
   /**
    * Updates the company address
-   * 
+   *
    * @param address - New address
    * @throws Error if address is invalid
    */
@@ -180,7 +180,7 @@ export class Company {
   /**
    * Updates the tax regime
    * Note: This is a core fiscal field - should only be updated by Owner role users
-   * 
+   *
    * @param taxRegime - New tax regime
    * @throws Error if taxRegime is empty
    */
@@ -193,7 +193,7 @@ export class Company {
   /**
    * Updates the default VAT rate
    * Note: This is a core fiscal field - should only be updated by Owner role users
-   * 
+   *
    * @param vatRate - New default VAT rate (0-100)
    * @throws Error if vatRate is out of range
    */
@@ -207,7 +207,7 @@ export class Company {
 
   /**
    * Updates the company phone number
-   * 
+   *
    * @param phone - New phone number
    */
   updatePhone(phone: string | undefined): void {
@@ -217,7 +217,7 @@ export class Company {
 
   /**
    * Updates the company email
-   * 
+   *
    * @param email - New email address
    * @throws Error if email format is invalid
    */
@@ -231,7 +231,7 @@ export class Company {
 
   /**
    * Updates the company website
-   * 
+   *
    * @param website - New website URL
    */
   updateWebsite(website: string | undefined): void {
@@ -255,15 +255,17 @@ export class Company {
    * Checks if the company has complete address information
    */
   hasCompleteAddress(): boolean {
-    return !!this._address && 
-           !!this._address.street && 
-           !!this._address.city && 
-           !!this._address.postalCode;
+    return (
+      !!this._address &&
+      !!this._address.street &&
+      !!this._address.city &&
+      !!this._address.postalCode
+    );
   }
 
   /**
    * Checks if the company has all required fiscal information for invoicing
-   * 
+   *
    * @returns True if NIF and address are valid
    */
   hasRequiredFiscalInfo(): boolean {
@@ -272,7 +274,7 @@ export class Company {
 
   /**
    * Gets the VAT rate to use (default or provided rate)
-   * 
+   *
    * @param overrideRate - Optional override rate
    * @returns VAT rate to use
    */
@@ -301,7 +303,7 @@ export class Company {
   /**
    * Validates Portuguese NIF (Número de Identificação Fiscal) format
    * NIF format: 9 digits, with a check digit algorithm
-   * 
+   *
    * @param nif - NIF to validate
    * @throws Error if format is invalid
    */
@@ -335,7 +337,7 @@ export class Company {
 
     const digits = nif.split('').map(Number);
     const weights = [9, 8, 7, 6, 5, 4, 3, 2];
-    
+
     let sum = 0;
     for (let i = 0; i < 8; i++) {
       sum += digits[i] * weights[i];
@@ -343,7 +345,7 @@ export class Company {
 
     const remainder = sum % 11;
     let checkDigit = 11 - remainder;
-    
+
     if (checkDigit >= 10) {
       checkDigit = 0;
     }
@@ -407,4 +409,3 @@ export class Company {
     }
   }
 }
-

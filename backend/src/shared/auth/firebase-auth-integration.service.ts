@@ -1,6 +1,6 @@
 /**
  * Firebase Auth Integration Service
- * 
+ *
  * Service that integrates Firebase Authentication with the internal user system.
  * This service handles creating Firebase users, linking them to internal users,
  * and managing custom claims (roles).
@@ -33,7 +33,7 @@ export class FirebaseAuthIntegrationService {
 
   /**
    * Creates a Firebase Auth user and links it to an internal user
-   * 
+   *
    * @param input - User creation data
    * @returns Firebase user UID
    */
@@ -61,7 +61,7 @@ export class FirebaseAuthIntegrationService {
 
   /**
    * Sets custom claims (roles, permissions) on a Firebase user
-   * 
+   *
    * @param firebaseUid - Firebase user UID
    * @param roles - Array of role IDs or role names
    * @param storeIds - Optional array of store IDs the user can access
@@ -73,7 +73,7 @@ export class FirebaseAuthIntegrationService {
 
     // Convert roles array to object format for Firebase custom claims
     // Firebase custom claims should be objects, not arrays
-    roles.forEach(role => {
+    roles.forEach((role) => {
       customClaims.roles[role] = true;
     });
 
@@ -86,7 +86,7 @@ export class FirebaseAuthIntegrationService {
 
   /**
    * Updates custom claims when user roles change
-   * 
+   *
    * @param firebaseUid - Firebase user UID
    * @param roles - New array of roles
    * @param storeIds - Optional array of store IDs
@@ -97,7 +97,7 @@ export class FirebaseAuthIntegrationService {
 
   /**
    * Creates a custom token for a user (for testing or special cases)
-   * 
+   *
    * @param firebaseUid - Firebase user UID
    * @param roles - User roles
    * @returns Custom token that can be exchanged for an ID token
@@ -107,7 +107,7 @@ export class FirebaseAuthIntegrationService {
       roles: {},
     };
 
-    roles.forEach(role => {
+    roles.forEach((role) => {
       customClaims.roles[role] = true;
     });
 
@@ -116,7 +116,7 @@ export class FirebaseAuthIntegrationService {
 
   /**
    * Verifies a Firebase ID token and extracts user information
-   * 
+   *
    * @param idToken - Firebase ID token
    * @returns User information from token
    */
@@ -137,7 +137,7 @@ export class FirebaseAuthIntegrationService {
 
     // Extract roles from custom claims
     if (payload.roles && typeof payload.roles === 'object') {
-      roles.push(...Object.keys(payload.roles).filter(key => payload.roles[key] === true));
+      roles.push(...Object.keys(payload.roles).filter((key) => payload.roles[key] === true));
     }
 
     return {
@@ -150,7 +150,7 @@ export class FirebaseAuthIntegrationService {
 
   /**
    * Deletes a Firebase Auth user
-   * 
+   *
    * @param firebaseUid - Firebase user UID
    */
   async deleteFirebaseUser(firebaseUid: string): Promise<void> {
@@ -159,7 +159,7 @@ export class FirebaseAuthIntegrationService {
 
   /**
    * Disables a Firebase Auth user
-   * 
+   *
    * @param firebaseUid - Firebase user UID
    */
   async disableFirebaseUser(firebaseUid: string): Promise<void> {
@@ -170,7 +170,7 @@ export class FirebaseAuthIntegrationService {
 
   /**
    * Enables a Firebase Auth user
-   * 
+   *
    * @param firebaseUid - Firebase user UID
    */
   async enableFirebaseUser(firebaseUid: string): Promise<void> {
@@ -181,7 +181,7 @@ export class FirebaseAuthIntegrationService {
 
   /**
    * Updates a Firebase Auth user's password
-   * 
+   *
    * @param firebaseUid - Firebase user UID
    * @param newPassword - New password
    */
@@ -191,4 +191,3 @@ export class FirebaseAuthIntegrationService {
     });
   }
 }
-

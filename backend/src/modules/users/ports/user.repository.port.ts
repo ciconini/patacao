@@ -1,9 +1,9 @@
 /**
  * UserRepository Port (Interface)
- * 
+ *
  * Repository interface for User domain entity persistence.
  * This is a port in the Hexagonal Architecture pattern.
- * 
+ *
  * Implementations should be provided in the Infrastructure layer.
  */
 
@@ -46,7 +46,7 @@ export interface PaginatedResult<T> {
 export interface UserRepository {
   /**
    * Saves a User entity (creates or updates)
-   * 
+   *
    * @param user - User domain entity to save
    * @returns Saved User entity
    */
@@ -54,7 +54,7 @@ export interface UserRepository {
 
   /**
    * Finds a User by ID
-   * 
+   *
    * @param id - User ID
    * @returns User entity or null if not found
    */
@@ -62,7 +62,7 @@ export interface UserRepository {
 
   /**
    * Finds a User by email
-   * 
+   *
    * @param email - Email address to search for
    * @returns User entity or null if not found
    */
@@ -70,7 +70,7 @@ export interface UserRepository {
 
   /**
    * Finds a User by username
-   * 
+   *
    * @param username - Username to search for
    * @returns User entity or null if not found
    */
@@ -78,7 +78,7 @@ export interface UserRepository {
 
   /**
    * Updates user password
-   * 
+   *
    * @param userId - User ID
    * @param passwordHash - New password hash
    */
@@ -86,7 +86,7 @@ export interface UserRepository {
 
   /**
    * Verifies user password
-   * 
+   *
    * @param userId - User ID
    * @param password - Plain text password to verify
    * @returns True if password matches
@@ -95,28 +95,28 @@ export interface UserRepository {
 
   /**
    * Updates last login timestamp
-   * 
+   *
    * @param userId - User ID
    */
   updateLastLogin(userId: string): Promise<void>;
 
   /**
    * Increments failed login attempts counter
-   * 
+   *
    * @param userId - User ID
    */
   incrementFailedLoginAttempts(userId: string): Promise<void>;
 
   /**
    * Resets failed login attempts counter
-   * 
+   *
    * @param userId - User ID
    */
   resetFailedLoginAttempts(userId: string): Promise<void>;
 
   /**
    * Locks user account
-   * 
+   *
    * @param userId - User ID
    * @param lockoutExpiry - Lockout expiration date
    */
@@ -124,7 +124,7 @@ export interface UserRepository {
 
   /**
    * Checks if user account is locked
-   * 
+   *
    * @param userId - User ID
    * @returns True if account is locked
    */
@@ -132,7 +132,7 @@ export interface UserRepository {
 
   /**
    * Searches for users with pagination
-   * 
+   *
    * @param criteria - Search criteria
    * @param pagination - Pagination parameters
    * @param sort - Sort parameters
@@ -141,12 +141,12 @@ export interface UserRepository {
   search(
     criteria: UserSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<User>>;
 
   /**
    * Assigns roles to a user
-   * 
+   *
    * @param userId - User ID
    * @param roleIds - List of role IDs to assign
    */
@@ -154,10 +154,9 @@ export interface UserRepository {
 
   /**
    * Assigns stores to a user
-   * 
+   *
    * @param userId - User ID
    * @param storeIds - List of store IDs to assign
    */
   assignStores(userId: string, storeIds: string[]): Promise<void>;
 }
-

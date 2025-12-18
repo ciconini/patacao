@@ -1,6 +1,6 @@
 /**
  * Authentication Integration Test Script
- * 
+ *
  * This script tests the authentication integration with Firebase:
  * 1. Creates an admin user
  * 2. Tests login with email/password
@@ -39,7 +39,7 @@ async function testAuthIntegration() {
     const jwtTokenGenerator = app.get(JwtTokenGeneratorService);
     const firebaseAuthIntegration = app.get(FirebaseAuthIntegrationService);
     const firebaseUserLookup = app.get(FirebaseUserLookupService);
-    
+
     // Get repositories using string tokens (as registered in modules)
     const userRepository = app.get('UserRepository') as FirestoreUserRepository;
     const sessionRepository = app.get('SessionRepository') as FirestoreSessionRepository;
@@ -50,7 +50,7 @@ async function testAuthIntegration() {
     const adminFullName = 'Admin User';
 
     console.log('📝 Step 1: Creating admin user...');
-    
+
     // 1. Hash password
     const passwordHash = await passwordHasher.hash(adminPassword);
     console.log('   ✓ Password hashed');
@@ -70,7 +70,7 @@ async function testAuthIntegration() {
       [], // serviceSkills
       true, // active
       new Date(), // createdAt
-      new Date() // updatedAt
+      new Date(), // updatedAt
     );
 
     // 3. Save user to Firestore
@@ -96,14 +96,18 @@ async function testAuthIntegration() {
       // 6. Set custom claims (roles)
       await firebaseAuthIntegration.setUserRoles(firebaseUid, ['Owner']);
       console.log('   ✓ Custom claims (roles) set on Firebase user');
-      
+
       // Get Firebase user for later use
-      firebaseUser = await (firebaseAuthIntegration as any)['firebaseAdmin'].auth().getUser(firebaseUid);
+      firebaseUser = await (firebaseAuthIntegration as any)['firebaseAdmin']
+        .auth()
+        .getUser(firebaseUid);
     } catch (error: any) {
       if (error.code === 'auth/email-already-exists') {
         console.log('   ⚠ Firebase user already exists, skipping creation');
         // Try to get existing user
-        const existingUser = await (firebaseAuthIntegration as any)['firebaseAdmin'].auth().getUserByEmail(adminEmail);
+        const existingUser = await (firebaseAuthIntegration as any)['firebaseAdmin']
+          .auth()
+          .getUserByEmail(adminEmail);
         if (existingUser) {
           firebaseUser = existingUser;
           await firebaseUserLookup.linkFirebaseUid(userId, existingUser.uid);
@@ -117,7 +121,7 @@ async function testAuthIntegration() {
 
     // 7. Test login flow
     console.log('\n📝 Step 3: Testing login flow...');
-    
+
     // Verify password
     const isPasswordValid = await passwordHasher.verify(adminPassword, passwordHash);
     console.log(`   ✓ Password verification: ${isPasswordValid ? 'PASSED' : 'FAILED'}`);
@@ -136,23 +140,27 @@ async function testAuthIntegration() {
     const decodedToken = await jwtTokenGenerator.verifyAccessToken(accessToken);
     if (decodedToken) {
       console.log('   ✓ Access token verification: PASSED');
-      console.log(`   ✓ Token payload: userId=${decodedToken.userId}, roles=${decodedToken.roles.join(',')}`);
+      console.log(
+        `   ✓ Token payload: userId=${decodedToken.userId}, roles=${decodedToken.roles.join(',')}`,
+      );
     } else {
       throw new Error('Access token verification failed');
     }
 
     // 8. Test Firebase token verification
     console.log('\n📝 Step 4: Testing Firebase token verification...');
-    
+
     if (firebaseUser) {
       console.log(`   ✓ Firebase user found: ${firebaseUser.uid}`);
-      
+
       try {
         // Create a custom token (for testing)
-        const customToken = await firebaseAuthIntegration.createCustomToken(firebaseUser.uid, ['Owner']);
+        const customToken = await firebaseAuthIntegration.createCustomToken(firebaseUser.uid, [
+          'Owner',
+        ]);
         console.log('   ✓ Custom token created');
         console.log(`   ✓ Custom token: ${customToken.substring(0, 50)}...`);
-        
+
         // Note: To verify the custom token, you would need to exchange it for an ID token
         // using the Firebase Auth SDK on the client side. This is just for demonstration.
       } catch (error: any) {
@@ -188,7 +196,7 @@ async function testAuthIntegration() {
       userId,
       now,
       expiresAt,
-      false // not revoked
+      false, // not revoked
     );
 
     await sessionRepository.saveWithRefreshToken(session, refreshToken);
@@ -212,7 +220,6 @@ async function testAuthIntegration() {
     console.log('\n💡 You can now use these credentials to test the login endpoint:');
     console.log(`   POST /api/v1/auth/login`);
     console.log(`   Body: { "email": "${adminEmail}", "password": "${adminPassword}" }`);
-
   } catch (error: any) {
     console.error('\n❌ Test failed:', error.message);
     console.error(error.stack);

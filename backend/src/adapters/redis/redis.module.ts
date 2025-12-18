@@ -27,4 +27,3 @@ import { AppConfigService } from '../../shared/config/config.service';
   exports: ['REDIS_CLIENT'],
 })
 export class RedisModule {}
-

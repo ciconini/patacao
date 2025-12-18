@@ -1,6 +1,6 @@
 /**
  * Credit Note Controller
- * 
+ *
  * REST API controller for Credit Note management endpoints.
  */
 
@@ -15,17 +15,24 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { CreateCreditNoteDto, CreditNoteResponseDto } from '../dto/credit-note.dto';
-import { CreateCreditNoteUseCase, CreateCreditNoteInput } from '../../application/create-credit-note.use-case';
+import {
+  CreateCreditNoteUseCase,
+  CreateCreditNoteInput,
+} from '../../application/create-credit-note.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Financial')
+@ApiBearerAuth('JWT-auth')
 @Controller('api/v1/credit-notes')
 @UseGuards(FirebaseAuthGuard)
 export class CreditNoteController {
-  constructor(
-    private readonly createCreditNoteUseCase: CreateCreditNoteUseCase,
-  ) {}
+  constructor(private readonly createCreditNoteUseCase: CreateCreditNoteUseCase) {}
 
   /**
    * Create a new credit note
@@ -33,6 +40,8 @@ export class CreditNoteController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create credit note', description: 'Creates a new credit note' })
+  @ApiBody({ type: CreateCreditNoteDto })
   async create(
     @Body() createDto: CreateCreditNoteDto,
     @Request() req: AuthenticatedRequest,
@@ -77,4 +86,3 @@ export class CreditNoteController {
     throw new Error('Not implemented yet');
   }
 }
-

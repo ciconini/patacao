@@ -1,35 +1,35 @@
 /**
  * PortugueseNIF Value Object
- * 
+ *
  * Represents a Portuguese NIF (Número de Identificação Fiscal) in the petshop management system.
  * NIF is the Portuguese tax identification number used for fiscal and invoicing purposes.
  * This is a pure domain value object that encapsulates NIF validation and business rules.
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates the NIF format and check digit
- * 
+ *
  * Business Rules:
  * - NIF must be exactly 9 digits
  * - NIF must pass the Portuguese check digit algorithm
  * - NIF is normalized (digits only, no spaces or formatting)
  * - NIF validation is required when used for invoicing
- * 
+ *
  * Invariants:
  * - NIF value must be exactly 9 digits
  * - NIF must pass check digit validation
  * - Normalized NIF contains only digits
  * - Value object is immutable after creation
- * 
+ *
  * Equality Definition:
  * - Two PortugueseNIF instances are equal if their normalized (digits-only) values are equal
  * - Equality ignores formatting (spaces, dashes)
  * - Equality is based on the NIF value, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In Company entity (required):
  *    constructor(
  *      id: string,
@@ -39,7 +39,7 @@
  *    ) {
  *      this._nif = new PortugueseNIF(nif); // Creates value object
  *    }
- * 
+ *
  * 2. In Owner entity (optional):
  *    constructor(
  *      // ... other params
@@ -49,12 +49,12 @@
  *        this._nif = new PortugueseNIF(nif);
  *      }
  *    }
- * 
+ *
  * 3. Equality comparison:
  *    const nif1 = new PortugueseNIF('123 456 789');
  *    const nif2 = new PortugueseNIF('123456789');
  *    nif1.equals(nif2); // true (formatting ignored)
- * 
+ *
  * 4. String representation:
  *    const nif = new PortugueseNIF('123456789');
  *    nif.toString(); // '123456789'
@@ -68,7 +68,7 @@ export class PortugueseNIF {
 
   /**
    * Creates a new PortugueseNIF value object
-   * 
+   *
    * @param nif - NIF string (9 digits, may include spaces or dashes)
    * @throws Error if nif is empty or invalid format
    * @throws Error if nif does not pass check digit validation
@@ -84,7 +84,7 @@ export class PortugueseNIF {
 
   /**
    * Gets the NIF value (normalized, digits only)
-   * 
+   *
    * @returns NIF string (9 digits)
    */
   get value(): string {
@@ -93,7 +93,7 @@ export class PortugueseNIF {
 
   /**
    * Gets the normalized NIF (digits only)
-   * 
+   *
    * @returns Normalized NIF string (9 digits)
    */
   get normalized(): string {
@@ -102,7 +102,7 @@ export class PortugueseNIF {
 
   /**
    * Gets the check digit (9th digit)
-   * 
+   *
    * @returns Check digit (0-9)
    */
   get checkDigit(): number {
@@ -111,7 +111,7 @@ export class PortugueseNIF {
 
   /**
    * Gets the base number (first 8 digits)
-   * 
+   *
    * @returns Base number string (8 digits)
    */
   get baseNumber(): string {
@@ -120,10 +120,10 @@ export class PortugueseNIF {
 
   /**
    * Checks if this NIF equals another NIF
-   * 
+   *
    * Equality is determined by comparing normalized (digits-only) values.
    * Formatting differences (spaces, dashes) are ignored.
-   * 
+   *
    * @param other - Other PortugueseNIF to compare
    * @returns True if NIFs are equal (ignoring formatting)
    */
@@ -141,7 +141,7 @@ export class PortugueseNIF {
 
   /**
    * Converts the NIF to string representation
-   * 
+   *
    * @returns NIF string (9 digits)
    */
   toString(): string {
@@ -150,7 +150,7 @@ export class PortugueseNIF {
 
   /**
    * Formats the NIF with spaces for readability (XXX XXX XXX)
-   * 
+   *
    * @returns Formatted NIF string
    */
   toFormattedString(): string {
@@ -162,9 +162,9 @@ export class PortugueseNIF {
 
   /**
    * Creates a PortugueseNIF from a string, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param nif - NIF string
    * @returns PortugueseNIF instance or null if invalid
    */
@@ -182,7 +182,7 @@ export class PortugueseNIF {
 
   /**
    * Validates if a string is a valid Portuguese NIF format
-   * 
+   *
    * @param nif - NIF string to validate
    * @returns True if NIF format and check digit are valid
    */
@@ -193,7 +193,7 @@ export class PortugueseNIF {
 
     try {
       const trimmed = nif.trim().replace(/\s/g, '');
-      
+
       // Must be exactly 9 digits
       if (!/^\d{9}$/.test(trimmed)) {
         return false;
@@ -208,14 +208,14 @@ export class PortugueseNIF {
 
   /**
    * Validates NIF check digit using Portuguese algorithm
-   * 
+   *
    * Algorithm:
    * 1. Multiply first 8 digits by weights [9,8,7,6,5,4,3,2]
    * 2. Sum the results
    * 3. Calculate remainder = sum % 11
    * 4. Check digit = 11 - remainder, or 0 if result is 10 or 11
    * 5. The 9th digit must match the calculated check digit
-   * 
+   *
    * @param nif - NIF string (9 digits)
    * @returns True if check digit is valid
    */
@@ -226,7 +226,7 @@ export class PortugueseNIF {
 
     const digits = nif.split('').map(Number);
     const weights = [9, 8, 7, 6, 5, 4, 3, 2];
-    
+
     let sum = 0;
     for (let i = 0; i < 8; i++) {
       sum += digits[i] * weights[i];
@@ -234,7 +234,7 @@ export class PortugueseNIF {
 
     const remainder = sum % 11;
     let checkDigit = 11 - remainder;
-    
+
     if (checkDigit >= 10) {
       checkDigit = 0;
     }
@@ -246,7 +246,7 @@ export class PortugueseNIF {
 
   /**
    * Extracts digits from a string
-   * 
+   *
    * @param str - String to extract digits from
    * @returns String containing only digits
    */
@@ -256,7 +256,7 @@ export class PortugueseNIF {
 
   /**
    * Validates the NIF format and check digit
-   * 
+   *
    * @param nif - NIF string to validate
    * @throws Error if nif is empty, invalid format, or check digit is invalid
    */
@@ -276,9 +276,7 @@ export class PortugueseNIF {
 
     // NIF must be exactly 9 digits
     if (digits.length !== 9) {
-      throw new Error(
-        `NIF must be exactly 9 digits. Found: ${digits.length} digit(s)`
-      );
+      throw new Error(`NIF must be exactly 9 digits. Found: ${digits.length} digit(s)`);
     }
 
     // Validate that all characters are digits (after removing spaces)
@@ -292,4 +290,3 @@ export class PortugueseNIF {
     }
   }
 }
-

@@ -1,10 +1,19 @@
 /**
  * Stock Management DTOs
- * 
+ *
  * Data Transfer Objects for Stock operations (receipts, adjustments, movements).
  */
 
-import { IsString, IsOptional, IsUUID, IsArray, ValidateNested, IsNumber, IsDateString, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsUUID,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsDateString,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**
@@ -160,4 +169,3 @@ export class SearchStockMovementsQueryDto {
   @IsString()
   sort?: string; // e.g., "created_at", "-created_at"
 }
-

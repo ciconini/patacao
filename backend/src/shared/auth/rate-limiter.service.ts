@@ -1,6 +1,6 @@
 /**
  * Rate Limiter Service
- * 
+ *
  * Service for rate limiting authentication attempts and other actions.
  * This service implements the RateLimiter interface used by authentication use cases.
  * Uses Redis for distributed rate limiting.
@@ -52,7 +52,7 @@ export class RateLimiterService {
 
   /**
    * Checks if an action is allowed based on rate limits
-   * 
+   *
    * @param identifier - Unique identifier (IP address, email, user ID, etc.)
    * @param action - Action type ('login', 'password_reset', 'general')
    * @returns True if allowed, false if rate limit exceeded
@@ -88,7 +88,7 @@ export class RateLimiterService {
   /**
    * Increments the attempt counter for rate limiting
    * This is called automatically by checkRateLimit, but can be called explicitly
-   * 
+   *
    * @param identifier - Unique identifier
    * @param action - Action type
    */
@@ -100,7 +100,7 @@ export class RateLimiterService {
 
   /**
    * Resets rate limit for an identifier (useful for testing or manual unlocks)
-   * 
+   *
    * @param identifier - Unique identifier
    * @param action - Action type
    */
@@ -125,4 +125,3 @@ export class RateLimiterService {
     }
   }
 }
-

@@ -1,15 +1,15 @@
 /**
  * SessionRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for SessionRepository port.
  * This implementation handles persistence of Session domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map Session domain entities to Firestore documents
  * - Map Firestore documents to Session domain entities
  * - Implement repository interface methods
  * - Handle Firestore-specific operations (queries, transactions)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -37,13 +37,13 @@ export class FirestoreSessionRepository implements SessionRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a Session entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
-   * 
+   *
    * @param session - Session domain entity to save
    * @returns Saved Session entity
    */
@@ -55,10 +55,13 @@ export class FirestoreSessionRepository implements SessionRepository {
     const existingDoc = await docRef.get();
     if (existingDoc.exists) {
       const existingData = existingDoc.data() as SessionDocument;
-      await docRef.set({
-        ...document,
-        refreshToken: existingData.refreshToken,
-      }, { merge: true });
+      await docRef.set(
+        {
+          ...document,
+          refreshToken: existingData.refreshToken,
+        },
+        { merge: true },
+      );
     } else {
       await docRef.set(document, { merge: true });
     }
@@ -69,23 +72,26 @@ export class FirestoreSessionRepository implements SessionRepository {
   /**
    * Saves a Session with a refresh token
    * This is a helper method for storing refresh tokens
-   * 
+   *
    * @param session - Session domain entity
    * @param refreshToken - Refresh token to store
    */
   async saveWithRefreshToken(session: Session, refreshToken: string): Promise<void> {
     const docRef = this.firestore.collection(this.collectionName).doc(session.id);
     const document = this.toDocument(session);
-    
-    await docRef.set({
-      ...document,
-      refreshToken,
-    }, { merge: true });
+
+    await docRef.set(
+      {
+        ...document,
+        refreshToken,
+      },
+      { merge: true },
+    );
   }
 
   /**
    * Finds a Session by ID
-   * 
+   *
    * @param sessionId - Session ID
    * @returns Session entity or null if not found
    */
@@ -102,7 +108,7 @@ export class FirestoreSessionRepository implements SessionRepository {
 
   /**
    * Finds a Session by refresh token
-   * 
+   *
    * @param refreshToken - Refresh token to search for
    * @returns Session entity or null if not found
    */
@@ -123,7 +129,7 @@ export class FirestoreSessionRepository implements SessionRepository {
 
   /**
    * Revokes a session by ID
-   * 
+   *
    * @param sessionId - Session ID to revoke
    */
   async revoke(sessionId: string): Promise<void> {
@@ -136,7 +142,7 @@ export class FirestoreSessionRepository implements SessionRepository {
 
   /**
    * Revokes a session by refresh token
-   * 
+   *
    * @param refreshToken - Refresh token to revoke
    */
   async revokeByRefreshToken(refreshToken: string): Promise<void> {
@@ -148,7 +154,7 @@ export class FirestoreSessionRepository implements SessionRepository {
 
   /**
    * Revokes all sessions for a user
-   * 
+   *
    * @param userId - User ID
    */
   async revokeAllByUserId(userId: string): Promise<void> {
@@ -161,7 +167,7 @@ export class FirestoreSessionRepository implements SessionRepository {
     const batch = this.firestore.batch();
     const now = this.toTimestamp(new Date());
 
-    snapshot.docs.forEach(doc => {
+    snapshot.docs.forEach((doc) => {
       batch.update(doc.ref, {
         revoked: true,
         revokedAt: now,
@@ -173,7 +179,7 @@ export class FirestoreSessionRepository implements SessionRepository {
 
   /**
    * Converts Session domain entity to Firestore document
-   * 
+   *
    * @param session - Session domain entity
    * @returns Firestore document (without refreshToken)
    */
@@ -194,7 +200,7 @@ export class FirestoreSessionRepository implements SessionRepository {
 
   /**
    * Converts Firestore document to Session domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns Session domain entity
@@ -206,13 +212,13 @@ export class FirestoreSessionRepository implements SessionRepository {
       this.toDate(doc.createdAt),
       doc.expiresAt ? this.toDate(doc.expiresAt) : undefined,
       doc.revoked,
-      doc.revokedAt ? this.toDate(doc.revokedAt) : undefined
+      doc.revokedAt ? this.toDate(doc.revokedAt) : undefined,
     );
   }
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -223,7 +229,7 @@ export class FirestoreSessionRepository implements SessionRepository {
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */

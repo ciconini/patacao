@@ -1,10 +1,10 @@
 /**
  * User Domain Entity
- * 
+ *
  * Represents a system user (staff, managers, accountants, veterinarians) in the petshop management system.
  * This entity represents people who log into the system, distinct from Customers who are clients.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - A User must have at least one Role to access the system (invariant)
  * - Email must be unique across all users
@@ -47,7 +47,7 @@ export class User {
 
   /**
    * Creates a new User entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param email - Email address (required, must be unique)
    * @param fullName - User's full name (required)
@@ -61,7 +61,7 @@ export class User {
    * @param active - Whether the user is active (default true)
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if email is empty or invalid
    * @throws Error if fullName is empty
@@ -80,7 +80,7 @@ export class User {
     serviceSkills: string[] = [],
     active: boolean = true,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateEmail(email);
@@ -165,7 +165,7 @@ export class User {
 
   /**
    * Updates the user's email address
-   * 
+   *
    * @param email - New email address
    * @throws Error if email is empty or invalid
    */
@@ -177,7 +177,7 @@ export class User {
 
   /**
    * Updates the user's full name
-   * 
+   *
    * @param fullName - New full name
    * @throws Error if name is empty
    */
@@ -189,7 +189,7 @@ export class User {
 
   /**
    * Updates the user's phone number
-   * 
+   *
    * @param phone - New phone number
    */
   updatePhone(phone: string | undefined): void {
@@ -199,7 +199,7 @@ export class User {
 
   /**
    * Updates the user's username
-   * 
+   *
    * @param username - New username
    * @throws Error if username format is invalid
    */
@@ -214,7 +214,7 @@ export class User {
   /**
    * Updates the password hash
    * Note: Password hashing should be done outside the domain layer
-   * 
+   *
    * @param passwordHash - New password hash
    */
   updatePasswordHash(passwordHash: string | undefined): void {
@@ -224,7 +224,7 @@ export class User {
 
   /**
    * Adds a role to the user
-   * 
+   *
    * @param roleId - Role ID to add
    * @throws Error if roleId is empty
    */
@@ -241,7 +241,7 @@ export class User {
 
   /**
    * Removes a role from the user
-   * 
+   *
    * @param roleId - Role ID to remove
    * @throws Error if removing would leave user with no roles
    */
@@ -258,7 +258,7 @@ export class User {
 
   /**
    * Replaces all roles with a new set
-   * 
+   *
    * @param roleIds - New list of role IDs
    * @throws Error if roleIds is empty
    */
@@ -270,7 +270,7 @@ export class User {
 
   /**
    * Checks if the user has a specific role
-   * 
+   *
    * @param roleId - Role ID to check
    * @returns True if user has the role
    */
@@ -280,7 +280,7 @@ export class User {
 
   /**
    * Checks if the user has the Owner role
-   * 
+   *
    * @returns True if user has Owner role
    */
   isOwner(): boolean {
@@ -289,7 +289,7 @@ export class User {
 
   /**
    * Assigns the user to a store
-   * 
+   *
    * @param storeId - Store ID to assign
    * @throws Error if storeId is empty
    */
@@ -306,7 +306,7 @@ export class User {
 
   /**
    * Removes the user from a store
-   * 
+   *
    * @param storeId - Store ID to remove
    */
   removeFromStore(storeId: string): void {
@@ -319,7 +319,7 @@ export class User {
 
   /**
    * Updates the working hours schedule
-   * 
+   *
    * @param workingHours - New working hours schedule
    * @throws Error if schedule is invalid
    */
@@ -335,7 +335,7 @@ export class User {
 
   /**
    * Gets working hours for a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @returns Working hours for the day, or undefined if not set
    */
@@ -345,7 +345,7 @@ export class User {
 
   /**
    * Updates working hours for a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @param hours - Working hours for the day
    * @throws Error if hours are invalid
@@ -369,7 +369,7 @@ export class User {
 
   /**
    * Checks if the user is available on a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @returns True if user is available on that day
    */
@@ -380,7 +380,7 @@ export class User {
 
   /**
    * Checks if the user is available at a specific time on a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @param time - Time to check (format: "HH:mm")
    * @returns True if user is available at that time
@@ -400,7 +400,7 @@ export class User {
 
   /**
    * Checks if a time range falls within user's working hours for a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @param startTime - Start time (format: "HH:mm")
    * @param endTime - End time (format: "HH:mm")
@@ -409,7 +409,7 @@ export class User {
   isTimeRangeWithinWorkingHours(
     dayOfWeek: keyof WeeklySchedule,
     startTime: string,
-    endTime: string
+    endTime: string,
   ): boolean {
     const dayHours = this._workingHours?.[dayOfWeek];
     if (!dayHours || !dayHours.isAvailable || !dayHours.startTime || !dayHours.endTime) {
@@ -426,7 +426,7 @@ export class User {
 
   /**
    * Adds a service skill to the user
-   * 
+   *
    * @param serviceId - Service ID or skill tag to add
    * @throws Error if serviceId is empty
    */
@@ -443,7 +443,7 @@ export class User {
 
   /**
    * Removes a service skill from the user
-   * 
+   *
    * @param serviceId - Service ID or skill tag to remove
    */
   removeServiceSkill(serviceId: string): void {
@@ -456,7 +456,7 @@ export class User {
 
   /**
    * Sets all service skills
-   * 
+   *
    * @param serviceSkills - New list of service skills
    */
   setServiceSkills(serviceSkills: string[]): void {
@@ -466,7 +466,7 @@ export class User {
 
   /**
    * Checks if the user has a specific service skill
-   * 
+   *
    * @param serviceId - Service ID or skill tag to check
    * @returns True if user has the skill
    */
@@ -492,7 +492,7 @@ export class User {
 
   /**
    * Checks if the user is assigned to a specific store
-   * 
+   *
    * @param storeId - Store ID to check
    * @returns True if user is assigned to the store
    */
@@ -502,7 +502,7 @@ export class User {
 
   /**
    * Checks if the user can perform a service based on their skills
-   * 
+   *
    * @param serviceId - Service ID to check
    * @returns True if user has the required skill
    */
@@ -584,7 +584,7 @@ export class User {
 
   private validateWorkingHours(workingHours: WeeklySchedule): void {
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
+
     for (const day of days) {
       const dayHours = (workingHours as any)[day];
       if (dayHours) {
@@ -596,7 +596,7 @@ export class User {
   private validateDayWorkingHours(hours: WorkingHours): void {
     // Validate time format (HH:mm)
     const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
-    
+
     if (!timeRegex.test(hours.startTime)) {
       throw new Error(`Invalid start time format: ${hours.startTime}. Expected format: HH:mm`);
     }
@@ -622,15 +622,14 @@ export class User {
   private deepCopySchedule(schedule: WeeklySchedule): WeeklySchedule {
     const copy: any = {};
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
+
     for (const day of days) {
       const dayHours = (schedule as any)[day];
       if (dayHours) {
         copy[day] = { ...dayHours };
       }
     }
-    
+
     return copy as WeeklySchedule;
   }
 }
-

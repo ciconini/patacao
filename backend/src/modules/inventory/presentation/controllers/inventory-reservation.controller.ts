@@ -1,6 +1,6 @@
 /**
  * Inventory Reservation Controller
- * 
+ *
  * REST API controller for Inventory Reservation endpoints.
  */
 
@@ -14,12 +14,28 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
-import { CreateInventoryReservationDto, ReleaseInventoryReservationDto, InventoryReservationResponseDto } from '../dto/inventory-reservation.dto';
-import { CreateInventoryReservationUseCase, CreateInventoryReservationInput } from '../../application/inventory-reservation.use-case';
-import { ReleaseInventoryReservationUseCase, ReleaseInventoryReservationInput } from '../../application/release-inventory-reservation.use-case';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
+import {
+  CreateInventoryReservationDto,
+  ReleaseInventoryReservationDto,
+  InventoryReservationResponseDto,
+} from '../dto/inventory-reservation.dto';
+import {
+  CreateInventoryReservationUseCase,
+  CreateInventoryReservationInput,
+} from '../../application/inventory-reservation.use-case';
+import {
+  ReleaseInventoryReservationUseCase,
+  ReleaseInventoryReservationInput,
+} from '../../application/release-inventory-reservation.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Inventory')
+@ApiBearerAuth('JWT-auth')
 @Controller('api/v1/inventory-reservations')
 @UseGuards(FirebaseAuthGuard)
 export class InventoryReservationController {
@@ -34,6 +50,8 @@ export class InventoryReservationController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create inventory reservation', description: 'Creates a new inventory reservation' })
+  @ApiBody({ type: CreateInventoryReservationDto })
   async create(
     @Body() createDto: CreateInventoryReservationDto,
     @Request() req: AuthenticatedRequest,
@@ -77,6 +95,9 @@ export class InventoryReservationController {
    */
   @Post(':id/release')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Release inventory reservation', description: 'Releases an inventory reservation' })
+  @ApiParam({ name: 'id', description: 'Reservation UUID' })
+  @ApiBody({ type: ReleaseInventoryReservationDto })
   async release(
     @Param('id') id: string,
     @Body() releaseDto: ReleaseInventoryReservationDto,
@@ -99,4 +120,3 @@ export class InventoryReservationController {
     }
   }
 }
-

@@ -1,16 +1,16 @@
 /**
  * Archive Customer Use Case (UC-ADMIN-007)
- * 
+ *
  * Application use case for archiving or deleting a customer record.
  * This use case orchestrates domain entities and domain services to archive or delete a customer.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager/Owner for archive, Owner only for delete)
  * - Validate customer exists and is not already archived (for archive)
  * - Check for linked records (pets, appointments, invoices) before hard delete
  * - Archive or delete customer via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -85,7 +85,7 @@ export interface ArchiveCustomerResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -150,16 +150,16 @@ export class ArchiveCustomerUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the archive/delete customer use case
-   * 
+   *
    * @param input - Input data for archiving/deleting customer
    * @returns Result containing archive/delete result or error
    */
@@ -192,38 +192,40 @@ export class ArchiveCustomerUseCase {
 
   /**
    * Validates operation type
-   * 
+   *
    * @param operation - Operation type
    * @throws ValidationError if invalid
    */
   private validateOperation(operation: string): void {
     if (operation !== 'archive' && operation !== 'delete') {
-      throw new ValidationError('Operation must be \'archive\' or \'delete\'');
+      throw new ValidationError("Operation must be 'archive' or 'delete'");
     }
   }
 
   /**
    * Validates reason length
-   * 
+   *
    * @param reason - Reason string
    * @throws ValidationError if too long
    */
   private validateReason(reason: string): void {
     if (reason.length > ArchiveCustomerUseCase.MAX_REASON_LENGTH) {
-      throw new ValidationError(`Reason cannot exceed ${ArchiveCustomerUseCase.MAX_REASON_LENGTH} characters`);
+      throw new ValidationError(
+        `Reason cannot exceed ${ArchiveCustomerUseCase.MAX_REASON_LENGTH} characters`,
+      );
     }
   }
 
   /**
    * Loads existing customer by ID
-   * 
+   *
    * @param customerId - Customer ID
    * @returns Customer entity
    * @throws NotFoundError if customer not found
    */
   private async loadCustomer(customerId: string): Promise<Customer> {
     const customer = await this.customerRepository.findById(customerId);
-    
+
     if (!customer) {
       throw new NotFoundError('Customer not found');
     }
@@ -233,22 +235,25 @@ export class ArchiveCustomerUseCase {
 
   /**
    * Validates user authorization based on operation
-   * 
+   *
    * @param userId - User ID
    * @param operation - Operation type
    * @throws UnauthorizedError if user not found
    * @throws ForbiddenError if user lacks required role
    */
-  private async validateUserAuthorization(userId: string, operation: 'archive' | 'delete'): Promise<void> {
+  private async validateUserAuthorization(
+    userId: string,
+    operation: 'archive' | 'delete',
+  ): Promise<void> {
     const user = await this.userRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
     if (operation === 'delete') {
       // Only Owner can delete
-      const isOwner = user.roleIds.some(roleId => {
+      const isOwner = user.roleIds.some((roleId) => {
         try {
           const role = RoleId.fromString(roleId);
           return role ? role.isOwner() : false;
@@ -262,10 +267,10 @@ export class ArchiveCustomerUseCase {
       }
     } else {
       // Manager or Owner can archive
-      const hasRequiredRole = user.roleIds.some(roleId => {
+      const hasRequiredRole = user.roleIds.some((roleId) => {
         try {
           const role = RoleId.fromString(roleId);
-          return role ? (role.isManager() || role.isOwner()) : false;
+          return role ? role.isManager() || role.isOwner() : false;
         } catch {
           return false;
         }
@@ -279,14 +284,14 @@ export class ArchiveCustomerUseCase {
 
   /**
    * Executes archive operation
-   * 
+   *
    * @param customer - Customer entity
    * @param input - Input data
    * @returns Archive result
    */
   private async executeArchive(
     customer: Customer,
-    input: ArchiveCustomerInput
+    input: ArchiveCustomerInput,
   ): Promise<ArchiveCustomerResult> {
     // Check if already archived
     const isArchived = await this.customerRepository.isArchived(customer.id);
@@ -313,7 +318,7 @@ export class ArchiveCustomerUseCase {
       input.performedBy,
       beforeState,
       { archived: true, reason: input.reason },
-      input.reason
+      input.reason,
     );
 
     return {
@@ -331,14 +336,14 @@ export class ArchiveCustomerUseCase {
 
   /**
    * Executes delete operation
-   * 
+   *
    * @param customer - Customer entity
    * @param input - Input data
    * @returns Delete result
    */
   private async executeDelete(
     customer: Customer,
-    input: ArchiveCustomerInput
+    input: ArchiveCustomerInput,
   ): Promise<ArchiveCustomerResult> {
     // Check for linked records
     await this.validateNoLinkedRecords(customer.id);
@@ -356,7 +361,7 @@ export class ArchiveCustomerUseCase {
       input.performedBy,
       beforeState,
       { deleted: true, reason: input.reason },
-      input.reason
+      input.reason,
     );
 
     // Permanently delete customer
@@ -376,7 +381,7 @@ export class ArchiveCustomerUseCase {
 
   /**
    * Validates that customer has no linked records
-   * 
+   *
    * @param customerId - Customer ID
    * @throws ConflictError if linked records exist
    */
@@ -388,11 +393,15 @@ export class ArchiveCustomerUseCase {
     ]);
 
     if (petCount > 0) {
-      throw new ConflictError('Cannot delete customer with linked pets. Archive instead or delete pets first');
+      throw new ConflictError(
+        'Cannot delete customer with linked pets. Archive instead or delete pets first',
+      );
     }
 
     if (appointmentCount > 0) {
-      throw new ConflictError('Cannot delete customer with linked appointments. Archive instead or cancel appointments first');
+      throw new ConflictError(
+        'Cannot delete customer with linked appointments. Archive instead or cancel appointments first',
+      );
     }
 
     if (invoiceCount > 0) {
@@ -402,7 +411,7 @@ export class ArchiveCustomerUseCase {
 
   /**
    * Creates audit log entry
-   * 
+   *
    * @param customerId - Customer ID
    * @param action - Audit action
    * @param performedBy - User ID
@@ -416,7 +425,7 @@ export class ArchiveCustomerUseCase {
     performedBy: string,
     beforeState: Record<string, unknown>,
     afterState: Record<string, unknown>,
-    reason?: string
+    reason?: string,
   ): Promise<void> {
     try {
       const meta: Record<string, unknown> = {
@@ -435,7 +444,7 @@ export class ArchiveCustomerUseCase {
         action,
         performedBy,
         meta,
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -448,7 +457,7 @@ export class ArchiveCustomerUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -472,4 +481,3 @@ export class ArchiveCustomerUseCase {
     };
   }
 }
-

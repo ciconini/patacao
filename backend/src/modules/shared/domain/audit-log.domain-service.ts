@@ -1,20 +1,20 @@
 /**
  * AuditLogDomainService
- * 
+ *
  * Domain service responsible for defining when audit entries must be created and
  * enforcing the append-only rule. This service operates conceptually across all entities
  * and provides validation and creation logic for audit log entries.
- * 
+ *
  * Responsibilities:
  * - Define when audit entries must be created
  * - Enforce append-only rule
  * - Validate audit log entries
  * - Provide conceptual audit entry creation
- * 
+ *
  * Collaborating Entities:
  * - AuditLog: The audit log entity being created or validated
  * - All domain entities: This service operates conceptually across all entities
- * 
+ *
  * Business Rules Enforced:
  * - BR: AuditLog entries are append-only; editing is not allowed
  * - BR: All entity CREATE operations must be audited
@@ -26,14 +26,14 @@
  * - BR: Timestamp is required to track when the action occurred
  * - BR: Meta data can contain before/after state for change tracking
  * - BR: Logs must be searchable by admin roles (enforced at repository/use case level)
- * 
+ *
  * Invariants:
  * - Audit log entries cannot be modified once created
  * - Audit log entries cannot be deleted
  * - All auditable actions must create an audit entry
  * - Performed by user ID is always required
  * - Entity type and entity ID are always required
- * 
+ *
  * Edge Cases:
  * - Attempting to modify an audit log entry (not allowed)
  * - Attempting to delete an audit log entry (not allowed)
@@ -61,9 +61,9 @@ export interface AuditValidationResult {
 export class AuditLogDomainService {
   /**
    * Determines if an audit entry must be created for an action.
-   * 
+   *
    * Business Rule: All entity CREATE, UPDATE, DELETE, and VOID operations must be audited
-   * 
+   *
    * @param action - The action being performed
    * @param entityType - Type of entity being acted upon
    * @param entityId - ID of entity being acted upon
@@ -74,7 +74,7 @@ export class AuditLogDomainService {
     action: AuditAction,
     entityType: string,
     entityId: string,
-    performedBy: string
+    performedBy: string,
   ): boolean {
     // Validate required fields
     if (!action) {
@@ -94,18 +94,20 @@ export class AuditLogDomainService {
     }
 
     // All valid actions must be audited
-    return action === AuditAction.CREATE ||
-           action === AuditAction.UPDATE ||
-           action === AuditAction.DELETE ||
-           action === AuditAction.VOID;
+    return (
+      action === AuditAction.CREATE ||
+      action === AuditAction.UPDATE ||
+      action === AuditAction.DELETE ||
+      action === AuditAction.VOID
+    );
   }
 
   /**
    * Creates an audit log entry conceptually.
-   * 
+   *
    * This method creates an AuditLog entity that should be persisted.
    * It validates all requirements and determines if the entry should be created.
-   * 
+   *
    * @param id - Unique identifier for the audit log entry
    * @param entityType - Type of entity being audited
    * @param entityId - ID of entity being audited
@@ -122,7 +124,7 @@ export class AuditLogDomainService {
     action: AuditAction,
     performedBy: string,
     meta?: AuditMeta,
-    timestamp?: Date
+    timestamp?: Date,
   ): AuditEntryCreationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -132,7 +134,7 @@ export class AuditLogDomainService {
     if (!shouldCreate) {
       errors.push(
         `Audit entry should not be created. Action: ${action}, EntityType: ${entityType}, ` +
-        `EntityId: ${entityId}, PerformedBy: ${performedBy}`
+          `EntityId: ${entityId}, PerformedBy: ${performedBy}`,
       );
       return {
         auditLog: null,
@@ -172,7 +174,7 @@ export class AuditLogDomainService {
     // Warnings for missing metadata on UPDATE actions
     if (action === AuditAction.UPDATE && (!meta || (!meta.before && !meta.after))) {
       warnings.push(
-        'UPDATE action should include before/after state in metadata for better audit trail'
+        'UPDATE action should include before/after state in metadata for better audit trail',
       );
     }
 
@@ -187,15 +189,7 @@ export class AuditLogDomainService {
     }
 
     // Create the audit log entry
-    const auditLog = new AuditLog(
-      id,
-      entityType,
-      entityId,
-      action,
-      performedBy,
-      timestamp,
-      meta
-    );
+    const auditLog = new AuditLog(id, entityType, entityId, action, performedBy, timestamp, meta);
 
     return {
       auditLog,
@@ -207,9 +201,9 @@ export class AuditLogDomainService {
 
   /**
    * Validates that an audit log entry cannot be modified.
-   * 
+   *
    * Business Rule: AuditLog entries are append-only; editing is not allowed
-   * 
+   *
    * @param auditLog - The audit log entry that cannot be modified
    * @returns Validation result indicating modification is not allowed
    */
@@ -222,7 +216,7 @@ export class AuditLogDomainService {
       isValid: false,
       errors: [
         `Audit log entry ${auditLog.id} cannot be modified. ` +
-        `Audit log entries are append-only and immutable once created.`
+          `Audit log entries are append-only and immutable once created.`,
       ],
       warnings: [],
     };
@@ -230,9 +224,9 @@ export class AuditLogDomainService {
 
   /**
    * Validates that an audit log entry cannot be deleted.
-   * 
+   *
    * Business Rule: AuditLog entries are append-only; editing is not allowed
-   * 
+   *
    * @param auditLog - The audit log entry that cannot be deleted
    * @returns Validation result indicating deletion is not allowed
    */
@@ -245,7 +239,7 @@ export class AuditLogDomainService {
       isValid: false,
       errors: [
         `Audit log entry ${auditLog.id} cannot be deleted. ` +
-        `Audit log entries are append-only and must be retained for compliance and audit purposes.`
+          `Audit log entries are append-only and must be retained for compliance and audit purposes.`,
       ],
       warnings: [],
     };
@@ -253,7 +247,7 @@ export class AuditLogDomainService {
 
   /**
    * Validates an audit log entry.
-   * 
+   *
    * @param auditLog - The audit log entry to validate
    * @returns Validation result
    */
@@ -301,7 +295,7 @@ export class AuditLogDomainService {
     // Warnings for missing metadata on UPDATE actions
     if (auditLog.isUpdateAction() && !auditLog.hasMeta()) {
       warnings.push(
-        'UPDATE action should include metadata with before/after state for better audit trail'
+        'UPDATE action should include metadata with before/after state for better audit trail',
       );
     }
 
@@ -314,22 +308,24 @@ export class AuditLogDomainService {
 
   /**
    * Determines if an action should be audited.
-   * 
+   *
    * @param action - The action to check
    * @returns True if action should be audited
    */
   shouldAuditAction(action: AuditAction): boolean {
-    return action === AuditAction.CREATE ||
-           action === AuditAction.UPDATE ||
-           action === AuditAction.DELETE ||
-           action === AuditAction.VOID;
+    return (
+      action === AuditAction.CREATE ||
+      action === AuditAction.UPDATE ||
+      action === AuditAction.DELETE ||
+      action === AuditAction.VOID
+    );
   }
 
   /**
    * Creates metadata for an UPDATE action with before and after states.
-   * 
+   *
    * This is a helper method to create proper metadata for UPDATE audit entries.
-   * 
+   *
    * @param beforeState - State before the update
    * @param afterState - State after the update
    * @param additionalMeta - Additional metadata to include
@@ -338,7 +334,7 @@ export class AuditLogDomainService {
   createUpdateMetadata(
     beforeState: Record<string, unknown>,
     afterState: Record<string, unknown>,
-    additionalMeta?: Record<string, unknown>
+    additionalMeta?: Record<string, unknown>,
   ): AuditMeta {
     const meta: any = {
       before: { ...beforeState },
@@ -358,14 +354,14 @@ export class AuditLogDomainService {
 
   /**
    * Creates metadata for a CREATE action.
-   * 
+   *
    * @param initialState - Initial state of the created entity
    * @param additionalMeta - Additional metadata to include
    * @returns Audit metadata object
    */
   createCreateMetadata(
     initialState: Record<string, unknown>,
-    additionalMeta?: Record<string, unknown>
+    additionalMeta?: Record<string, unknown>,
   ): AuditMeta {
     const meta: any = {
       after: { ...initialState },
@@ -384,14 +380,14 @@ export class AuditLogDomainService {
 
   /**
    * Creates metadata for a DELETE action.
-   * 
+   *
    * @param deletedState - State of the entity before deletion
    * @param additionalMeta - Additional metadata to include
    * @returns Audit metadata object
    */
   createDeleteMetadata(
     deletedState: Record<string, unknown>,
-    additionalMeta?: Record<string, unknown>
+    additionalMeta?: Record<string, unknown>,
   ): AuditMeta {
     const meta: any = {
       before: { ...deletedState },
@@ -410,7 +406,7 @@ export class AuditLogDomainService {
 
   /**
    * Creates metadata for a VOID action.
-   * 
+   *
    * @param voidedState - State of the entity before voiding
    * @param voidReason - Reason for voiding
    * @param additionalMeta - Additional metadata to include
@@ -419,7 +415,7 @@ export class AuditLogDomainService {
   createVoidMetadata(
     voidedState: Record<string, unknown>,
     voidReason?: string,
-    additionalMeta?: Record<string, unknown>
+    additionalMeta?: Record<string, unknown>,
   ): AuditMeta {
     const meta: any = {
       before: { ...voidedState },
@@ -439,9 +435,9 @@ export class AuditLogDomainService {
 
   /**
    * Validates that audit log entries are immutable.
-   * 
+   *
    * Business Rule: AuditLog entries are append-only; editing is not allowed
-   * 
+   *
    * @param auditLog - The audit log entry to check
    * @returns True if audit log is immutable (always true)
    */
@@ -456,9 +452,9 @@ export class AuditLogDomainService {
 
   /**
    * Gets the entity type name for an entity class.
-   * 
+   *
    * This is a helper method to get a consistent entity type name.
-   * 
+   *
    * @param entityClassName - Name of the entity class (e.g., "Invoice", "Appointment")
    * @returns Entity type string
    */
@@ -474,13 +470,11 @@ export class AuditLogDomainService {
 
   /**
    * Validates multiple audit log entries.
-   * 
+   *
    * @param auditLogs - List of audit log entries to validate
    * @returns Map of audit log ID to validation result
    */
-  validateMultipleAuditLogs(
-    auditLogs: AuditLog[]
-  ): Map<string, AuditValidationResult> {
+  validateMultipleAuditLogs(auditLogs: AuditLog[]): Map<string, AuditValidationResult> {
     const results = new Map<string, AuditValidationResult>();
 
     for (const auditLog of auditLogs) {
@@ -493,17 +487,13 @@ export class AuditLogDomainService {
 
   /**
    * Checks if an audit log entry is for a specific entity.
-   * 
+   *
    * @param auditLog - The audit log entry
    * @param entityType - Entity type to check
    * @param entityId - Entity ID to check
    * @returns True if audit log is for the specified entity
    */
-  isAuditLogForEntity(
-    auditLog: AuditLog,
-    entityType: string,
-    entityId: string
-  ): boolean {
+  isAuditLogForEntity(auditLog: AuditLog, entityType: string, entityId: string): boolean {
     if (!auditLog) {
       throw new Error('AuditLog entity is required');
     }
@@ -513,7 +503,7 @@ export class AuditLogDomainService {
 
   /**
    * Filters audit log entries by entity type.
-   * 
+   *
    * @param auditLogs - List of audit log entries
    * @param entityType - Entity type to filter by
    * @returns Filtered list of audit log entries
@@ -523,12 +513,12 @@ export class AuditLogDomainService {
       throw new Error('Entity type is required');
     }
 
-    return auditLogs.filter(log => log.entityType === entityType);
+    return auditLogs.filter((log) => log.entityType === entityType);
   }
 
   /**
    * Filters audit log entries by action.
-   * 
+   *
    * @param auditLogs - List of audit log entries
    * @param action - Action to filter by
    * @returns Filtered list of audit log entries
@@ -538,12 +528,12 @@ export class AuditLogDomainService {
       throw new Error('Action is required');
     }
 
-    return auditLogs.filter(log => log.action === action);
+    return auditLogs.filter((log) => log.action === action);
   }
 
   /**
    * Filters audit log entries by performed by user.
-   * 
+   *
    * @param auditLogs - List of audit log entries
    * @param performedBy - User ID to filter by
    * @returns Filtered list of audit log entries
@@ -553,7 +543,6 @@ export class AuditLogDomainService {
       throw new Error('Performed by user ID is required');
     }
 
-    return auditLogs.filter(log => log.performedBy === performedBy);
+    return auditLogs.filter((log) => log.performedBy === performedBy);
   }
 }
-

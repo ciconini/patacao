@@ -1,15 +1,15 @@
 /**
  * User Logout Use Case (UC-AUTH-002)
- * 
+ *
  * Application use case for logging out an authenticated user.
  * This use case orchestrates domain entities and domain services to revoke sessions.
- * 
+ *
  * Responsibilities:
  * - Validate access token
  * - Revoke current session
  * - Optionally revoke refresh token
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -73,7 +73,7 @@ export interface UserLogoutResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -98,16 +98,16 @@ export class UserLogoutUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the user logout use case
-   * 
+   *
    * @param input - Logout input data
    * @returns Result containing logout confirmation or error
    */
@@ -144,7 +144,9 @@ export class UserLogoutUseCase {
       // 5. Revoke refresh token if provided
       if (input.refreshToken) {
         try {
-          const refreshSession = await this.sessionRepository.findByRefreshToken(input.refreshToken);
+          const refreshSession = await this.sessionRepository.findByRefreshToken(
+            input.refreshToken,
+          );
           if (refreshSession && !refreshSession.isRevoked()) {
             refreshSession.revoke();
             await this.sessionRepository.revokeByRefreshToken(input.refreshToken);
@@ -173,7 +175,7 @@ export class UserLogoutUseCase {
 
   /**
    * Validates access token
-   * 
+   *
    * @param token - Access token string
    * @returns Token payload or null
    */
@@ -187,7 +189,7 @@ export class UserLogoutUseCase {
 
   /**
    * Creates audit log entry for logout
-   * 
+   *
    * @param userId - User ID
    * @param ipAddress - Client IP address
    * @param userAgent - Client user agent
@@ -195,7 +197,7 @@ export class UserLogoutUseCase {
   private async createAuditLog(
     userId: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<void> {
     try {
       const auditResult = this.auditLogDomainService.createAuditEntry(
@@ -211,7 +213,7 @@ export class UserLogoutUseCase {
             userAgent,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (auditResult.auditLog) {
@@ -224,7 +226,7 @@ export class UserLogoutUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -248,4 +250,3 @@ export class UserLogoutUseCase {
     };
   }
 }
-

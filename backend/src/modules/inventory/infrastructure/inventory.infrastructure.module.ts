@@ -1,6 +1,6 @@
 /**
  * Inventory Infrastructure Module
- * 
+ *
  * NestJS module that provides Firestore implementations for Inventory module repositories.
  */
 
@@ -57,4 +57,3 @@ import { InventoryReservationRepository } from '../ports/inventory-reservation.r
   ],
 })
 export class InventoryInfrastructureModule {}
-

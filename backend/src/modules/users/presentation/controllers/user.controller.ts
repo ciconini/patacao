@@ -1,6 +1,6 @@
 /**
  * User Controller
- * 
+ *
  * REST API controller for User management endpoints.
  */
 
@@ -17,13 +17,29 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+  ApiExtraModels,
+} from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from '../dto/user.dto';
-import { PaginatedResponseDto } from '../../../../shared/presentation/dto/pagination.dto';
+import { PaginatedResponseDto, PaginationMetaDto } from '../../../../shared/presentation/dto/pagination.dto';
 import { CreateUserUseCase, CreateUserInput } from '../../application/create-user.use-case';
 import { SearchUsersUseCase, SearchUsersInput } from '../../application/search-users.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Users')
+@ApiBearerAuth('JWT-auth')
+@ApiExtraModels(PaginatedResponseDto, PaginationMetaDto)
 @Controller('api/v1/users')
 @UseGuards(FirebaseAuthGuard)
 export class UserController {
@@ -38,6 +54,32 @@ export class UserController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create user',
+    description: 'Creates a new user with roles and store assignments',
+  })
+  @ApiBody({ type: CreateUserDto })
+  @ApiResponse({
+    status: 201,
+    description: 'User created successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'User with this email or username already exists',
+  })
   async create(
     @Body() createDto: CreateUserDto,
     @Request() req: AuthenticatedRequest,
@@ -72,6 +114,33 @@ export class UserController {
    * PUT /api/v1/users/:id
    */
   @Put(':id')
+  @ApiOperation({
+    summary: 'Update user',
+    description: 'Updates an existing user profile',
+  })
+  @ApiParam({ name: 'id', description: 'User UUID', type: String })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({
+    status: 200,
+    description: 'User updated successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateUserDto,
@@ -86,6 +155,28 @@ export class UserController {
    * GET /api/v1/users/:id
    */
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get user by ID',
+    description: 'Retrieves a user profile by its ID',
+  })
+  @ApiParam({ name: 'id', description: 'User UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'User retrieved successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
   async findOne(@Param('id') id: string): Promise<UserResponseDto> {
     // TODO: Implement GetUserUseCase
     throw new Error('Not implemented yet');
@@ -96,6 +187,62 @@ export class UserController {
    * GET /api/v1/users
    */
   @Get()
+  @ApiOperation({
+    summary: 'Search users',
+    description: 'Searches and filters users with pagination support',
+  })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    type: String,
+    description: 'Search query (name, email, username)',
+  })
+  @ApiQuery({ name: 'email', required: false, type: String, description: 'Filter by email' })
+  @ApiQuery({ name: 'role', required: false, type: String, description: 'Filter by role' })
+  @ApiQuery({ name: 'storeId', required: false, type: String, description: 'Filter by store ID' })
+  @ApiQuery({
+    name: 'active',
+    required: false,
+    type: String,
+    description: 'Filter by active status (true/false)',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1, description: 'Page number' })
+  @ApiQuery({
+    name: 'perPage',
+    required: false,
+    type: Number,
+    example: 20,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    type: String,
+    description: 'Sort field and direction (e.g., "email:asc")',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/UserResponseDto' },
+        },
+        meta: { $ref: '#/components/schemas/PaginationMetaDto' },
+      },
+      required: ['items', 'meta'],
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
   async search(
     @Query('q') q?: string,
     @Query('email') email?: string,
@@ -131,7 +278,7 @@ export class UserController {
     }
 
     return {
-      items: result.data.items.map(item => this.mapToResponseDto(item)),
+      items: result.data.items.map((item) => this.mapToResponseDto(item)),
       meta: result.data.meta,
     };
   }
@@ -152,20 +299,19 @@ export class UserController {
     createdAt: Date;
     updatedAt: Date;
   }): UserResponseDto {
-      return {
-        id: output.id,
-        email: output.email,
-        fullName: output.fullName,
-        phone: output.phone,
-        username: output.username,
-        roles: output.roles,
-        storeIds: output.storeIds,
-        workingHours: output.workingHours,
-        serviceSkills: [], // TODO: Add serviceSkills to CreateUserOutput
-        active: output.active,
-        createdAt: output.createdAt,
-        updatedAt: output.updatedAt,
-      };
+    return {
+      id: output.id,
+      email: output.email,
+      fullName: output.fullName,
+      phone: output.phone,
+      username: output.username,
+      roles: output.roles,
+      storeIds: output.storeIds,
+      workingHours: output.workingHours,
+      serviceSkills: [], // TODO: Add serviceSkills to CreateUserOutput
+      active: output.active,
+      createdAt: output.createdAt,
+      updatedAt: output.updatedAt,
+    };
   }
 }
-

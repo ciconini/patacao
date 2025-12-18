@@ -1,16 +1,16 @@
 /**
  * Search Appointments Use Case (UC-SVC-006)
- * 
+ *
  * Application use case for searching and filtering appointment records.
  * This use case orchestrates domain entities and repository ports to search appointments.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, Veterinarian, or Owner role)
  * - Validate search criteria and pagination parameters
  * - Execute search via repository
  * - Enrich results with denormalized data
  * - Return paginated results with metadata
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -23,7 +23,11 @@ import { RoleId } from '../../shared/domain/role-id.value-object';
 
 // Repository interfaces (ports)
 export interface AppointmentRepository {
-  search(criteria: SearchCriteria, pagination: Pagination, sort: Sort): Promise<PaginatedResult<Appointment>>;
+  search(
+    criteria: SearchCriteria,
+    pagination: Pagination,
+    sort: Sort,
+  ): Promise<PaginatedResult<Appointment>>;
 }
 
 export interface StoreRepository {
@@ -47,10 +51,12 @@ export interface ServiceRepository {
 }
 
 export interface AppointmentServiceLineRepository {
-  findByAppointmentId(appointmentId: string): Promise<Array<{
-    serviceId: string;
-    quantity: number;
-  }>>;
+  findByAppointmentId(appointmentId: string): Promise<
+    Array<{
+      serviceId: string;
+      quantity: number;
+    }>
+  >;
 }
 
 export interface CurrentUserRepository {
@@ -156,7 +162,7 @@ export interface SearchAppointmentsResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -211,12 +217,12 @@ export class SearchAppointmentsUseCase {
     private readonly userRepository: UserRepository,
     private readonly serviceRepository: ServiceRepository,
     private readonly appointmentServiceLineRepository: AppointmentServiceLineRepository,
-    private readonly currentUserRepository: CurrentUserRepository
+    private readonly currentUserRepository: CurrentUserRepository,
   ) {}
 
   /**
    * Executes the search appointments use case
-   * 
+   *
    * @param input - Input data for searching appointments
    * @returns Result containing paginated appointment list or error
    */
@@ -264,12 +270,12 @@ export class SearchAppointmentsUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -280,7 +286,9 @@ export class SearchAppointmentsUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Manager, Veterinarian, or Owner role can search appointments');
+      throw new ForbiddenError(
+        'Only Staff, Manager, Veterinarian, or Owner role can search appointments',
+      );
     }
   }
 
@@ -288,15 +296,17 @@ export class SearchAppointmentsUseCase {
    * Validates and normalizes pagination parameters
    */
   private validateAndNormalizePagination(page?: number, perPage?: number): Pagination {
-    const normalizedPage = page !== undefined && page >= SearchAppointmentsUseCase.MIN_PAGE
-      ? page
-      : SearchAppointmentsUseCase.MIN_PAGE;
+    const normalizedPage =
+      page !== undefined && page >= SearchAppointmentsUseCase.MIN_PAGE
+        ? page
+        : SearchAppointmentsUseCase.MIN_PAGE;
 
-    const normalizedPerPage = perPage !== undefined &&
+    const normalizedPerPage =
+      perPage !== undefined &&
       perPage >= SearchAppointmentsUseCase.MIN_PER_PAGE &&
       perPage <= SearchAppointmentsUseCase.MAX_PER_PAGE
-      ? perPage
-      : SearchAppointmentsUseCase.DEFAULT_PER_PAGE;
+        ? perPage
+        : SearchAppointmentsUseCase.DEFAULT_PER_PAGE;
 
     return {
       page: normalizedPage,
@@ -320,7 +330,7 @@ export class SearchAppointmentsUseCase {
 
     if (!SearchAppointmentsUseCase.VALID_SORT_FIELDS.includes(field)) {
       throw new ValidationError(
-        `Invalid sort field. Valid fields: ${SearchAppointmentsUseCase.VALID_SORT_FIELDS.join(', ')}`
+        `Invalid sort field. Valid fields: ${SearchAppointmentsUseCase.VALID_SORT_FIELDS.join(', ')}`,
       );
     }
 
@@ -347,13 +357,11 @@ export class SearchAppointmentsUseCase {
       return undefined;
     }
 
-    const validStatus = SearchAppointmentsUseCase.VALID_STATUSES.find(
-      s => s === status
-    );
+    const validStatus = SearchAppointmentsUseCase.VALID_STATUSES.find((s) => s === status);
 
     if (!validStatus) {
       throw new ValidationError(
-        `Invalid status. Valid values: ${SearchAppointmentsUseCase.VALID_STATUSES.join(', ')}`
+        `Invalid status. Valid values: ${SearchAppointmentsUseCase.VALID_STATUSES.join(', ')}`,
       );
     }
 
@@ -365,7 +373,7 @@ export class SearchAppointmentsUseCase {
    */
   private buildSearchCriteria(
     input: SearchAppointmentsInput,
-    status?: AppointmentStatus
+    status?: AppointmentStatus,
   ): SearchCriteria {
     const criteria: SearchCriteria = {};
 
@@ -404,7 +412,7 @@ export class SearchAppointmentsUseCase {
    * Enriches appointments with denormalized data
    */
   private async enrichWithDenormalizedData(
-    appointments: Appointment[]
+    appointments: Appointment[],
   ): Promise<SearchAppointmentsOutput['items']> {
     const enrichedItems: SearchAppointmentsOutput['items'] = [];
 
@@ -413,7 +421,7 @@ export class SearchAppointmentsUseCase {
     const customerIds = new Set<string>();
     const petIds = new Set<string>();
     const userIds = new Set<string>();
-    const appointmentIds = appointments.map(a => a.id);
+    const appointmentIds = appointments.map((a) => a.id);
 
     for (const appointment of appointments) {
       storeIds.add(appointment.storeId);
@@ -436,9 +444,10 @@ export class SearchAppointmentsUseCase {
     const serviceLinesMap = new Map<string, Array<{ serviceId: string; quantity: number }>>();
     await Promise.all(
       appointmentIds.map(async (appointmentId) => {
-        const lines = await this.appointmentServiceLineRepository.findByAppointmentId(appointmentId);
+        const lines =
+          await this.appointmentServiceLineRepository.findByAppointmentId(appointmentId);
         serviceLinesMap.set(appointmentId, lines);
-      })
+      }),
     );
 
     // Load services
@@ -458,7 +467,7 @@ export class SearchAppointmentsUseCase {
       const staff = appointment.staffId ? users.get(appointment.staffId) : undefined;
       const serviceLines = serviceLinesMap.get(appointment.id) || [];
 
-      const enrichedServices = serviceLines.map(line => {
+      const enrichedServices = serviceLines.map((line) => {
         const service = services.get(line.serviceId);
         return {
           serviceId: line.serviceId,
@@ -502,7 +511,7 @@ export class SearchAppointmentsUseCase {
         if (store) {
           stores.set(id, store);
         }
-      })
+      }),
     );
 
     return stores;
@@ -511,7 +520,9 @@ export class SearchAppointmentsUseCase {
   /**
    * Loads customers by IDs
    */
-  private async loadCustomers(customerIds: string[]): Promise<Map<string, { id: string; fullName: string }>> {
+  private async loadCustomers(
+    customerIds: string[],
+  ): Promise<Map<string, { id: string; fullName: string }>> {
     const customers = new Map<string, { id: string; fullName: string }>();
 
     await Promise.all(
@@ -520,7 +531,7 @@ export class SearchAppointmentsUseCase {
         if (customer) {
           customers.set(id, customer);
         }
-      })
+      }),
     );
 
     return customers;
@@ -538,7 +549,7 @@ export class SearchAppointmentsUseCase {
         if (pet) {
           pets.set(id, pet);
         }
-      })
+      }),
     );
 
     return pets;
@@ -547,7 +558,9 @@ export class SearchAppointmentsUseCase {
   /**
    * Loads users by IDs
    */
-  private async loadUsers(userIds: string[]): Promise<Map<string, { id: string; fullName: string }>> {
+  private async loadUsers(
+    userIds: string[],
+  ): Promise<Map<string, { id: string; fullName: string }>> {
     const users = new Map<string, { id: string; fullName: string }>();
 
     await Promise.all(
@@ -556,7 +569,7 @@ export class SearchAppointmentsUseCase {
         if (user) {
           users.set(id, user);
         }
-      })
+      }),
     );
 
     return users;
@@ -565,7 +578,9 @@ export class SearchAppointmentsUseCase {
   /**
    * Loads services by IDs
    */
-  private async loadServices(serviceIds: string[]): Promise<Map<string, { id: string; name: string }>> {
+  private async loadServices(
+    serviceIds: string[],
+  ): Promise<Map<string, { id: string; name: string }>> {
     const services = new Map<string, { id: string; name: string }>();
 
     await Promise.all(
@@ -574,7 +589,7 @@ export class SearchAppointmentsUseCase {
         if (service) {
           services.set(id, service);
         }
-      })
+      }),
     );
 
     return services;
@@ -603,4 +618,3 @@ export class SearchAppointmentsUseCase {
     };
   }
 }
-

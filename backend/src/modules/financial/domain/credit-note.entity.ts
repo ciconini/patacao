@@ -1,11 +1,11 @@
 /**
  * CreditNote Domain Entity
- * 
+ *
  * Represents a credit note (nota de crédito) in the petshop management system.
  * Credit notes are fiscal documents used to correct or refund invoices.
  * They must reference the original invoice and reduce the outstanding amount in financial exports.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - CreditNote must be linked to an Invoice (invariant)
  * - Amount must be positive
@@ -25,7 +25,7 @@ export class CreditNote {
 
   /**
    * Creates a new CreditNote entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param invoiceId - Invoice ID this credit note references (required)
    * @param amount - Credit note amount (required, must be positive)
@@ -33,7 +33,7 @@ export class CreditNote {
    * @param issuedAt - Date when credit note was issued
    * @param reason - Reason for the credit note
    * @param createdAt - Creation timestamp (defaults to now)
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if invoiceId is empty
    * @throws Error if amount is not positive
@@ -46,7 +46,7 @@ export class CreditNote {
     createdBy: string,
     issuedAt?: Date,
     reason?: string,
-    createdAt?: Date
+    createdAt?: Date,
   ) {
     this.validateId(id);
     this.validateInvoiceId(invoiceId);
@@ -93,7 +93,7 @@ export class CreditNote {
 
   /**
    * Updates the amount
-   * 
+   *
    * @param amount - New amount
    * @throws Error if amount is not positive
    * @throws Error if credit note is already issued
@@ -108,7 +108,7 @@ export class CreditNote {
 
   /**
    * Updates the reason
-   * 
+   *
    * @param reason - New reason
    * @throws Error if credit note is already issued
    */
@@ -121,7 +121,7 @@ export class CreditNote {
 
   /**
    * Issues the credit note
-   * 
+   *
    * @param issuedAt - Date when credit note is issued (defaults to now)
    * @throws Error if credit note is already issued
    */
@@ -134,7 +134,7 @@ export class CreditNote {
 
   /**
    * Checks if the credit note is issued
-   * 
+   *
    * @returns True if credit note has an issued date
    */
   isIssued(): boolean {
@@ -143,7 +143,7 @@ export class CreditNote {
 
   /**
    * Checks if the credit note can be modified
-   * 
+   *
    * @returns True if credit note is not yet issued
    */
   canBeModified(): boolean {
@@ -152,7 +152,7 @@ export class CreditNote {
 
   /**
    * Checks if the credit note has a reason
-   * 
+   *
    * @returns True if reason is set
    */
   hasReason(): boolean {
@@ -185,4 +185,3 @@ export class CreditNote {
     }
   }
 }
-

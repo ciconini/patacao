@@ -1,11 +1,11 @@
 /**
  * StockBatch Domain Entity
- * 
+ *
  * Represents a batch of stock items for batch/expiry tracking in the petshop management system.
  * StockBatch tracks inventory by batch numbers and expiry dates, enabling FIFO/LIFO inventory management
  * and preventing sale of expired items.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - StockBatch must be linked to a Product (invariant)
  * - Quantity must be non-negative integer
@@ -25,7 +25,7 @@ export class StockBatch {
 
   /**
    * Creates a new StockBatch entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param productId - Product ID this batch belongs to (required)
    * @param receivedAt - Date when batch was received (required)
@@ -34,7 +34,7 @@ export class StockBatch {
    * @param expiryDate - Expiry date for the batch
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if productId is empty
    * @throws Error if quantity is negative
@@ -48,7 +48,7 @@ export class StockBatch {
     batchNumber?: string,
     expiryDate?: Date,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateProductId(productId);
@@ -105,7 +105,7 @@ export class StockBatch {
 
   /**
    * Updates the batch number
-   * 
+   *
    * @param batchNumber - New batch number
    */
   updateBatchNumber(batchNumber: string | undefined): void {
@@ -115,7 +115,7 @@ export class StockBatch {
 
   /**
    * Updates the quantity
-   * 
+   *
    * @param quantity - New quantity
    * @throws Error if quantity is negative
    */
@@ -127,7 +127,7 @@ export class StockBatch {
 
   /**
    * Increases the quantity by the specified amount
-   * 
+   *
    * @param amount - Amount to add to quantity
    * @throws Error if amount is negative
    */
@@ -141,7 +141,7 @@ export class StockBatch {
 
   /**
    * Decreases the quantity by the specified amount
-   * 
+   *
    * @param amount - Amount to subtract from quantity
    * @throws Error if amount is negative or would result in negative quantity
    */
@@ -158,7 +158,7 @@ export class StockBatch {
 
   /**
    * Updates the expiry date
-   * 
+   *
    * @param expiryDate - New expiry date
    * @throws Error if expiryDate is before receivedAt
    */
@@ -174,13 +174,13 @@ export class StockBatch {
 
   /**
    * Updates the received date
-   * 
+   *
    * @param receivedAt - New received date
    * @throws Error if expiryDate exists and is before receivedAt
    */
   updateReceivedAt(receivedAt: Date): void {
     const received = new Date(receivedAt);
-    
+
     if (this._expiryDate && received > this._expiryDate) {
       throw new Error('Received date cannot be after expiry date');
     }
@@ -191,7 +191,7 @@ export class StockBatch {
 
   /**
    * Checks if the batch is expired
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to now)
    * @returns True if batch has an expiry date and it has passed
    */
@@ -205,7 +205,7 @@ export class StockBatch {
   /**
    * Checks if the batch can be sold
    * Items in expired StockBatch cannot be sold; system must block them at POS
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to now)
    * @returns True if batch is not expired and has quantity > 0
    */
@@ -218,7 +218,7 @@ export class StockBatch {
 
   /**
    * Calculates days until expiry
-   * 
+   *
    * @param referenceDate - Date to calculate from (defaults to now)
    * @returns Days until expiry, or undefined if no expiry date or already expired
    */
@@ -237,7 +237,7 @@ export class StockBatch {
 
   /**
    * Calculates days since received
-   * 
+   *
    * @param referenceDate - Date to calculate to (defaults to now)
    * @returns Days since received
    */
@@ -248,7 +248,7 @@ export class StockBatch {
 
   /**
    * Checks if the batch has an expiry date
-   * 
+   *
    * @returns True if expiry date is set
    */
   hasExpiryDate(): boolean {
@@ -257,7 +257,7 @@ export class StockBatch {
 
   /**
    * Checks if the batch has a batch number
-   * 
+   *
    * @returns True if batch number is set
    */
   hasBatchNumber(): boolean {
@@ -266,7 +266,7 @@ export class StockBatch {
 
   /**
    * Checks if the batch has available stock
-   * 
+   *
    * @returns True if quantity > 0
    */
   hasStock(): boolean {
@@ -302,4 +302,3 @@ export class StockBatch {
     }
   }
 }
-

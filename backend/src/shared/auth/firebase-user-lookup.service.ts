@@ -1,6 +1,6 @@
 /**
  * Firebase User Lookup Service
- * 
+ *
  * Service for finding internal User entities by Firebase UID.
  * This service bridges Firebase Authentication with the internal user system.
  */
@@ -20,7 +20,7 @@ export class FirebaseUserLookupService {
 
   /**
    * Finds an internal User by Firebase UID
-   * 
+   *
    * @param firebaseUid - Firebase user UID
    * @returns User entity or null if not found
    */
@@ -46,18 +46,15 @@ export class FirebaseUserLookupService {
 
   /**
    * Updates a user's Firebase UID
-   * 
+   *
    * @param userId - Internal user ID
    * @param firebaseUid - Firebase user UID
    */
   async linkFirebaseUid(userId: string, firebaseUid: string): Promise<void> {
-    await this.firestore
-      .collection(this.collectionName)
-      .doc(userId)
-      .update({
-        firebaseUid,
-        updatedAt: new Date(),
-      });
+    await this.firestore.collection(this.collectionName).doc(userId).update({
+      firebaseUid,
+      updatedAt: new Date(),
+    });
   }
 
   /**
@@ -85,4 +82,3 @@ export class FirebaseUserLookupService {
     );
   }
 }
-

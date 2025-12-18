@@ -1,13 +1,13 @@
 /**
  * Firebase CRUD Test Script
- * 
+ *
  * This script tests Firebase connection by performing actual CRUD operations:
  * 1. Create a test document
  * 2. Read the document
  * 3. Update the document
  * 4. Query documents
  * 5. Delete the document
- * 
+ *
  * Usage:
  *   npm run test:firebase:crud
  *   or
@@ -83,7 +83,12 @@ async function initializeFirebase(): Promise<admin.firestore.Firestore> {
       } else {
         try {
           const pathModule = require('path');
-          const defaultPath = pathModule.join(process.cwd(), 'config', 'secrets', 'firebase-service-account.json');
+          const defaultPath = pathModule.join(
+            process.cwd(),
+            'config',
+            'secrets',
+            'firebase-service-account.json',
+          );
           const serviceAccount = require(defaultPath);
           admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
@@ -121,7 +126,9 @@ async function testFirebaseCRUD(): Promise<void> {
   // Check if using emulator
   const useEmulator = process.env.USE_FIREBASE_EMULATOR === 'true';
   if (!useEmulator) {
-    console.log('ℹ️  Note: Testing against production Firebase. Make sure Firestore API is enabled.');
+    console.log(
+      'ℹ️  Note: Testing against production Firebase. Make sure Firestore API is enabled.',
+    );
     console.log('   To test locally, use: USE_FIREBASE_EMULATOR=true npm run test:firebase:crud\n');
   }
 
@@ -152,10 +159,16 @@ async function testFirebaseCRUD(): Promise<void> {
     logResult('CREATE', false, 'Failed to create document', error);
     if (error.message?.includes('PERMISSION_DENIED') && error.message?.includes('Firestore API')) {
       console.log('\n⚠️  Firestore API needs to be enabled in your Firebase project.');
-      console.log('   Visit: https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=patacao');
-      console.log('   Or test locally with emulator: USE_FIREBASE_EMULATOR=true npm run test:firebase:crud\n');
+      console.log(
+        '   Visit: https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=patacao',
+      );
+      console.log(
+        '   Or test locally with emulator: USE_FIREBASE_EMULATOR=true npm run test:firebase:crud\n',
+      );
     } else if (error.code === 5 || error.message?.includes('NOT_FOUND')) {
-      console.log('\n⚠️  Firestore database not found. You need to create a Firestore database first.');
+      console.log(
+        '\n⚠️  Firestore database not found. You need to create a Firestore database first.',
+      );
       console.log('   Visit: https://console.firebase.google.com/project/patacao/firestore');
       console.log('   Click "Create database" and choose:');
       console.log('   - Mode: Native mode (recommended)');
@@ -222,7 +235,7 @@ async function testFirebaseCRUD(): Promise<void> {
       .limit(10)
       .get();
 
-    const documents = querySnapshot.docs.map(doc => ({
+    const documents = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
@@ -328,8 +341,8 @@ async function testFirebaseCRUD(): Promise<void> {
   console.log('📊 Test Summary');
   console.log('='.repeat(60));
 
-  const successful = results.filter(r => r.success).length;
-  const failed = results.filter(r => !r.success).length;
+  const successful = results.filter((r) => r.success).length;
+  const failed = results.filter((r) => !r.success).length;
   const total = results.length;
 
   console.log(`Total Tests: ${total}`);
@@ -338,7 +351,9 @@ async function testFirebaseCRUD(): Promise<void> {
 
   if (failed === 0) {
     console.log('\n🎉 All CRUD tests passed! Firebase is working correctly.');
-    console.log('✅ CREATE, READ, UPDATE, QUERY, BATCH, TRANSACTION, and DELETE operations are all functional.');
+    console.log(
+      '✅ CREATE, READ, UPDATE, QUERY, BATCH, TRANSACTION, and DELETE operations are all functional.',
+    );
   } else {
     console.log('\n⚠️  Some tests failed. Please check the errors above.');
   }
@@ -354,4 +369,3 @@ testFirebaseCRUD().catch((error) => {
   console.error('❌ Unexpected error:', error);
   process.exit(1);
 });
-

@@ -1,10 +1,10 @@
 /**
  * Confirm Appointment Use Case (UC-SVC-003)
- * 
+ *
  * Application use case for confirming a booked appointment.
  * This use case orchestrates domain entities and domain services to confirm appointments
  * and create inventory reservations for services that consume inventory.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, or Owner role)
  * - Validate appointment exists and is in booked status
@@ -14,7 +14,7 @@
  * - Update appointment status to confirmed
  * - Persist changes via repositories
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -39,10 +39,12 @@ export interface AppointmentRepository {
 }
 
 export interface AppointmentServiceLineRepository {
-  findByAppointmentId(appointmentId: string): Promise<Array<{
-    serviceId: string;
-    quantity: number;
-  }>>;
+  findByAppointmentId(appointmentId: string): Promise<
+    Array<{
+      serviceId: string;
+      quantity: number;
+    }>
+  >;
 }
 
 export interface ServiceRepository {
@@ -102,7 +104,7 @@ export interface ConfirmAppointmentResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -161,16 +163,16 @@ export class ConfirmAppointmentUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the confirm appointment use case
-   * 
+   *
    * @param input - Input data for confirming appointment
    * @returns Result containing confirmed appointment or error
    */
@@ -193,23 +195,25 @@ export class ConfirmAppointmentUseCase {
       // 4. Verify user has store access
       const hasAccess = await this.currentUserRepository.hasStoreAccess(
         input.performedBy,
-        appointment.storeId
+        appointment.storeId,
       );
       if (!hasAccess) {
-        throw new ForbiddenError('You do not have access to this appointment\'s store');
+        throw new ForbiddenError("You do not have access to this appointment's store");
       }
 
       // 5. Check if user can override (Manager or Owner)
       const canOverride = await this.canOverrideInsufficientStock(input.performedBy);
 
       // 6. Load appointment service lines
-      const serviceLines = await this.appointmentServiceLineRepository.findByAppointmentId(appointment.id);
+      const serviceLines = await this.appointmentServiceLineRepository.findByAppointmentId(
+        appointment.id,
+      );
 
       // 7. Check inventory availability and create reservations
       const reservations = await this.createInventoryReservations(
         appointment,
         serviceLines,
-        canOverride
+        canOverride,
       );
 
       // 8. Confirm appointment
@@ -229,7 +233,7 @@ export class ConfirmAppointmentUseCase {
           status: updatedAppointment.status,
           confirmedAt: new Date(),
           confirmedBy: input.performedBy,
-          inventoryReservations: reservations.map(r => ({
+          inventoryReservations: reservations.map((r) => ({
             id: r.id,
             productId: r.productId,
             quantity: r.quantity,
@@ -247,12 +251,12 @@ export class ConfirmAppointmentUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -274,7 +278,7 @@ export class ConfirmAppointmentUseCase {
     const user = await this.currentUserRepository.findById(userId);
     if (!user) return false;
 
-    return user.roleIds.some(roleId => {
+    return user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -291,7 +295,7 @@ export class ConfirmAppointmentUseCase {
   private async createInventoryReservations(
     appointment: Appointment,
     serviceLines: Array<{ serviceId: string; quantity: number }>,
-    allowOverride: boolean
+    allowOverride: boolean,
   ): Promise<InventoryReservation[]> {
     const reservations: InventoryReservation[] = [];
 
@@ -317,25 +321,31 @@ export class ConfirmAppointmentUseCase {
         currentStockLevels.set(product.id, onHand);
 
         // Load existing reservations for this product
-        const productReservations = await this.inventoryReservationRepository.findByProduct(product.id);
+        const productReservations = await this.inventoryReservationRepository.findByProduct(
+          product.id,
+        );
         allReservations.push(...productReservations);
       }
 
       // Check availability using domain service
-      const availabilityResult = this.inventoryAvailabilityDomainService.validateServiceAvailability(
-        service,
-        products,
-        currentStockLevels,
-        allReservations
-      );
+      const availabilityResult =
+        this.inventoryAvailabilityDomainService.validateServiceAvailability(
+          service,
+          products,
+          currentStockLevels,
+          allReservations,
+        );
 
       if (!availabilityResult.isAvailable && !allowOverride) {
         const unavailableProducts = availabilityResult.unavailableProducts
-          .map(p => `${p.productName} (available: ${p.availableStock}, required: ${p.requiredQuantity})`)
+          .map(
+            (p) =>
+              `${p.productName} (available: ${p.availableStock}, required: ${p.requiredQuantity})`,
+          )
           .join(', ');
 
         throw new ConflictError(
-          `Insufficient stock for service ${service.name}. ${unavailableProducts}`
+          `Insufficient stock for service ${service.name}. ${unavailableProducts}`,
         );
       }
 
@@ -343,31 +353,33 @@ export class ConfirmAppointmentUseCase {
       for (const consumedItem of service.consumedItems) {
         const product = products.get(consumedItem.productId)!;
         const quantity = consumedItem.quantity * line.quantity;
-        const availableStock = currentStockLevels.get(product.id)! - 
+        const availableStock =
+          currentStockLevels.get(product.id)! -
           allReservations
-            .filter(r => r.productId === product.id && !r.isExpired())
+            .filter((r) => r.productId === product.id && !r.isExpired())
             .reduce((sum, r) => sum + r.quantity, 0);
 
         // Use domain service to create reservation
-        const reservationResult = this.inventoryReservationDomainService.createReservationForAppointment(
-          this.generateId(),
-          product,
-          quantity,
-          appointment,
-          availableStock,
-          appointment.endAt, // Expires at appointment end
-          allowOverride
-        );
+        const reservationResult =
+          this.inventoryReservationDomainService.createReservationForAppointment(
+            this.generateId(),
+            product,
+            quantity,
+            appointment,
+            availableStock,
+            appointment.endAt, // Expires at appointment end
+            allowOverride,
+          );
 
         if (!reservationResult.canCreate && !allowOverride) {
           throw new ConflictError(
-            `Cannot create reservation for ${product.name}: ${reservationResult.errors.join('; ')}`
+            `Cannot create reservation for ${product.name}: ${reservationResult.errors.join('; ')}`,
           );
         }
 
         if (reservationResult.reservation) {
           const savedReservation = await this.inventoryReservationRepository.save(
-            reservationResult.reservation
+            reservationResult.reservation,
           );
           reservations.push(savedReservation);
         }
@@ -383,7 +395,7 @@ export class ConfirmAppointmentUseCase {
   private async createAuditLog(
     appointment: Appointment,
     reservations: InventoryReservation[],
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -399,7 +411,7 @@ export class ConfirmAppointmentUseCase {
             reservationsCount: reservations.length,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -433,4 +445,3 @@ export class ConfirmAppointmentUseCase {
     };
   }
 }
-

@@ -1,13 +1,13 @@
 /**
  * VAT Rate Validator
- * 
+ *
  * Custom validator for VAT rates.
  * Validates that a number is between 0 and 100, and optionally matches common Portuguese VAT rates.
- * 
+ *
  * Usage:
  * @IsVATRate()
  * vatRate: number;
- * 
+ *
  * @IsVATRate({ allowCommonRatesOnly: true })
  * vatRate: number; // Only allows 0, 6, 13, 23
  */
@@ -57,15 +57,12 @@ export class IsVATRateConstraint implements ValidatorConstraintInterface {
 
 /**
  * Validates that a number is a valid VAT rate
- * 
+ *
  * @param options - Optional validation options
  * @param validationOptions - Optional validation options
  * @returns Property decorator
  */
-export function IsVATRate(
-  options?: IsVATRateOptions,
-  validationOptions?: ValidationOptions
-) {
+export function IsVATRate(options?: IsVATRateOptions, validationOptions?: ValidationOptions) {
   return function (object: Object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
@@ -76,4 +73,3 @@ export function IsVATRate(
     });
   };
 }
-

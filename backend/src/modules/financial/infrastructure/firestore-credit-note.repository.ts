@@ -1,15 +1,15 @@
 /**
  * CreditNoteRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for CreditNoteRepository port.
  * This implementation handles persistence of CreditNote domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map CreditNote domain entities to Firestore documents
  * - Map Firestore documents to CreditNote domain entities
  * - Implement repository interface methods
  * - Handle Firestore-specific operations (queries, transactions)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -37,13 +37,13 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a CreditNote entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
-   * 
+   *
    * @param creditNote - CreditNote domain entity to save
    * @returns Saved CreditNote entity
    */
@@ -58,7 +58,7 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
 
   /**
    * Finds credit notes by invoice ID
-   * 
+   *
    * @param invoiceId - Invoice ID
    * @returns Array of credit notes
    */
@@ -68,14 +68,12 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
       .where('invoiceId', '==', invoiceId)
       .get();
 
-    return snapshot.docs.map(doc => 
-      this.toEntity(doc.id, doc.data() as CreditNoteDocument)
-    );
+    return snapshot.docs.map((doc) => this.toEntity(doc.id, doc.data() as CreditNoteDocument));
   }
 
   /**
    * Finds credit notes by multiple invoice IDs
-   * 
+   *
    * @param invoiceIds - Array of invoice IDs
    * @returns Array of credit notes
    */
@@ -95,7 +93,7 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
         .where('invoiceId', 'in', batch)
         .get();
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc) => {
         creditNotes.push(this.toEntity(doc.id, doc.data() as CreditNoteDocument));
       });
     }
@@ -105,7 +103,7 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
 
   /**
    * Sums the total amount of credit notes for an invoice
-   * 
+   *
    * @param invoiceId - Invoice ID
    * @returns Total amount of credit notes
    */
@@ -123,7 +121,7 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
 
   /**
    * Converts CreditNote domain entity to Firestore document
-   * 
+   *
    * @param creditNote - CreditNote domain entity
    * @returns Firestore document
    */
@@ -141,7 +139,7 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
 
   /**
    * Converts Firestore document to CreditNote domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns CreditNote domain entity
@@ -154,13 +152,13 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
       doc.createdBy,
       doc.issuedAt ? this.toDate(doc.issuedAt) : undefined,
       doc.reason,
-      this.toDate(doc.createdAt)
+      this.toDate(doc.createdAt),
     );
   }
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -170,7 +168,7 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -178,4 +176,3 @@ export class FirestoreCreditNoteRepository implements CreditNoteRepository {
     return timestamp.toDate();
   }
 }
-

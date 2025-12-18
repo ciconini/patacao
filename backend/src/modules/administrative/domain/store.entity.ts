@@ -1,10 +1,10 @@
 /**
  * Store Domain Entity
- * 
+ *
  * Represents a store location in the petshop management system.
  * A Store belongs to a Company and can have multiple staff members assigned.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - A Store must be linked to a Company (invariant)
  * - Store name is required
@@ -50,7 +50,7 @@ export class Store {
 
   /**
    * Creates a new Store entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param companyId - Company ID that owns this store (required)
    * @param name - Store name (required)
@@ -61,7 +61,7 @@ export class Store {
    * @param timezone - Timezone (default: Europe/Lisbon)
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if companyId is empty
    * @throws Error if name is empty
    * @throws Error if openingHours is invalid
@@ -76,7 +76,7 @@ export class Store {
     phone?: string,
     timezone: string = 'Europe/Lisbon',
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateCompanyId(companyId);
@@ -146,7 +146,7 @@ export class Store {
 
   /**
    * Updates the store name
-   * 
+   *
    * @param name - New store name
    * @throws Error if name is empty
    */
@@ -158,7 +158,7 @@ export class Store {
 
   /**
    * Updates the store address
-   * 
+   *
    * @param address - New address
    */
   updateAddress(address: Address | undefined): void {
@@ -173,7 +173,7 @@ export class Store {
 
   /**
    * Updates the store email
-   * 
+   *
    * @param email - New email address
    * @throws Error if email format is invalid
    */
@@ -187,7 +187,7 @@ export class Store {
 
   /**
    * Updates the store phone number
-   * 
+   *
    * @param phone - New phone number
    */
   updatePhone(phone: string | undefined): void {
@@ -197,7 +197,7 @@ export class Store {
 
   /**
    * Updates the opening hours schedule
-   * 
+   *
    * @param openingHours - New opening hours schedule
    * @throws Error if opening hours are invalid
    */
@@ -209,7 +209,7 @@ export class Store {
 
   /**
    * Updates the timezone
-   * 
+   *
    * @param timezone - New timezone (e.g., "Europe/Lisbon")
    */
   updateTimezone(timezone: string): void {
@@ -222,7 +222,7 @@ export class Store {
 
   /**
    * Gets opening hours for a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @returns Opening hours for the day, or undefined if not set
    */
@@ -232,12 +232,15 @@ export class Store {
 
   /**
    * Updates opening hours for a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @param hours - Opening hours for the day
    * @throws Error if hours are invalid
    */
-  updateDayOpeningHours(dayOfWeek: keyof WeeklyOpeningHours, hours: DayOpeningHours | undefined): void {
+  updateDayOpeningHours(
+    dayOfWeek: keyof WeeklyOpeningHours,
+    hours: DayOpeningHours | undefined,
+  ): void {
     if (hours) {
       this.validateDayOpeningHours(hours);
     }
@@ -256,7 +259,7 @@ export class Store {
 
   /**
    * Checks if the store is open on a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @returns True if store is open on that day
    */
@@ -267,7 +270,7 @@ export class Store {
 
   /**
    * Checks if the store is open at a specific time on a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @param time - Time to check (format: "HH:mm")
    * @returns True if store is open at that time
@@ -287,7 +290,7 @@ export class Store {
 
   /**
    * Checks if a time range falls within opening hours for a specific day
-   * 
+   *
    * @param dayOfWeek - Day name (monday, tuesday, etc.)
    * @param startTime - Start time (format: "HH:mm")
    * @param endTime - End time (format: "HH:mm")
@@ -296,7 +299,7 @@ export class Store {
   isTimeRangeWithinOpeningHours(
     dayOfWeek: keyof WeeklyOpeningHours,
     startTime: string,
-    endTime: string
+    endTime: string,
   ): boolean {
     const dayHours = this._openingHours[dayOfWeek];
     if (!dayHours || !dayHours.isOpen || !dayHours.openTime || !dayHours.closeTime) {
@@ -315,10 +318,12 @@ export class Store {
    * Checks if the store has complete address information
    */
   hasCompleteAddress(): boolean {
-    return !!this._address && 
-           !!this._address.street && 
-           !!this._address.city && 
-           !!this._address.postalCode;
+    return (
+      !!this._address &&
+      !!this._address.street &&
+      !!this._address.city &&
+      !!this._address.postalCode
+    );
   }
 
   // Private validation methods
@@ -380,10 +385,18 @@ export class Store {
   }
 
   private validateOpeningHours(openingHours: WeeklyOpeningHours): void {
-    const days: (keyof WeeklyOpeningHours)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
+    const days: (keyof WeeklyOpeningHours)[] = [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday',
+    ];
+
     let hasAtLeastOneOpenDay = false;
-    
+
     for (const day of days) {
       const dayHours = openingHours[day];
       if (dayHours) {
@@ -407,7 +420,7 @@ export class Store {
 
       // Validate time format (HH:mm)
       const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
-      
+
       if (!timeRegex.test(hours.openTime)) {
         throw new Error(`Invalid open time format: ${hours.openTime}. Expected format: HH:mm`);
       }
@@ -438,16 +451,23 @@ export class Store {
 
   private deepCopyOpeningHours(hours: WeeklyOpeningHours): WeeklyOpeningHours {
     const copy: any = {};
-    const days: (keyof WeeklyOpeningHours)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
+    const days: (keyof WeeklyOpeningHours)[] = [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday',
+    ];
+
     for (const day of days) {
       const dayHours = hours[day];
       if (dayHours) {
         copy[day] = { ...dayHours };
       }
     }
-    
+
     return copy as WeeklyOpeningHours;
   }
 }
-

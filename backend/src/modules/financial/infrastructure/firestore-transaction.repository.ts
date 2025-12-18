@@ -1,15 +1,15 @@
 /**
  * TransactionRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for TransactionRepository port.
  * This implementation handles persistence of Transaction domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map Transaction domain entities to Firestore documents
  * - Map Firestore documents to Transaction domain entities
  * - Implement repository interface methods
  * - Handle Firestore-specific operations (queries, transactions)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -45,13 +45,13 @@ export class FirestoreTransactionRepository implements TransactionRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a Transaction entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
-   * 
+   *
    * @param transaction - Transaction domain entity to save
    * @returns Saved Transaction entity
    */
@@ -66,7 +66,7 @@ export class FirestoreTransactionRepository implements TransactionRepository {
 
   /**
    * Updates a Transaction entity in Firestore
-   * 
+   *
    * @param transaction - Transaction domain entity to update
    * @returns Updated Transaction entity
    */
@@ -76,7 +76,7 @@ export class FirestoreTransactionRepository implements TransactionRepository {
 
   /**
    * Finds a Transaction by ID
-   * 
+   *
    * @param id - Transaction ID
    * @returns Transaction entity or null if not found
    */
@@ -93,7 +93,7 @@ export class FirestoreTransactionRepository implements TransactionRepository {
 
   /**
    * Finds transactions by invoice ID
-   * 
+   *
    * @param invoiceId - Invoice ID
    * @returns Array of transactions (with minimal fields)
    */
@@ -103,7 +103,7 @@ export class FirestoreTransactionRepository implements TransactionRepository {
       .where('invoiceId', '==', invoiceId)
       .get();
 
-    return snapshot.docs.map(doc => {
+    return snapshot.docs.map((doc) => {
       const data = doc.data() as TransactionDocument;
       return {
         id: doc.id,
@@ -116,17 +116,13 @@ export class FirestoreTransactionRepository implements TransactionRepository {
    * Finds transactions by company and period
    * Note: This requires joining with invoices to get companyId
    * For efficiency, we'll query by invoiceId and filter by period
-   * 
+   *
    * @param companyId - Company ID
    * @param start - Start date of period
    * @param end - End date of period
    * @returns Array of transactions
    */
-  async findByCompanyAndPeriod(
-    companyId: string,
-    start: Date,
-    end: Date
-  ): Promise<Transaction[]> {
+  async findByCompanyAndPeriod(companyId: string, start: Date, end: Date): Promise<Transaction[]> {
     // First, get all invoices for the company in the period
     const invoiceRepo = this.firestore.collection('invoices');
     const invoiceSnapshot = await invoiceRepo
@@ -135,7 +131,7 @@ export class FirestoreTransactionRepository implements TransactionRepository {
       .where('issuedAt', '<=', this.toTimestamp(end))
       .get();
 
-    const invoiceIds = invoiceSnapshot.docs.map(doc => doc.id);
+    const invoiceIds = invoiceSnapshot.docs.map((doc) => doc.id);
 
     if (invoiceIds.length === 0) {
       return [];
@@ -153,7 +149,7 @@ export class FirestoreTransactionRepository implements TransactionRepository {
         .where('invoiceId', 'in', batch)
         .get();
 
-      transactionSnapshot.docs.forEach(doc => {
+      transactionSnapshot.docs.forEach((doc) => {
         transactions.push(this.toEntity(doc.id, doc.data() as TransactionDocument));
       });
     }
@@ -163,7 +159,7 @@ export class FirestoreTransactionRepository implements TransactionRepository {
 
   /**
    * Converts Transaction domain entity to Firestore document
-   * 
+   *
    * @param transaction - Transaction domain entity
    * @returns Firestore document
    */
@@ -172,7 +168,7 @@ export class FirestoreTransactionRepository implements TransactionRepository {
       id: transaction.id,
       storeId: transaction.storeId,
       invoiceId: transaction.invoiceId,
-      lineItems: transaction.lineItems.map(item => ({
+      lineItems: transaction.lineItems.map((item) => ({
         productId: item.productId,
         serviceId: item.serviceId,
         quantity: item.quantity,
@@ -189,13 +185,13 @@ export class FirestoreTransactionRepository implements TransactionRepository {
 
   /**
    * Converts Firestore document to Transaction domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns Transaction domain entity
    */
   private toEntity(id: string, doc: TransactionDocument): Transaction {
-    const lineItems: TransactionLineItem[] = doc.lineItems.map(item => ({
+    const lineItems: TransactionLineItem[] = doc.lineItems.map((item) => ({
       productId: item.productId,
       serviceId: item.serviceId,
       quantity: item.quantity,
@@ -211,13 +207,13 @@ export class FirestoreTransactionRepository implements TransactionRepository {
       lineItems,
       doc.paymentStatus,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -227,7 +223,7 @@ export class FirestoreTransactionRepository implements TransactionRepository {
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -235,4 +231,3 @@ export class FirestoreTransactionRepository implements TransactionRepository {
     return timestamp.toDate();
   }
 }
-

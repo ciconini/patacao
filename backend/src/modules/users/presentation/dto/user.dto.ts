@@ -1,10 +1,18 @@
 /**
  * User DTOs
- * 
+ *
  * Data Transfer Objects for User API endpoints.
  */
 
-import { IsString, IsOptional, IsEmail, IsArray, IsBoolean, IsUUID, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  IsArray,
+  IsBoolean,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**
@@ -210,4 +218,3 @@ export class UserResponseDto {
   createdAt!: Date;
   updatedAt!: Date;
 }
-

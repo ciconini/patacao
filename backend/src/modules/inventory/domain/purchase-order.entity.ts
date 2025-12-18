@@ -1,11 +1,11 @@
 /**
  * PurchaseOrder Domain Entity
- * 
+ *
  * Represents a purchase order to a supplier in the petshop management system.
  * Purchase orders track orders placed with suppliers and their status through the procurement lifecycle.
  * When goods are received, StockBatch and StockMovement entries are created.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - PurchaseOrder must be linked to a Supplier (invariant)
  * - Order lines must have at least one line item
@@ -39,7 +39,7 @@ export class PurchaseOrder {
 
   /**
    * Creates a new PurchaseOrder entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param supplierId - Supplier ID this order is placed with (required)
    * @param createdBy - User ID who created the order (required)
@@ -48,7 +48,7 @@ export class PurchaseOrder {
    * @param status - Order status (default DRAFT)
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if supplierId is empty
    * @throws Error if createdBy is empty
@@ -63,7 +63,7 @@ export class PurchaseOrder {
     storeId?: string,
     status: PurchaseOrderStatus = PurchaseOrderStatus.DRAFT,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateSupplierId(supplierId);
@@ -73,7 +73,7 @@ export class PurchaseOrder {
     this._id = id;
     this._supplierId = supplierId;
     this._storeId = storeId;
-    this._orderLines = orderLines.map(line => ({ ...line }));
+    this._orderLines = orderLines.map((line) => ({ ...line }));
     this._status = status;
     this._createdBy = createdBy;
     this._createdAt = createdAt ? new Date(createdAt) : new Date();
@@ -94,7 +94,7 @@ export class PurchaseOrder {
   }
 
   get orderLines(): ReadonlyArray<PurchaseOrderLine> {
-    return this._orderLines.map(line => ({ ...line }));
+    return this._orderLines.map((line) => ({ ...line }));
   }
 
   get status(): PurchaseOrderStatus {
@@ -115,7 +115,7 @@ export class PurchaseOrder {
 
   /**
    * Updates the store ID
-   * 
+   *
    * @param storeId - New store ID
    */
   updateStoreId(storeId: string | undefined): void {
@@ -125,7 +125,7 @@ export class PurchaseOrder {
 
   /**
    * Adds an order line item
-   * 
+   *
    * @param productId - Product ID
    * @param quantity - Quantity to order
    * @param unitPrice - Unit price
@@ -139,7 +139,7 @@ export class PurchaseOrder {
 
   /**
    * Removes an order line item by index
-   * 
+   *
    * @param index - Index of the line to remove
    * @throws Error if index is out of bounds or if removing would leave order empty
    */
@@ -149,7 +149,9 @@ export class PurchaseOrder {
     }
 
     if (this._orderLines.length === 1) {
-      throw new Error('Cannot remove the last order line - purchase order must have at least one line');
+      throw new Error(
+        'Cannot remove the last order line - purchase order must have at least one line',
+      );
     }
 
     this._orderLines.splice(index, 1);
@@ -158,7 +160,7 @@ export class PurchaseOrder {
 
   /**
    * Updates an order line item by index
-   * 
+   *
    * @param index - Index of the line to update
    * @param productId - New product ID
    * @param quantity - New quantity
@@ -177,19 +179,19 @@ export class PurchaseOrder {
 
   /**
    * Sets all order lines
-   * 
+   *
    * @param orderLines - New list of order lines
    * @throws Error if orderLines is empty or invalid
    */
   setOrderLines(orderLines: PurchaseOrderLine[]): void {
     this.validateOrderLines(orderLines);
-    this._orderLines = orderLines.map(line => ({ ...line }));
+    this._orderLines = orderLines.map((line) => ({ ...line }));
     this._updatedAt = new Date();
   }
 
   /**
    * Marks the order as ordered (submitted to supplier)
-   * 
+   *
    * @throws Error if current status doesn't allow ordering
    */
   markAsOrdered(): void {
@@ -203,7 +205,7 @@ export class PurchaseOrder {
   /**
    * Marks the order as received
    * Note: Receiving goods creates StockBatch and StockMovement entries (handled at use case level)
-   * 
+   *
    * @throws Error if current status doesn't allow receiving
    */
   markAsReceived(): void {
@@ -216,7 +218,7 @@ export class PurchaseOrder {
 
   /**
    * Cancels the order
-   * 
+   *
    * @throws Error if order is already received or cancelled
    */
   cancel(): void {
@@ -232,18 +234,18 @@ export class PurchaseOrder {
 
   /**
    * Calculates the total order amount
-   * 
+   *
    * @returns Total amount (sum of all line totals)
    */
   calculateTotal(): number {
     return this._orderLines.reduce((total, line) => {
-      return total + (line.quantity * line.unitPrice);
+      return total + line.quantity * line.unitPrice;
     }, 0);
   }
 
   /**
    * Gets the total quantity of all items in the order
-   * 
+   *
    * @returns Sum of all quantities
    */
   getTotalQuantity(): number {
@@ -252,7 +254,7 @@ export class PurchaseOrder {
 
   /**
    * Gets the number of unique products in the order
-   * 
+   *
    * @returns Number of order lines
    */
   getLineCount(): number {
@@ -261,7 +263,7 @@ export class PurchaseOrder {
 
   /**
    * Checks if the order can be modified
-   * 
+   *
    * @returns True if order status allows modifications
    */
   canBeModified(): boolean {
@@ -270,17 +272,19 @@ export class PurchaseOrder {
 
   /**
    * Checks if the order can be cancelled
-   * 
+   *
    * @returns True if order can be cancelled
    */
   canBeCancelled(): boolean {
-    return this._status !== PurchaseOrderStatus.RECEIVED && 
-           this._status !== PurchaseOrderStatus.CANCELLED;
+    return (
+      this._status !== PurchaseOrderStatus.RECEIVED &&
+      this._status !== PurchaseOrderStatus.CANCELLED
+    );
   }
 
   /**
    * Checks if the order can be received
-   * 
+   *
    * @returns True if order can be marked as received
    */
   canBeReceived(): boolean {
@@ -289,7 +293,7 @@ export class PurchaseOrder {
 
   /**
    * Checks if the order is in draft status
-   * 
+   *
    * @returns True if status is DRAFT
    */
   isDraft(): boolean {
@@ -298,7 +302,7 @@ export class PurchaseOrder {
 
   /**
    * Checks if the order is ordered
-   * 
+   *
    * @returns True if status is ORDERED
    */
   isOrdered(): boolean {
@@ -307,7 +311,7 @@ export class PurchaseOrder {
 
   /**
    * Checks if the order is received
-   * 
+   *
    * @returns True if status is RECEIVED
    */
   isReceived(): boolean {
@@ -316,7 +320,7 @@ export class PurchaseOrder {
 
   /**
    * Checks if the order is cancelled
-   * 
+   *
    * @returns True if status is CANCELLED
    */
   isCancelled(): boolean {
@@ -353,7 +357,7 @@ export class PurchaseOrder {
     }
 
     // Check for duplicate product IDs
-    const productIds = orderLines.map(line => line.productId);
+    const productIds = orderLines.map((line) => line.productId);
     const uniqueProductIds = new Set(productIds);
     if (uniqueProductIds.size !== productIds.length) {
       throw new Error('Purchase order cannot have duplicate product IDs in order lines');
@@ -374,4 +378,3 @@ export class PurchaseOrder {
     }
   }
 }
-

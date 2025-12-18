@@ -1,6 +1,6 @@
 /**
  * Services Module
- * 
+ *
  * Main NestJS module for the Services domain.
  * Consolidates Application, Presentation, and Infrastructure layers.
  */
@@ -13,8 +13,8 @@ import { ServicesInfrastructureModule } from './infrastructure/services.infrastr
 @Module({
   imports: [
     ServicesInfrastructureModule, // Infrastructure first (repositories)
-    ServicesApplicationModule,    // Then application (use cases depend on repositories)
-    ServicesPresentationModule,   // Finally presentation (controllers depend on use cases)
+    ServicesApplicationModule, // Then application (use cases depend on repositories)
+    ServicesPresentationModule, // Finally presentation (controllers depend on use cases)
   ],
   exports: [
     // Export infrastructure for other modules that need repositories
@@ -24,4 +24,3 @@ import { ServicesInfrastructureModule } from './infrastructure/services.infrastr
   ],
 })
 export class ServicesModule {}
-

@@ -1,6 +1,6 @@
 /**
  * Administrative Presentation Module
- * 
+ *
  * NestJS module that registers all controllers for the Administrative module.
  */
 
@@ -23,4 +23,3 @@ import { ImportController } from './controllers/import.controller';
   ],
 })
 export class AdministrativePresentationModule {}
-

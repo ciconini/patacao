@@ -1,9 +1,9 @@
 /**
  * User Login Use Case (UC-AUTH-001)
- * 
+ *
  * Application use case for authenticating a user with email and password.
  * This use case orchestrates domain entities and domain services to authenticate users.
- * 
+ *
  * Responsibilities:
  * - Validate email and password input
  * - Check rate limiting
@@ -12,7 +12,7 @@
  * - Create session and generate tokens
  * - Update last login timestamp
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -106,7 +106,7 @@ export interface UserLoginResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -135,7 +135,9 @@ export class ForbiddenError extends ApplicationError {
 }
 
 export class AccountLockedError extends ApplicationError {
-  constructor(message: string = 'Account temporarily locked due to multiple failed login attempts') {
+  constructor(
+    message: string = 'Account temporarily locked due to multiple failed login attempts',
+  ) {
     super('ACCOUNT_LOCKED', message);
     this.name = 'AccountLockedError';
   }
@@ -172,10 +174,12 @@ export class UserLoginUseCase {
     private readonly tokenGenerator: TokenGenerator,
     private readonly auditLogDomainService: AuditLogDomainService,
     // Optional Firebase Auth integration services
-    @Optional() @Inject('FirebaseAuthIntegrationService')
+    @Optional()
+    @Inject('FirebaseAuthIntegrationService')
     private readonly firebaseAuthIntegration?: FirebaseAuthIntegration,
-    @Optional() @Inject('FirebaseUserLookupService')
-    private readonly firebaseUserLookup?: FirebaseUserLookup
+    @Optional()
+    @Inject('FirebaseUserLookupService')
+    private readonly firebaseUserLookup?: FirebaseUserLookup,
   ) {}
 
   /**
@@ -184,15 +188,15 @@ export class UserLoginUseCase {
    */
   private generateId(): string {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
   }
 
   /**
    * Executes the user login use case
-   * 
+   *
    * @param input - Login input data
    * @returns Result containing tokens and user info or error
    */
@@ -291,7 +295,7 @@ export class UserLoginUseCase {
 
   /**
    * Validates email format
-   * 
+   *
    * @param email - Email string
    * @returns EmailAddress value object
    * @throws ValidationError if invalid
@@ -306,7 +310,7 @@ export class UserLoginUseCase {
 
   /**
    * Validates password is provided
-   * 
+   *
    * @param password - Password string
    * @throws ValidationError if missing
    */
@@ -318,7 +322,7 @@ export class UserLoginUseCase {
 
   /**
    * Checks rate limiting for login attempts
-   * 
+   *
    * @param email - User email
    * @param ipAddress - Client IP address
    * @throws RateLimitError if rate limit exceeded
@@ -343,7 +347,7 @@ export class UserLoginUseCase {
 
   /**
    * Loads user by email
-   * 
+   *
    * @param email - Email address value object
    * @returns User entity or null
    */
@@ -353,12 +357,16 @@ export class UserLoginUseCase {
 
   /**
    * Handles failed login attempt
-   * 
+   *
    * @param identifier - User ID or email
    * @param ipAddress - Client IP address
    * @param reason - Failure reason
    */
-  private async handleFailedLogin(identifier: string, ipAddress?: string, reason?: string): Promise<void> {
+  private async handleFailedLogin(
+    identifier: string,
+    ipAddress?: string,
+    reason?: string,
+  ): Promise<void> {
     // Create audit log for failed login
     try {
       const auditResult = this.auditLogDomainService.createAuditEntry(
@@ -374,7 +382,7 @@ export class UserLoginUseCase {
             ipAddress,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (auditResult.auditLog) {
@@ -387,7 +395,7 @@ export class UserLoginUseCase {
 
   /**
    * Increments failed login attempts and locks account if threshold reached
-   * 
+   *
    * @param userId - User ID
    */
   private async incrementFailedAttempts(userId: string): Promise<void> {
@@ -397,8 +405,10 @@ export class UserLoginUseCase {
     // you'd check the current failed attempts count)
     // For now, we'll let the repository handle this logic
     const lockoutExpiry = new Date();
-    lockoutExpiry.setMinutes(lockoutExpiry.getMinutes() + UserLoginUseCase.LOCKOUT_DURATION_MINUTES);
-    
+    lockoutExpiry.setMinutes(
+      lockoutExpiry.getMinutes() + UserLoginUseCase.LOCKOUT_DURATION_MINUTES,
+    );
+
     // Note: In a real implementation, you'd check the failed attempts count
     // and only lock if it exceeds the threshold. This is simplified.
     // await this.userRepository.lockAccount(userId, lockoutExpiry);
@@ -406,13 +416,17 @@ export class UserLoginUseCase {
 
   /**
    * Creates a new session for the user
-   * 
+   *
    * @param userId - User ID
    * @param refreshToken - Refresh token string
    * @param ipAddress - Client IP address
    * @returns Created session entity
    */
-  private async createSession(userId: string, refreshToken: string, ipAddress?: string): Promise<Session> {
+  private async createSession(
+    userId: string,
+    refreshToken: string,
+    ipAddress?: string,
+  ): Promise<Session> {
     const sessionId = this.generateId();
     const now = new Date();
     const expiresAt = new Date();
@@ -423,7 +437,7 @@ export class UserLoginUseCase {
       userId,
       now,
       expiresAt,
-      false // not revoked
+      false, // not revoked
     );
 
     // Save session with refresh token
@@ -436,7 +450,7 @@ export class UserLoginUseCase {
    * Ensures Firebase user exists and is linked to internal user
    * This is an optional step that creates a Firebase Auth user if one doesn't exist
    * and links it to the internal user entity.
-   * 
+   *
    * @param user - User entity
    * @param password - User password (needed to create Firebase user)
    */
@@ -479,7 +493,7 @@ export class UserLoginUseCase {
 
   /**
    * Creates audit log entry for login
-   * 
+   *
    * @param userId - User ID
    * @param ipAddress - Client IP address
    * @param userAgent - Client user agent
@@ -489,7 +503,7 @@ export class UserLoginUseCase {
     userId: string,
     ipAddress?: string,
     userAgent?: string,
-    success: boolean = true
+    success: boolean = true,
   ): Promise<void> {
     try {
       const auditResult = this.auditLogDomainService.createAuditEntry(
@@ -505,7 +519,7 @@ export class UserLoginUseCase {
             userAgent,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (auditResult.auditLog) {
@@ -518,7 +532,7 @@ export class UserLoginUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -542,4 +556,3 @@ export class UserLoginUseCase {
     };
   }
 }
-

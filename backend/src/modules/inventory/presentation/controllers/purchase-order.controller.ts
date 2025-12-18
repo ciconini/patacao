@@ -1,6 +1,6 @@
 /**
  * Purchase Order Controller
- * 
+ *
  * REST API controller for Purchase Order management endpoints.
  */
 
@@ -15,12 +15,30 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
-import { CreatePurchaseOrderDto, ReceivePurchaseOrderDto, PurchaseOrderResponseDto } from '../dto/purchase-order.dto';
-import { CreatePurchaseOrderUseCase, CreatePurchaseOrderInput } from '../../application/create-purchase-order.use-case';
-import { ReceivePurchaseOrderUseCase, ReceivePurchaseOrderInput } from '../../application/receive-purchase-order.use-case';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth, ApiParam, ApiExtraModels } from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
+import {
+  CreatePurchaseOrderDto,
+  ReceivePurchaseOrderDto,
+  PurchaseOrderResponseDto,
+  PurchaseOrderLineDto,
+} from '../dto/purchase-order.dto';
+import {
+  CreatePurchaseOrderUseCase,
+  CreatePurchaseOrderInput,
+} from '../../application/create-purchase-order.use-case';
+import {
+  ReceivePurchaseOrderUseCase,
+  ReceivePurchaseOrderInput,
+} from '../../application/receive-purchase-order.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Inventory')
+@ApiBearerAuth('JWT-auth')
+@ApiExtraModels(PurchaseOrderLineDto)
 @Controller('api/v1/purchase-orders')
 @UseGuards(FirebaseAuthGuard)
 export class PurchaseOrderController {
@@ -35,6 +53,8 @@ export class PurchaseOrderController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create purchase order', description: 'Creates a new purchase order' })
+  @ApiBody({ type: CreatePurchaseOrderDto })
   async create(
     @Body() createDto: CreatePurchaseOrderDto,
     @Request() req: AuthenticatedRequest,
@@ -66,6 +86,9 @@ export class PurchaseOrderController {
    * POST /api/v1/purchase-orders/:id/receive
    */
   @Post(':id/receive')
+  @ApiOperation({ summary: 'Receive purchase order', description: 'Receives a purchase order' })
+  @ApiParam({ name: 'id', description: 'Purchase order UUID' })
+  @ApiBody({ type: ReceivePurchaseOrderDto })
   async receive(
     @Param('id') id: string,
     @Body() receiveDto: ReceivePurchaseOrderDto,
@@ -79,7 +102,7 @@ export class PurchaseOrderController {
     const input: ReceivePurchaseOrderInput = {
       id,
       storeId: receiveDto.storeId,
-      receivedLines: receiveDto.receivedLines.map(line => ({
+      receivedLines: receiveDto.receivedLines.map((line) => ({
         productId: line.productId,
         quantity: line.quantityReceived,
         batchNumber: line.batchNumber,
@@ -126,4 +149,3 @@ export class PurchaseOrderController {
     };
   }
 }
-

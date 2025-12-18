@@ -2,17 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
+    // ============================================
+    // Helper Functions
+    // ============================================
+    
+    // Authentication check
     function isAuthenticated() {
       return request.auth != null;
     }
     
+    // Role checking - roles are stored as object: { Owner: true, Manager: true }
     function hasRole(role) {
       return isAuthenticated() && 
              request.auth.token.roles != null && 
              role in request.auth.token.roles;
     }
     
+    // Role hierarchy helpers
     function isOwner() {
       return hasRole('Owner');
     }
@@ -37,47 +43,113 @@ service cloud.firestore {
       return isOwner() || hasRole('Manager');
     }
     
+    // Self-access check
     function isSelf(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
+    // Store access check - Staff can only access assigned stores
+    function hasStoreAccess(storeId) {
+      return isOwner() || 
+             isManager() || 
+             (hasRole('Staff') && 
+              request.auth.token.storeIds != null && 
+              storeId in request.auth.token.storeIds);
+    }
+    
+    // Check if user has access to store-scoped resource
+    function canAccessStoreResource(storeId) {
+      return isOwner() || 
+             isManager() || 
+             isAccountant() || 
+             hasStoreAccess(storeId);
+    }
+    
+    // ============================================
+    // Administrative Module Collections
+    // ============================================
+    
     // Companies
     match /companies/{companyId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isOwnerOrManager() || isAccountant());
       allow create: if isOwner();
-      allow update: if isOwner();
+      allow update: if isOwner(); // Only Owner can update (including fiscal fields)
       allow delete: if false; // Companies should not be deleted
     }
     
     // Stores
     match /stores/{storeId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isOwnerOrManager() || isAccountant() || hasStoreAccess(storeId));
       allow create: if isOwnerOrManager();
       allow update: if isOwnerOrManager();
+      allow delete: if isOwner(); // Only Owner can delete stores
+    }
+    
+    // Inventory Locations (optional sub-locations within stores)
+    match /inventory_locations/{locationId} {
+      allow read: if isAuthenticated() && 
+                     (isOwnerOrManager() || 
+                      (resource != null && hasStoreAccess(resource.data.storeId)));
+      allow create: if isManager();
+      allow update: if isManager();
       allow delete: if isOwner();
     }
     
+    // Customers
+    match /customers/{customerId} {
+      allow read: if isAuthenticated() && (isStaff() || isAccountant() || isVeterinarian());
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isManager(); // Soft delete (archive) preferred, but Manager can hard delete
+    }
+    
+    // Pets
+    match /pets/{petId} {
+      allow read: if isAuthenticated() && (isStaff() || isVeterinarian());
+      allow create: if isStaff() || isVeterinarian();
+      allow update: if isStaff() || isVeterinarian();
+      allow delete: if isManager(); // Only Manager/Owner can delete pets
+    }
+    
+    // ============================================
+    // Users & Access Control Module Collections
+    // ============================================
+    
     // Users
     match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwnerOrManager() || isSelf(userId));
+      allow read: if isAuthenticated() && 
+                     (isOwnerOrManager() || 
+                      isAccountant() || 
+                      isSelf(userId));
       allow create: if isOwnerOrManager();
       // Users can update their own data, but not roles or active status
       // Owners/Managers can update anything
       allow update: if isOwnerOrManager() || 
                        (isSelf(userId) && 
                         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roleIds', 'active']));
-      allow delete: if false; // Users should be archived, not deleted
+      allow delete: if false; // Users should be archived (set active=false), not deleted
+    }
+    
+    // Roles
+    match /roles/{roleId} {
+      allow read: if isAuthenticated() && (isOwnerOrManager() || isAccountant());
+      allow create: if isOwner(); // Only Owner can create roles
+      allow update: if isOwner(); // Only Owner can update roles
+      allow delete: if false; // Roles should not be deleted (system-defined)
     }
     
     // Sessions
     match /sessions/{sessionId} {
       allow read: if isAuthenticated() && 
-                     (resource.data.userId == request.auth.uid || isOwnerOrManager());
+                     (resource != null && 
+                      (resource.data.userId == request.auth.uid || isOwnerOrManager()));
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && 
-                       (resource.data.userId == request.auth.uid || isOwnerOrManager());
+                       (resource != null && 
+                        (resource.data.userId == request.auth.uid || isOwnerOrManager()));
       allow delete: if isAuthenticated() && 
-                       (resource.data.userId == request.auth.uid || isOwnerOrManager());
+                       (resource != null && 
+                        (resource.data.userId == request.auth.uid || isOwnerOrManager()));
     }
     
     // Password Reset Tokens
@@ -86,25 +158,21 @@ service cloud.firestore {
       allow write: if false; // Tokens should only be created/updated server-side
     }
     
-    // Customers
-    match /customers/{customerId} {
-      allow read: if isAuthenticated();
-      allow create: if isStaff();
-      allow update: if isStaff();
-      allow delete: if isManager(); // Soft delete (archive) preferred
-    }
-    
-    // Pets
-    match /pets/{petId} {
-      allow read: if isAuthenticated();
-      allow create: if isStaff();
-      allow update: if isStaff();
-      allow delete: if isManager();
-    }
+    // ============================================
+    // Services Module Collections
+    // ============================================
     
     // Services
     match /services/{serviceId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isStaff() || isVeterinarian());
+      allow create: if isManager();
+      allow update: if isManager();
+      allow delete: if isOwner();
+    }
+    
+    // Service Packages (optional bundles)
+    match /service_packages/{packageId} {
+      allow read: if isAuthenticated() && isStaff();
       allow create: if isManager();
       allow update: if isManager();
       allow delete: if isOwner();
@@ -112,45 +180,53 @@ service cloud.firestore {
     
     // Appointments
     match /appointments/{appointmentId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isStaff() || isVeterinarian());
       allow create: if isStaff();
-      allow update: if isStaff();
-      allow delete: if isManager();
+      // Staff can update appointments for their assigned stores
+      allow update: if isStaff() && 
+                       (isOwnerOrManager() || 
+                        (resource != null && hasStoreAccess(resource.data.storeId)));
+      allow delete: if false; // Appointments should be cancelled, not deleted
     }
     
     // Appointment Service Lines
     match /appointment_service_lines/{lineId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isStaff() || isVeterinarian());
       allow create: if isStaff();
       allow update: if isStaff();
       allow delete: if isStaff();
     }
     
+    // ============================================
+    // Inventory Module Collections
+    // ============================================
+    
     // Products
     match /products/{productId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isStaff() || isAccountant());
       allow create: if isManager();
       allow update: if isManager();
-      allow delete: if isOwner();
+      allow delete: if isOwner(); // Safe delete only (check for dependencies)
     }
     
-    // Product Stock
+    // Product Stock (current stock levels)
     match /product_stock/{stockId} {
-      allow read: if isAuthenticated();
-      allow write: if isStaff(); // Stock updates should be done through use cases
+      allow read: if isAuthenticated() && (isStaff() || isAccountant());
+      // Stock updates should be done through use cases (stock movements)
+      allow write: if isStaff(); // Staff can update stock via receipts/adjustments
     }
     
     // Stock Movements (immutable audit log)
     match /stock_movements/{movementId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isStaff() || isAccountant());
       allow create: if isStaff();
-      allow update: if false; // Immutable
-      allow delete: if false; // Immutable
+      allow update: if false; // Immutable - never update
+      allow delete: if false; // Immutable - never delete
     }
     
     // Stock Batches
     match /stock_batches/{batchId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isStaff() || isAccountant());
       allow create: if isStaff();
       allow update: if isStaff();
       allow delete: if isManager();
@@ -158,7 +234,7 @@ service cloud.firestore {
     
     // Inventory Reservations
     match /inventory_reservations/{reservationId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && isStaff();
       allow create: if isStaff();
       allow update: if isStaff();
       allow delete: if isStaff();
@@ -166,7 +242,7 @@ service cloud.firestore {
     
     // Suppliers
     match /suppliers/{supplierId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isStaff() || isAccountant());
       allow create: if isManager();
       allow update: if isManager();
       allow delete: if isOwner();
@@ -174,24 +250,33 @@ service cloud.firestore {
     
     // Purchase Orders
     match /purchase_orders/{orderId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && isManager();
       allow create: if isManager();
       allow update: if isManager();
       allow delete: if isOwner();
     }
     
+    // ============================================
+    // Financial Module Collections
+    // ============================================
+    
     // Invoices
     match /invoices/{invoiceId} {
-      allow read: if isAuthenticated();
-      allow create: if isStaff();
-      allow update: if isStaff() && resource.data.status == 'draft';
-      // Only managers/owners can issue, mark paid, or void invoices
-      allow update: if isManager() && 
-                       request.resource.data.status in ['issued', 'paid', 'void'];
+      allow read: if isAuthenticated() && 
+                     (isStaff() || isAccountant() || 
+                      (resource != null && hasRole('Staff') && hasStoreAccess(resource.data.storeId)));
+      allow create: if isStaff() || isAccountant();
+      // Staff can only update draft invoices
+      allow update: if (resource != null && isStaff() && resource.data.status == 'draft') ||
+                     // Managers/Accountants can issue, mark paid, or void
+                     (resource != null && isManager() && request.resource.data.status in ['issued', 'paid', 'void']) ||
+                     (resource != null && isAccountant() && request.resource.data.status in ['issued', 'paid', 'void']) ||
+                     // Staff can mark as paid (cashier operations)
+                     (resource != null && isStaff() && request.resource.data.status == 'paid' && resource.data.status == 'issued');
       allow delete: if false; // Invoices should not be deleted (void instead)
     }
     
-    // Invoice Number Counters
+    // Invoice Number Counters (server-side only)
     match /invoice_number_counters/{counterId} {
       allow read: if false; // Server-side only
       allow write: if false; // Server-side only
@@ -199,16 +284,19 @@ service cloud.firestore {
     
     // Transactions
     match /transactions/{transactionId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && 
+                     (isStaff() || isAccountant() || 
+                      (resource != null && hasRole('Staff') && hasStoreAccess(resource.data.storeId)));
       allow create: if isStaff();
-      allow update: if isStaff();
-      allow delete: if false; // Transactions should not be deleted
+      // Staff can update pending transactions
+      allow update: if resource != null && isStaff() && resource.data.status == 'pending';
+      allow delete: if false; // Transactions should not be deleted (use void/refund)
     }
     
     // Credit Notes
     match /credit_notes/{creditNoteId} {
-      allow read: if isAuthenticated();
-      allow create: if isManager();
+      allow read: if isAuthenticated() && (isManager() || isAccountant());
+      allow create: if isManager() || isAccountant();
       allow update: if false; // Credit notes should be immutable
       allow delete: if false; // Credit notes should not be deleted
     }
@@ -221,15 +309,22 @@ service cloud.firestore {
       allow delete: if isOwner();
     }
     
+    // ============================================
+    // Audit & Operational Collections
+    // ============================================
+    
     // Audit Logs (immutable)
     match /audit_logs/{logId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isOwnerOrManager() || isAccountant());
       allow create: if true; // System can create audit logs
-      allow update: if false; // Immutable
-      allow delete: if false; // Immutable
+      allow update: if false; // Immutable - never update
+      allow delete: if false; // Immutable - never delete
     }
     
-    // Default: deny all other access
+    // ============================================
+    // Default: Deny All Other Access
+    // ============================================
+    
     match /{document=**} {
       allow read, write: if false;
     }

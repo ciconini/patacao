@@ -1,9 +1,9 @@
 /**
  * Create User (Staff) Use Case (UC-ADMIN-009)
- * 
+ *
  * Application use case for creating a new system user account.
  * This use case orchestrates domain entities and domain services to create a user.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Owner or Manager role required)
  * - Validate role assignment restrictions (only Owner can create Owner users)
@@ -13,7 +13,7 @@
  * - Persist user via repository
  * - Assign roles, stores, and service skills
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -108,7 +108,7 @@ export interface CreateUserStaffResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -168,7 +168,15 @@ export class RepositoryError extends ApplicationError {
  * Create User (Staff) Use Case
  */
 export class CreateUserStaffUseCase {
-  private static readonly REQUIRED_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+  private static readonly REQUIRED_DAYS = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ] as const;
 
   constructor(
     private readonly userRepository: UserRepository,
@@ -179,16 +187,16 @@ export class CreateUserStaffUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create user use case
-   * 
+   *
    * @param input - Input data for creating user
    * @returns Result containing created user or error
    */
@@ -242,23 +250,25 @@ export class CreateUserStaffUseCase {
 
   /**
    * Validates user authorization (must have Owner or Manager role)
-   * 
+   *
    * @param userId - User ID to validate
    * @returns User data
    * @throws UnauthorizedError if user not found
    * @throws ForbiddenError if user does not have required role
    */
-  private async validateUserAuthorization(userId: string): Promise<{ id: string; roleIds: string[] }> {
+  private async validateUserAuthorization(
+    userId: string,
+  ): Promise<{ id: string; roleIds: string[] }> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasOwnerOrManagerRole = user.roleIds.some(roleId => {
+    const hasOwnerOrManagerRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
-        return role ? (role.isOwner() || role.isManager()) : false;
+        return role ? role.isOwner() || role.isManager() : false;
       } catch {
         return false;
       }
@@ -273,7 +283,7 @@ export class CreateUserStaffUseCase {
 
   /**
    * Validates and normalizes input data
-   * 
+   *
    * @param input - Raw input data
    * @param currentUser - Current user performing the action
    * @returns Validated and normalized input
@@ -281,7 +291,7 @@ export class CreateUserStaffUseCase {
    */
   private async validateAndNormalizeInput(
     input: CreateUserStaffInput,
-    currentUser: { id: string; roleIds: string[] }
+    currentUser: { id: string; roleIds: string[] },
   ): Promise<{
     email: EmailAddress;
     fullName: string;
@@ -329,13 +339,15 @@ export class CreateUserStaffUseCase {
         if (error instanceof ValidationError) {
           throw error;
         }
-        throw new ValidationError(`Invalid role ID: ${roleId}. Valid roles are: Owner, Manager, Staff, Accountant, Veterinarian`);
+        throw new ValidationError(
+          `Invalid role ID: ${roleId}. Valid roles are: Owner, Manager, Staff, Accountant, Veterinarian`,
+        );
       }
     }
 
     // Check if non-Owner is trying to create Owner user
     if (hasOwnerRole) {
-      const isCurrentUserOwner = currentUser.roleIds.some(roleId => {
+      const isCurrentUserOwner = currentUser.roleIds.some((roleId) => {
         try {
           const role = RoleId.fromString(roleId);
           return role ? role.isOwner() : false;
@@ -392,7 +404,7 @@ export class CreateUserStaffUseCase {
 
   /**
    * Validates working hours structure
-   * 
+   *
    * @param workingHours - Working hours input
    * @returns Validated WeeklySchedule
    * @throws ValidationError if validation fails
@@ -402,12 +414,12 @@ export class CreateUserStaffUseCase {
       throw new ValidationError('Working hours cannot be null');
     }
 
-    const validated: WeeklySchedule = {};
+    const validated: any = {};
 
     // Validate all 7 days are present
     for (const day of CreateUserStaffUseCase.REQUIRED_DAYS) {
       const dayHours = workingHours[day];
-      
+
       if (!dayHours) {
         throw new ValidationError(`Working hours must contain all 7 days of week. Missing: ${day}`);
       }
@@ -423,8 +435,8 @@ export class CreateUserStaffUseCase {
         const workingHoursVO = isAvailable
           ? WorkingHours.available(dayHours.start, dayHours.end)
           : WorkingHours.unavailable(dayHours.start, dayHours.end);
-        
-        validated[day] = {
+
+        (validated as any)[day] = {
           startTime: workingHoursVO.startTime,
           endTime: workingHoursVO.endTime,
           isAvailable: workingHoursVO.isAvailable,
@@ -434,18 +446,18 @@ export class CreateUserStaffUseCase {
       }
     }
 
-    return validated;
+    return validated as WeeklySchedule;
   }
 
   /**
    * Checks if email is unique
-   * 
+   *
    * @param email - Email address value object
    * @throws DuplicateEmailError if email already exists
    */
   private async checkEmailUniqueness(email: EmailAddress): Promise<void> {
     const existingUser = await this.userRepository.findByEmail(email.value);
-    
+
     if (existingUser) {
       throw new DuplicateEmailError('A user with this email already exists');
     }
@@ -453,13 +465,13 @@ export class CreateUserStaffUseCase {
 
   /**
    * Checks if username is unique
-   * 
+   *
    * @param username - Username string
    * @throws DuplicateUsernameError if username already exists
    */
   private async checkUsernameUniqueness(username: string): Promise<void> {
     const existingUser = await this.userRepository.findByUsername(username);
-    
+
     if (existingUser) {
       throw new DuplicateUsernameError('A user with this username already exists');
     }
@@ -467,7 +479,7 @@ export class CreateUserStaffUseCase {
 
   /**
    * Validates that all stores exist
-   * 
+   *
    * @param storeIds - Array of store IDs
    * @throws NotFoundError if any store not found
    */
@@ -482,7 +494,7 @@ export class CreateUserStaffUseCase {
 
   /**
    * Validates that all services exist
-   * 
+   *
    * @param serviceIds - Array of service IDs
    * @throws NotFoundError if any service not found
    */
@@ -497,7 +509,7 @@ export class CreateUserStaffUseCase {
 
   /**
    * Creates User domain entity
-   * 
+   *
    * @param validatedInput - Validated input data
    * @returns User domain entity
    */
@@ -528,13 +540,13 @@ export class CreateUserStaffUseCase {
       validatedInput.serviceSkills,
       validatedInput.active,
       now,
-      now
+      now,
     );
   }
 
   /**
    * Persists user via repository
-   * 
+   *
    * @param user - User domain entity
    * @returns Persisted user entity
    * @throws RepositoryError if persistence fails
@@ -549,7 +561,7 @@ export class CreateUserStaffUseCase {
 
   /**
    * Assigns user relationships (roles, stores, service skills)
-   * 
+   *
    * @param userId - User ID
    * @param validatedInput - Validated input data
    */
@@ -559,7 +571,7 @@ export class CreateUserStaffUseCase {
       roles: string[];
       storeIds: string[];
       serviceSkills: string[];
-    }
+    },
   ): Promise<void> {
     // Assign roles
     if (validatedInput.roles.length > 0) {
@@ -579,7 +591,7 @@ export class CreateUserStaffUseCase {
 
   /**
    * Creates audit log entry for user creation
-   * 
+   *
    * @param user - Created user entity
    * @param performedBy - User ID who performed the action
    */
@@ -599,7 +611,7 @@ export class CreateUserStaffUseCase {
             roles: user.roleIds,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -612,7 +624,7 @@ export class CreateUserStaffUseCase {
 
   /**
    * Maps User domain entity to output model
-   * 
+   *
    * @param user - User domain entity
    * @param validatedInput - Validated input data (for relationships)
    * @returns Output model
@@ -622,7 +634,7 @@ export class CreateUserStaffUseCase {
     validatedInput: {
       storeIds: string[];
       serviceSkills: string[];
-    }
+    },
   ): CreateUserStaffOutput {
     return {
       id: user.id,
@@ -630,7 +642,7 @@ export class CreateUserStaffUseCase {
       fullName: user.fullName,
       phone: user.phone,
       username: user.username,
-      roles: user.roleIds,
+      roles: [...user.roleIds],
       storeIds: validatedInput.storeIds,
       workingHours: user.workingHours,
       serviceSkills: validatedInput.serviceSkills,
@@ -642,7 +654,7 @@ export class CreateUserStaffUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -666,4 +678,3 @@ export class CreateUserStaffUseCase {
     };
   }
 }
-

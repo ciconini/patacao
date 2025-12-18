@@ -1,10 +1,17 @@
 /**
  * Pet DTOs
- * 
+ *
  * Data Transfer Objects for Pet API endpoints.
  */
 
-import { IsString, IsOptional, IsArray, ValidateNested, IsUUID, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsUUID,
+  IsDateString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**

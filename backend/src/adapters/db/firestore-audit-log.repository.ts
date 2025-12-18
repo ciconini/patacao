@@ -1,9 +1,9 @@
 /**
  * Firestore AuditLog Repository
- * 
+ *
  * Firestore implementation of AuditLogRepository port.
  * This repository handles persistence of AuditLog entities to Firestore.
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -38,27 +38,27 @@ export class FirestoreAuditLogRepository implements AuditLogRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves an AuditLog entity to Firestore
-   * 
+   *
    * @param auditLog - AuditLog domain entity
    * @returns Saved AuditLog entity
    */
   async save(auditLog: AuditLog): Promise<AuditLog> {
     const docRef = this.firestore.collection(this.collectionName).doc(auditLog.id);
     const document = this.toDocument(auditLog);
-    
+
     await docRef.set(document);
-    
+
     return auditLog;
   }
 
   /**
    * Converts AuditLog domain entity to Firestore document
-   * 
+   *
    * @param auditLog - AuditLog domain entity
    * @returns Firestore document
    */
@@ -76,7 +76,7 @@ export class FirestoreAuditLogRepository implements AuditLogRepository {
 
   /**
    * Converts Date to Firestore Timestamp
-   * 
+   *
    * @param date - Date object
    * @returns Firestore Timestamp
    */
@@ -85,4 +85,3 @@ export class FirestoreAuditLogRepository implements AuditLogRepository {
     return Timestamp.fromDate(date);
   }
 }
-

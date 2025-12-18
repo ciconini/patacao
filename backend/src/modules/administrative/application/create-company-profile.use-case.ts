@@ -1,9 +1,9 @@
 /**
  * Create Company Profile Use Case (UC-ADMIN-001)
- * 
+ *
  * Application use case for creating a new company/business profile with fiscal data.
  * This use case orchestrates domain entities and domain services to create a company profile.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Owner role required)
  * - Validate input data and business rules
@@ -11,7 +11,7 @@
  * - Create Company domain entity
  * - Persist company via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -96,7 +96,7 @@ export interface CreateCompanyProfileResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -150,16 +150,16 @@ export class CreateCompanyProfileUseCase {
     private readonly generateId: () => string = () => {
       // Simple UUID v4 generator (in production, use a proper UUID library)
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create company profile use case
-   * 
+   *
    * @param input - Input data for creating company profile
    * @returns Result containing created company or error
    */
@@ -195,20 +195,20 @@ export class CreateCompanyProfileUseCase {
 
   /**
    * Validates user authorization (must have Owner role)
-   * 
+   *
    * @param userId - User ID to validate
    * @throws UnauthorizedError if user not found
    * @throws ForbiddenError if user does not have Owner role
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.userRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
     // Check if user has Owner role
-    const hasOwnerRole = user.roleIds.some(roleId => {
+    const hasOwnerRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         return role ? role.isOwner() : false;
@@ -224,7 +224,7 @@ export class CreateCompanyProfileUseCase {
 
   /**
    * Validates and normalizes input data
-   * 
+   *
    * @param input - Raw input data
    * @returns Validated and normalized input
    * @throws ValidationError if validation fails
@@ -267,7 +267,7 @@ export class CreateCompanyProfileUseCase {
         input.address.street,
         input.address.city,
         input.address.postalCode,
-        input.address.country
+        input.address.country,
       );
     } catch (error: any) {
       throw new ValidationError(`Invalid address: ${error.message}`);
@@ -324,13 +324,13 @@ export class CreateCompanyProfileUseCase {
 
   /**
    * Checks if NIF is unique
-   * 
+   *
    * @param nif - Portuguese NIF value object
    * @throws DuplicateNifError if NIF already exists
    */
   private async checkNifUniqueness(nif: PortugueseNIF): Promise<void> {
     const existingCompany = await this.companyRepository.findByNif(nif.value);
-    
+
     if (existingCompany) {
       throw new DuplicateNifError('A company with this NIF already exists');
     }
@@ -338,7 +338,7 @@ export class CreateCompanyProfileUseCase {
 
   /**
    * Creates Company domain entity
-   * 
+   *
    * @param validatedInput - Validated input data
    * @returns Company domain entity
    */
@@ -373,13 +373,13 @@ export class CreateCompanyProfileUseCase {
       validatedInput.email?.value,
       validatedInput.website,
       now,
-      now
+      now,
     );
   }
 
   /**
    * Persists company via repository
-   * 
+   *
    * @param company - Company domain entity
    * @returns Persisted company entity
    * @throws RepositoryError if persistence fails
@@ -394,7 +394,7 @@ export class CreateCompanyProfileUseCase {
 
   /**
    * Creates audit log entry for company creation
-   * 
+   *
    * @param company - Created company entity
    * @param performedBy - User ID who performed the action
    */
@@ -415,7 +415,7 @@ export class CreateCompanyProfileUseCase {
             taxRegime: company.taxRegime,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -430,7 +430,7 @@ export class CreateCompanyProfileUseCase {
 
   /**
    * Maps Company domain entity to output model
-   * 
+   *
    * @param company - Company domain entity
    * @returns Output model
    */
@@ -457,7 +457,7 @@ export class CreateCompanyProfileUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -482,4 +482,3 @@ export class CreateCompanyProfileUseCase {
     };
   }
 }
-

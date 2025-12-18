@@ -1,6 +1,6 @@
 /**
  * Financial Infrastructure Module
- * 
+ *
  * NestJS module that provides Firestore implementations for Financial module repositories.
  * This module registers all repository adapters and exports them for use in other modules.
  */
@@ -44,4 +44,3 @@ import { FinancialExportRepository } from '../ports/financial-export.repository.
   ],
 })
 export class FinancialInfrastructureModule {}
-

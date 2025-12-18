@@ -1,6 +1,6 @@
 /**
  * Financial Export Controller
- * 
+ *
  * REST API controller for Financial Export endpoints.
  */
 
@@ -15,17 +15,24 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { CreateFinancialExportDto, FinancialExportResponseDto } from '../dto/financial-export.dto';
-import { CreateFinancialExportUseCase, CreateFinancialExportInput } from '../../application/create-financial-export.use-case';
+import {
+  CreateFinancialExportUseCase,
+  CreateFinancialExportInput,
+} from '../../application/create-financial-export.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Financial')
+@ApiBearerAuth('JWT-auth')
 @Controller('api/v1/financial-exports')
 @UseGuards(FirebaseAuthGuard)
 export class FinancialExportController {
-  constructor(
-    private readonly createFinancialExportUseCase: CreateFinancialExportUseCase,
-  ) {}
+  constructor(private readonly createFinancialExportUseCase: CreateFinancialExportUseCase) {}
 
   /**
    * Create a new financial export
@@ -33,6 +40,8 @@ export class FinancialExportController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create financial export', description: 'Creates a new financial export' })
+  @ApiBody({ type: CreateFinancialExportDto })
   async create(
     @Body() createDto: CreateFinancialExportDto,
     @Request() req: AuthenticatedRequest,
@@ -83,4 +92,3 @@ export class FinancialExportController {
     throw new Error('Not implemented yet');
   }
 }
-

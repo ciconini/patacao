@@ -1,10 +1,10 @@
 /**
  * Update Company Profile Use Case (UC-ADMIN-002)
- * 
+ *
  * Application use case for updating an existing company/business profile.
  * This use case orchestrates domain entities and domain services to update a company profile
  * while enforcing role-based restrictions on fiscal fields.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Owner or Manager role)
  * - Validate field-level permissions (fiscal fields require Owner role)
@@ -13,7 +13,7 @@
  * - Update Company domain entity
  * - Persist updated company via repository
  * - Create audit log entry with before/after values
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -99,7 +99,7 @@ export interface UpdateCompanyProfileResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -159,16 +159,16 @@ export class UpdateCompanyProfileUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the update company profile use case
-   * 
+   *
    * @param input - Input data for updating company profile
    * @returns Result containing updated company or error
    */
@@ -193,7 +193,11 @@ export class UpdateCompanyProfileUseCase {
       this.validateFiscalFieldAccess(input, isOwner);
 
       // 5. Validate and normalize input data
-      const validatedUpdates = await this.validateAndNormalizeInput(input, existingCompany, isOwner);
+      const validatedUpdates = await this.validateAndNormalizeInput(
+        input,
+        existingCompany,
+        isOwner,
+      );
 
       // 6. Check NIF uniqueness if NIF is being changed
       if (validatedUpdates.nif && existingCompany.nif !== validatedUpdates.nif.value) {
@@ -224,12 +228,12 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Validates that at least one field is provided for update
-   * 
+   *
    * @param input - Input data
    * @throws ValidationError if no fields provided
    */
   private validateAtLeastOneFieldProvided(input: UpdateCompanyProfileInput): void {
-    const hasField = 
+    const hasField =
       input.name !== undefined ||
       input.nif !== undefined ||
       input.address !== undefined ||
@@ -246,14 +250,14 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Loads existing company by ID
-   * 
+   *
    * @param companyId - Company ID
    * @returns Company entity
    * @throws NotFoundError if company not found
    */
   private async loadCompany(companyId: string): Promise<Company> {
     const company = await this.companyRepository.findById(companyId);
-    
+
     if (!company) {
       throw new NotFoundError('Company not found');
     }
@@ -263,14 +267,14 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Validates user exists
-   * 
+   *
    * @param userId - User ID
    * @returns User data
    * @throws UnauthorizedError if user not found
    */
   private async validateUser(userId: string): Promise<{ id: string; roleIds: string[] }> {
     const user = await this.userRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
@@ -280,12 +284,12 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Checks if user has Owner role
-   * 
+   *
    * @param roleIds - User role IDs
    * @returns True if user has Owner role
    */
   private isOwnerRole(roleIds: string[]): boolean {
-    return roleIds.some(roleId => {
+    return roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         return role ? role.isOwner() : false;
@@ -297,12 +301,12 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Checks if user has Manager role
-   * 
+   *
    * @param roleIds - User role IDs
    * @returns True if user has Manager role
    */
   private isManagerRole(roleIds: string[]): boolean {
-    return roleIds.some(roleId => {
+    return roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         return role ? role.isManager() : false;
@@ -314,7 +318,7 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Validates fiscal field access (Manager cannot update fiscal fields)
-   * 
+   *
    * @param input - Input data
    * @param isOwner - Whether user is Owner
    * @throws ForbiddenError if Manager tries to update fiscal fields
@@ -327,7 +331,7 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Validates and normalizes input data
-   * 
+   *
    * @param input - Raw input data
    * @param existingCompany - Existing company entity
    * @param isOwner - Whether user is Owner
@@ -337,7 +341,7 @@ export class UpdateCompanyProfileUseCase {
   private async validateAndNormalizeInput(
     input: UpdateCompanyProfileInput,
     existingCompany: Company,
-    isOwner: boolean
+    isOwner: boolean,
   ): Promise<{
     name?: string;
     nif?: PortugueseNIF;
@@ -380,7 +384,7 @@ export class UpdateCompanyProfileUseCase {
           input.address.street,
           input.address.city,
           input.address.postalCode,
-          input.address.country
+          input.address.country,
         );
       } catch (error: any) {
         throw new ValidationError(`Invalid address: ${error.message}`);
@@ -444,14 +448,14 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Checks if NIF is unique (excluding current company)
-   * 
+   *
    * @param nif - Portuguese NIF value object
    * @param excludeCompanyId - Company ID to exclude from uniqueness check
    * @throws DuplicateNifError if NIF already exists
    */
   private async checkNifUniqueness(nif: PortugueseNIF, excludeCompanyId: string): Promise<void> {
     const existingCompany = await this.companyRepository.findByNif(nif.value);
-    
+
     if (existingCompany && existingCompany.id !== excludeCompanyId) {
       throw new DuplicateNifError('A company with this NIF already exists');
     }
@@ -459,7 +463,7 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Captures before state for audit log
-   * 
+   *
    * @param company - Company entity
    * @returns Before state object
    */
@@ -478,7 +482,7 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Updates Company domain entity with validated updates
-   * 
+   *
    * @param existingCompany - Existing company entity
    * @param updates - Validated update data
    * @returns Updated company entity
@@ -494,7 +498,7 @@ export class UpdateCompanyProfileUseCase {
       phone?: PhoneNumber;
       email?: EmailAddress;
       website?: string;
-    }
+    },
   ): Company {
     // Use Company entity's update methods
     if (updates.name !== undefined) {
@@ -539,7 +543,7 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Persists updated company via repository
-   * 
+   *
    * @param company - Updated company entity
    * @returns Persisted company entity
    * @throws RepositoryError if persistence fails
@@ -554,7 +558,7 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Creates audit log entry for company update
-   * 
+   *
    * @param company - Updated company entity
    * @param beforeState - Before state for audit log
    * @param performedBy - User ID who performed the action
@@ -562,7 +566,7 @@ export class UpdateCompanyProfileUseCase {
   private async createAuditLog(
     company: Company,
     beforeState: Record<string, unknown>,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const afterState: Record<string, unknown> = {
@@ -583,7 +587,7 @@ export class UpdateCompanyProfileUseCase {
         AuditAction.UPDATE,
         performedBy,
         this.auditLogDomainService.createUpdateMetadata(beforeState, afterState),
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -596,7 +600,7 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Maps Company domain entity to output model
-   * 
+   *
    * @param company - Company domain entity
    * @returns Output model
    */
@@ -623,7 +627,7 @@ export class UpdateCompanyProfileUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -647,4 +651,3 @@ export class UpdateCompanyProfileUseCase {
     };
   }
 }
-

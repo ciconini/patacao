@@ -1,34 +1,34 @@
 /**
  * VATRate Value Object
- * 
+ *
  * Represents a VAT (Value Added Tax) rate in the petshop management system.
  * This is a pure domain value object that encapsulates VAT rate validation and business rules,
  * including Portugal-specific VAT rates and precision requirements (2 decimal places).
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates rate range and precision
- * 
+ *
  * Business Rules:
  * - VAT rate must be between 0.00 and 100.00 (inclusive)
  * - VAT rate is stored with 2 decimal places precision (DECIMAL(5,2) standard)
  * - Common Portuguese VAT rates: 0%, 6%, 13%, 23%
  * - Rate represents percentage (e.g., 23.00 means 23%)
- * 
+ *
  * Invariants:
  * - Rate value must be between 0.00 and 100.00 (inclusive)
  * - Rate is always rounded to 2 decimal places
  * - Value object is immutable after creation
- * 
+ *
  * Equality Definition:
  * - Two VATRate instances are equal if their rate values are equal
  * - Rate comparison uses 2 decimal places precision
  * - Equality is based on rate values, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In Company entity (default VAT rate):
  *    constructor(
  *      // ... other params
@@ -38,7 +38,7 @@
  *        this._defaultVatRate = new VATRate(defaultVatRate);
  *      }
  *    }
- * 
+ *
  * 2. In Invoice entity (line VAT rate):
  *    export interface InvoiceLine {
  *      readonly description: string;
@@ -48,7 +48,7 @@
  *      readonly unitPrice: number;
  *      readonly vatRate: VATRate; // VATRate value object
  *    }
- * 
+ *
  * 3. Creating VATRate:
  *    const standardRate = new VATRate(23.00); // 23% VAT
  *    const reducedRate = new VATRate(6.00); // 6% VAT
@@ -56,19 +56,19 @@
  *    const standard = VATRate.standard(); // 23% VAT (Portugal standard)
  *    const intermediate = VATRate.intermediate(); // 13% VAT (Portugal intermediate)
  *    const reduced = VATRate.reduced(); // 6% VAT (Portugal reduced)
- * 
+ *
  * 4. Equality comparison:
  *    const rate1 = new VATRate(23.00);
  *    const rate2 = new VATRate(23.00);
  *    rate1.equals(rate2); // true
- * 
+ *
  * 5. String representation:
  *    const rate = new VATRate(23.00);
  *    rate.toString(); // '23.00%'
  *    rate.toFormattedString(); // '23,00%' (Portuguese format)
  *    rate.value; // 23.00
  *    rate.asDecimal(); // 0.23 (for calculations)
- * 
+ *
  * 6. Calculations:
  *    const rate = new VATRate(23.00);
  *    const baseAmount = 100.00;
@@ -79,19 +79,19 @@
 export class VATRate {
   private readonly _value: number;
 
-  private static readonly MIN_RATE = 0.00;
-  private static readonly MAX_RATE = 100.00;
+  private static readonly MIN_RATE = 0.0;
+  private static readonly MAX_RATE = 100.0;
   private static readonly DECIMAL_PLACES = 2;
 
   // Common Portuguese VAT rates
-  private static readonly STANDARD_RATE = 23.00; // Standard rate
-  private static readonly INTERMEDIATE_RATE = 13.00; // Intermediate rate
-  private static readonly REDUCED_RATE = 6.00; // Reduced rate
-  private static readonly ZERO_RATE = 0.00; // Zero rate
+  private static readonly STANDARD_RATE = 23.0; // Standard rate
+  private static readonly INTERMEDIATE_RATE = 13.0; // Intermediate rate
+  private static readonly REDUCED_RATE = 6.0; // Reduced rate
+  private static readonly ZERO_RATE = 0.0; // Zero rate
 
   /**
    * Creates a new VATRate value object
-   * 
+   *
    * @param rate - VAT rate as percentage (0.00 to 100.00, will be rounded to 2 decimal places)
    * @throws Error if rate is outside valid range
    */
@@ -102,7 +102,7 @@ export class VATRate {
 
   /**
    * Gets the VAT rate value as percentage
-   * 
+   *
    * @returns Rate as number (always rounded to 2 decimal places, e.g., 23.00 for 23%)
    */
   get value(): number {
@@ -111,9 +111,9 @@ export class VATRate {
 
   /**
    * Gets the VAT rate as a decimal multiplier (for calculations)
-   * 
+   *
    * Example: 23.00% returns 0.23
-   * 
+   *
    * @returns Rate as decimal (0.00 to 1.00)
    */
   get asDecimal(): number {
@@ -122,9 +122,9 @@ export class VATRate {
 
   /**
    * Checks if this VATRate equals another VATRate
-   * 
+   *
    * Equality is determined by comparing rate values with 2 decimal places precision.
-   * 
+   *
    * @param other - Other VATRate to compare
    * @returns True if rates are equal
    */
@@ -143,7 +143,7 @@ export class VATRate {
 
   /**
    * Checks if this VATRate is equal to another VATRate (alias for equals)
-   * 
+   *
    * @param other - Other VATRate to compare
    * @returns True if rates are equal
    */
@@ -153,7 +153,7 @@ export class VATRate {
 
   /**
    * Checks if this VATRate is greater than another VATRate
-   * 
+   *
    * @param other - Other VATRate to compare
    * @returns True if this rate is greater than other rate
    */
@@ -163,7 +163,7 @@ export class VATRate {
 
   /**
    * Checks if this VATRate is greater than or equal to another VATRate
-   * 
+   *
    * @param other - Other VATRate to compare
    * @returns True if this rate is greater than or equal to other rate
    */
@@ -173,7 +173,7 @@ export class VATRate {
 
   /**
    * Checks if this VATRate is less than another VATRate
-   * 
+   *
    * @param other - Other VATRate to compare
    * @returns True if this rate is less than other rate
    */
@@ -183,7 +183,7 @@ export class VATRate {
 
   /**
    * Checks if this VATRate is less than or equal to another VATRate
-   * 
+   *
    * @param other - Other VATRate to compare
    * @returns True if this rate is less than or equal to other rate
    */
@@ -193,27 +193,27 @@ export class VATRate {
 
   /**
    * Checks if this VATRate is zero
-   * 
+   *
    * @returns True if rate is 0.00%
    */
   isZero(): boolean {
-    return this._value === 0.00;
+    return this._value === 0.0;
   }
 
   /**
    * Checks if this VATRate is positive (greater than zero)
-   * 
+   *
    * @returns True if rate is greater than 0.00%
    */
   isPositive(): boolean {
-    return this._value > 0.00;
+    return this._value > 0.0;
   }
 
   /**
    * Checks if this VATRate is a standard Portuguese VAT rate
-   * 
+   *
    * Standard rate: 23.00%
-   * 
+   *
    * @returns True if rate is 23.00%
    */
   isStandard(): boolean {
@@ -222,9 +222,9 @@ export class VATRate {
 
   /**
    * Checks if this VATRate is an intermediate Portuguese VAT rate
-   * 
+   *
    * Intermediate rate: 13.00%
-   * 
+   *
    * @returns True if rate is 13.00%
    */
   isIntermediate(): boolean {
@@ -233,9 +233,9 @@ export class VATRate {
 
   /**
    * Checks if this VATRate is a reduced Portuguese VAT rate
-   * 
+   *
    * Reduced rate: 6.00%
-   * 
+   *
    * @returns True if rate is 6.00%
    */
   isReduced(): boolean {
@@ -244,7 +244,7 @@ export class VATRate {
 
   /**
    * Calculates VAT amount for a given base amount
-   * 
+   *
    * @param baseAmount - Base amount to calculate VAT for
    * @returns VAT amount (rounded to 2 decimal places)
    */
@@ -257,7 +257,7 @@ export class VATRate {
 
   /**
    * Calculates total amount (base + VAT) for a given base amount
-   * 
+   *
    * @param baseAmount - Base amount
    * @returns Total amount including VAT (rounded to 2 decimal places)
    */
@@ -270,7 +270,7 @@ export class VATRate {
 
   /**
    * Calculates base amount from a total amount that includes VAT
-   * 
+   *
    * @param totalAmount - Total amount including VAT
    * @returns Base amount excluding VAT (rounded to 2 decimal places)
    */
@@ -278,7 +278,7 @@ export class VATRate {
     if (totalAmount < 0) {
       throw new Error('Total amount cannot be negative');
     }
-    if (this._value === 100.00) {
+    if (this._value === 100.0) {
       throw new Error('Cannot calculate base from total when VAT rate is 100%');
     }
     return VATRate.roundToTwoDecimals(totalAmount / (1 + this.asDecimal));
@@ -286,7 +286,7 @@ export class VATRate {
 
   /**
    * Calculates VAT amount from a total amount that includes VAT
-   * 
+   *
    * @param totalAmount - Total amount including VAT
    * @returns VAT amount (rounded to 2 decimal places)
    */
@@ -300,9 +300,9 @@ export class VATRate {
 
   /**
    * Converts the VATRate to string representation
-   * 
+   *
    * Format: "value%" (e.g., "23.00%")
-   * 
+   *
    * @returns VATRate string representation
    */
   toString(): string {
@@ -311,9 +311,9 @@ export class VATRate {
 
   /**
    * Converts the VATRate to formatted string (Portuguese format)
-   * 
+   *
    * Format: "value%" with comma as decimal separator (e.g., "23,00%")
-   * 
+   *
    * @returns Formatted VATRate string in Portuguese format
    */
   toFormattedString(): string {
@@ -322,7 +322,7 @@ export class VATRate {
 
   /**
    * Creates a zero VATRate instance (0.00%)
-   * 
+   *
    * @returns New VATRate instance with 0.00% rate
    */
   static zero(): VATRate {
@@ -331,7 +331,7 @@ export class VATRate {
 
   /**
    * Creates a standard Portuguese VATRate instance (23.00%)
-   * 
+   *
    * @returns New VATRate instance with 23.00% rate
    */
   static standard(): VATRate {
@@ -340,7 +340,7 @@ export class VATRate {
 
   /**
    * Creates an intermediate Portuguese VATRate instance (13.00%)
-   * 
+   *
    * @returns New VATRate instance with 13.00% rate
    */
   static intermediate(): VATRate {
@@ -349,7 +349,7 @@ export class VATRate {
 
   /**
    * Creates a reduced Portuguese VATRate instance (6.00%)
-   * 
+   *
    * @returns New VATRate instance with 6.00% rate
    */
   static reduced(): VATRate {
@@ -358,9 +358,9 @@ export class VATRate {
 
   /**
    * Creates a VATRate instance from a number, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param rate - VAT rate as percentage
    * @returns VATRate instance or null if invalid
    */
@@ -374,7 +374,7 @@ export class VATRate {
 
   /**
    * Validates if a number can be used to create a VATRate instance
-   * 
+   *
    * @param rate - Rate to validate
    * @returns True if rate is valid for VATRate creation
    */
@@ -384,37 +384,32 @@ export class VATRate {
 
   /**
    * Gets all common Portuguese VAT rates
-   * 
+   *
    * @returns Array of common VATRate instances: [zero, reduced, intermediate, standard]
    */
   static getCommonRates(): VATRate[] {
-    return [
-      VATRate.zero(),
-      VATRate.reduced(),
-      VATRate.intermediate(),
-      VATRate.standard(),
-    ];
+    return [VATRate.zero(), VATRate.reduced(), VATRate.intermediate(), VATRate.standard()];
   }
 
   /**
    * Checks if a rate is a common Portuguese VAT rate
-   * 
+   *
    * @param rate - Rate to check
    * @returns True if rate is 0%, 6%, 13%, or 23%
    */
   static isCommonRate(rate: number): boolean {
-    const commonRates = [0.00, 6.00, 13.00, 23.00];
+    const commonRates = [0.0, 6.0, 13.0, 23.0];
     const rounded = VATRate.roundToTwoDecimals(rate);
-    return commonRates.some(common => Math.abs(rounded - common) < 0.005);
+    return commonRates.some((common) => Math.abs(rounded - common) < 0.005);
   }
 
   // Private helper methods
 
   /**
    * Rounds a number to 2 decimal places
-   * 
+   *
    * Uses standard rounding: Math.round(value * 100) / 100
-   * 
+   *
    * @param value - Value to round
    * @returns Rounded value with 2 decimal places
    */
@@ -424,7 +419,7 @@ export class VATRate {
 
   /**
    * Validates the VAT rate
-   * 
+   *
    * @param rate - Rate to validate
    * @throws Error if rate is outside valid range or invalid
    */
@@ -438,4 +433,3 @@ export class VATRate {
     }
   }
 }
-

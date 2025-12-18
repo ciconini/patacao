@@ -1,9 +1,9 @@
 /**
  * Update Product Use Case (UC-INV-006)
- * 
+ *
  * Application use case for updating an existing product's information.
  * This use case orchestrates domain entities to update products with partial updates.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role)
  * - Validate product exists
@@ -12,7 +12,7 @@
  * - Update Product domain entity (partial updates)
  * - Persist updated product via repository
  * - Create audit log entry with before/after values
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -89,7 +89,7 @@ export interface UpdateProductResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -140,16 +140,16 @@ export class UpdateProductUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the update product use case
-   * 
+   *
    * @param input - Input data for updating product
    * @returns Result containing updated product or error
    */
@@ -204,12 +204,12 @@ export class UpdateProductUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -228,7 +228,7 @@ export class UpdateProductUseCase {
    * Validates at least one field is provided for update
    */
   private validateAtLeastOneField(input: UpdateProductInput): void {
-    const hasField = 
+    const hasField =
       input.name !== undefined ||
       input.description !== undefined ||
       input.category !== undefined ||
@@ -248,7 +248,7 @@ export class UpdateProductUseCase {
    */
   private async validateAndLoadSupplier(supplierId: string): Promise<Supplier> {
     const supplier = await this.supplierRepository.findById(supplierId);
-    
+
     if (!supplier) {
       throw new NotFoundError('Supplier not found');
     }
@@ -265,19 +265,25 @@ export class UpdateProductUseCase {
         throw new ValidationError('Product name cannot be empty');
       }
       if (input.name.length > UpdateProductUseCase.MAX_NAME_LENGTH) {
-        throw new ValidationError(`Name cannot exceed ${UpdateProductUseCase.MAX_NAME_LENGTH} characters`);
+        throw new ValidationError(
+          `Name cannot exceed ${UpdateProductUseCase.MAX_NAME_LENGTH} characters`,
+        );
       }
     }
 
     if (input.description !== undefined && input.description !== null) {
       if (input.description.length > UpdateProductUseCase.MAX_DESCRIPTION_LENGTH) {
-        throw new ValidationError(`Description cannot exceed ${UpdateProductUseCase.MAX_DESCRIPTION_LENGTH} characters`);
+        throw new ValidationError(
+          `Description cannot exceed ${UpdateProductUseCase.MAX_DESCRIPTION_LENGTH} characters`,
+        );
       }
     }
 
     if (input.category !== undefined && input.category !== null) {
       if (input.category.length > UpdateProductUseCase.MAX_CATEGORY_LENGTH) {
-        throw new ValidationError(`Category cannot exceed ${UpdateProductUseCase.MAX_CATEGORY_LENGTH} characters`);
+        throw new ValidationError(
+          `Category cannot exceed ${UpdateProductUseCase.MAX_CATEGORY_LENGTH} characters`,
+        );
       }
     }
 
@@ -365,7 +371,7 @@ export class UpdateProductUseCase {
   private async createAuditLog(
     product: Product,
     beforeState: Record<string, any>,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const afterState = this.captureBeforeState(product); // Reuse method to get after state
@@ -380,7 +386,7 @@ export class UpdateProductUseCase {
           before: beforeState,
           after: afterState,
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -434,4 +440,3 @@ export class UpdateProductUseCase {
     };
   }
 }
-

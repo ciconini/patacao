@@ -1,80 +1,80 @@
 /**
  * TimeRange Value Object
- * 
+ *
  * Represents a time range (start time to end time) within a single day in the petshop management system.
  * This is a pure domain value object that encapsulates time range validation and business rules,
  * using 24-hour format (HH:mm) as per Portugal time conventions.
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates time format and range logic
- * 
+ *
  * Business Rules:
  * - Start time and end time must be in "HH:mm" format (24-hour format)
  * - Start time must be before end time (range cannot be zero or negative duration)
  * - Times are represented as strings in "HH:mm" format (e.g., "09:00", "17:00")
  * - Time range represents a period within a single day (does not span midnight)
- * 
+ *
  * Invariants:
  * - Start time must be valid "HH:mm" format (00:00 to 23:59)
  * - End time must be valid "HH:mm" format (00:00 to 23:59)
  * - Start time must be before end time
  * - Value object is immutable after creation
- * 
+ *
  * Equality Definition:
  * - Two TimeRange instances are equal if both start and end times are equal
  * - Equality is based on time string values, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In Store entity (opening hours):
  *    export interface DayOpeningHours {
  *      readonly isOpen: boolean;
  *      readonly openTime?: string; // "HH:mm"
  *      readonly closeTime?: string; // "HH:mm"
  *    }
- * 
+ *
  *    // Usage with TimeRange
  *    const openingRange = new TimeRange(dayHours.openTime!, dayHours.closeTime!);
  *    if (openingRange.contains("12:00")) {
  *      // Store is open at noon
  *    }
- * 
+ *
  * 2. In User entity (working hours):
  *    export interface WorkingHours {
  *      readonly startTime: string; // "HH:mm"
  *      readonly endTime: string; // "HH:mm"
  *      readonly isAvailable: boolean;
  *    }
- * 
+ *
  *    // Usage with TimeRange
  *    const workRange = new TimeRange(workingHours.startTime, workingHours.endTime);
  *    const duration = workRange.getDurationMinutes(); // e.g., 480 (8 hours)
- * 
+ *
  * 3. Creating TimeRange:
  *    const range = new TimeRange("09:00", "17:00"); // 9 AM to 5 PM
  *    const morning = TimeRange.fromHours(9, 12); // 9 AM to 12 PM
  *    const afternoon = TimeRange.fromHours(13, 17); // 1 PM to 5 PM
- * 
+ *
  * 4. Validation:
  *    const range = new TimeRange("09:00", "17:00"); // Valid
  *    // new TimeRange("17:00", "09:00"); // Error: start must be before end
  *    // new TimeRange("25:00", "17:00"); // Error: invalid time format
- * 
+ *
  * 5. Equality comparison:
  *    const range1 = new TimeRange("09:00", "17:00");
  *    const range2 = new TimeRange("09:00", "17:00");
  *    range1.equals(range2); // true
- * 
+ *
  * 6. String representation:
  *    const range = new TimeRange("09:00", "17:00");
  *    range.toString(); // "09:00 - 17:00"
  *    range.startTime; // "09:00"
  *    range.endTime; // "17:00"
  *    range.getDurationMinutes(); // 480 (8 hours)
- * 
+ *
  * 7. Range operations:
  *    const range1 = new TimeRange("09:00", "12:00");
  *    const range2 = new TimeRange("10:00", "14:00");
@@ -92,7 +92,7 @@ export class TimeRange {
 
   /**
    * Creates a new TimeRange value object
-   * 
+   *
    * @param startTime - Start time in "HH:mm" format (e.g., "09:00")
    * @param endTime - End time in "HH:mm" format (e.g., "17:00")
    * @throws Error if startTime or endTime is invalid format
@@ -115,7 +115,7 @@ export class TimeRange {
 
   /**
    * Gets the start time
-   * 
+   *
    * @returns Start time in "HH:mm" format
    */
   get startTime(): string {
@@ -124,7 +124,7 @@ export class TimeRange {
 
   /**
    * Gets the end time
-   * 
+   *
    * @returns End time in "HH:mm" format
    */
   get endTime(): string {
@@ -133,7 +133,7 @@ export class TimeRange {
 
   /**
    * Gets the duration of the time range in minutes
-   * 
+   *
    * @returns Duration in minutes
    */
   getDurationMinutes(): number {
@@ -144,7 +144,7 @@ export class TimeRange {
 
   /**
    * Gets the duration of the time range in hours
-   * 
+   *
    * @returns Duration in hours (as decimal, e.g., 8.5 for 8 hours 30 minutes)
    */
   getDurationHours(): number {
@@ -153,9 +153,9 @@ export class TimeRange {
 
   /**
    * Checks if this TimeRange equals another TimeRange
-   * 
+   *
    * Equality is determined by comparing both start and end times.
-   * 
+   *
    * @param other - Other TimeRange to compare
    * @returns True if both start and end times are equal
    */
@@ -173,7 +173,7 @@ export class TimeRange {
 
   /**
    * Checks if this TimeRange is equal to another TimeRange (alias for equals)
-   * 
+   *
    * @param other - Other TimeRange to compare
    * @returns True if both start and end times are equal
    */
@@ -183,7 +183,7 @@ export class TimeRange {
 
   /**
    * Checks if a specific time is within this time range
-   * 
+   *
    * @param time - Time to check in "HH:mm" format
    * @returns True if time is within the range (inclusive of start, exclusive of end)
    */
@@ -197,7 +197,7 @@ export class TimeRange {
 
   /**
    * Checks if a specific time is within this time range (inclusive of both start and end)
-   * 
+   *
    * @param time - Time to check in "HH:mm" format
    * @returns True if time is within the range (inclusive of both boundaries)
    */
@@ -211,7 +211,7 @@ export class TimeRange {
 
   /**
    * Checks if this time range completely contains another time range
-   * 
+   *
    * @param other - Other TimeRange to check
    * @returns True if this range completely contains the other range
    */
@@ -225,7 +225,7 @@ export class TimeRange {
 
   /**
    * Checks if this time range overlaps with another time range
-   * 
+   *
    * @param other - Other TimeRange to check
    * @returns True if the ranges overlap (at least one time point in common)
    */
@@ -239,7 +239,7 @@ export class TimeRange {
 
   /**
    * Checks if this time range is completely before another time range
-   * 
+   *
    * @param other - Other TimeRange to compare
    * @returns True if this range ends before the other range starts
    */
@@ -251,7 +251,7 @@ export class TimeRange {
 
   /**
    * Checks if this time range is completely after another time range
-   * 
+   *
    * @param other - Other TimeRange to compare
    * @returns True if this range starts after the other range ends
    */
@@ -263,7 +263,7 @@ export class TimeRange {
 
   /**
    * Checks if this time range is adjacent to another time range (no gap, no overlap)
-   * 
+   *
    * @param other - Other TimeRange to check
    * @returns True if ranges are adjacent (one ends exactly when the other starts)
    */
@@ -277,7 +277,7 @@ export class TimeRange {
 
   /**
    * Gets the intersection of this time range with another time range
-   * 
+   *
    * @param other - Other TimeRange to intersect with
    * @returns New TimeRange representing the intersection, or null if no intersection
    */
@@ -296,13 +296,13 @@ export class TimeRange {
 
     return new TimeRange(
       this.minutesToTimeString(intersectionStart),
-      this.minutesToTimeString(intersectionEnd)
+      this.minutesToTimeString(intersectionEnd),
     );
   }
 
   /**
    * Gets the gap between this time range and another time range
-   * 
+   *
    * @param other - Other TimeRange to check gap with
    * @returns New TimeRange representing the gap, or null if ranges overlap or are adjacent
    */
@@ -318,24 +318,18 @@ export class TimeRange {
 
     if (this.isBefore(other)) {
       // Gap between this end and other start
-      return new TimeRange(
-        this.minutesToTimeString(thisEnd),
-        this.minutesToTimeString(otherStart)
-      );
+      return new TimeRange(this.minutesToTimeString(thisEnd), this.minutesToTimeString(otherStart));
     } else {
       // Gap between other end and this start
-      return new TimeRange(
-        this.minutesToTimeString(otherEnd),
-        this.minutesToTimeString(thisStart)
-      );
+      return new TimeRange(this.minutesToTimeString(otherEnd), this.minutesToTimeString(thisStart));
     }
   }
 
   /**
    * Converts the TimeRange to string representation
-   * 
+   *
    * Format: "startTime - endTime" (e.g., "09:00 - 17:00")
-   * 
+   *
    * @returns TimeRange string representation
    */
   toString(): string {
@@ -344,7 +338,7 @@ export class TimeRange {
 
   /**
    * Creates a TimeRange from hour values
-   * 
+   *
    * @param startHour - Start hour (0-23)
    * @param endHour - End hour (0-23)
    * @param startMinute - Start minute (0-59, default 0)
@@ -356,7 +350,7 @@ export class TimeRange {
     startHour: number,
     endHour: number,
     startMinute: number = 0,
-    endMinute: number = 0
+    endMinute: number = 0,
   ): TimeRange {
     if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
       throw new Error('Hours must be between 0 and 23');
@@ -373,9 +367,9 @@ export class TimeRange {
 
   /**
    * Creates a TimeRange from a number, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param startTime - Start time in "HH:mm" format
    * @param endTime - End time in "HH:mm" format
    * @returns TimeRange instance or null if invalid
@@ -390,7 +384,7 @@ export class TimeRange {
 
   /**
    * Validates if time strings can be used to create a TimeRange instance
-   * 
+   *
    * @param startTime - Start time to validate
    * @param endTime - End time to validate
    * @returns True if times are valid for TimeRange creation
@@ -403,7 +397,7 @@ export class TimeRange {
 
   /**
    * Validates time format
-   * 
+   *
    * @param time - Time string to validate
    * @throws Error if time format is invalid
    */
@@ -413,13 +407,15 @@ export class TimeRange {
     }
 
     if (!TimeRange.TIME_REGEX.test(time)) {
-      throw new Error(`Invalid time format: "${time}". Expected format: HH:mm (24-hour format, e.g., "09:00", "17:30")`);
+      throw new Error(
+        `Invalid time format: "${time}". Expected format: HH:mm (24-hour format, e.g., "09:00", "17:30")`,
+      );
     }
   }
 
   /**
    * Parses a time string in "HH:mm" format to minutes since midnight
-   * 
+   *
    * @param time - Time string in "HH:mm" format
    * @returns Minutes since midnight (0-1439)
    */
@@ -430,7 +426,7 @@ export class TimeRange {
 
   /**
    * Converts minutes since midnight to "HH:mm" format string
-   * 
+   *
    * @param minutes - Minutes since midnight (0-1439)
    * @returns Time string in "HH:mm" format
    */
@@ -440,4 +436,3 @@ export class TimeRange {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   }
 }
-

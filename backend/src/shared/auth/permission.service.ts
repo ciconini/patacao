@@ -1,6 +1,6 @@
 /**
  * Permission Service
- * 
+ *
  * Centralized service for checking user permissions and roles.
  * This service provides role-based access control (RBAC) functionality.
  */
@@ -30,49 +30,49 @@ export class PermissionService {
 
   /**
    * Checks if a user has a specific role
-   * 
+   *
    * @param userPermissions - User permissions
    * @param requiredRole - Required role
    * @returns True if user has the role or a higher role
    */
   hasRole(userPermissions: UserPermissions, requiredRole: Role): boolean {
     const userRoles = userPermissions.roles || [];
-    
+
     for (const userRole of userRoles) {
       const inheritedRoles = this.roleHierarchy[userRole] || [];
       if (inheritedRoles.includes(requiredRole)) {
         return true;
       }
     }
-    
+
     return false;
   }
 
   /**
    * Checks if a user has any of the required roles
-   * 
+   *
    * @param userPermissions - User permissions
    * @param requiredRoles - Array of required roles (OR condition)
    * @returns True if user has at least one of the required roles
    */
   hasAnyRole(userPermissions: UserPermissions, requiredRoles: Role[]): boolean {
-    return requiredRoles.some(role => this.hasRole(userPermissions, role));
+    return requiredRoles.some((role) => this.hasRole(userPermissions, role));
   }
 
   /**
    * Checks if a user has all of the required roles
-   * 
+   *
    * @param userPermissions - User permissions
    * @param requiredRoles - Array of required roles (AND condition)
    * @returns True if user has all of the required roles
    */
   hasAllRoles(userPermissions: UserPermissions, requiredRoles: Role[]): boolean {
-    return requiredRoles.every(role => this.hasRole(userPermissions, role));
+    return requiredRoles.every((role) => this.hasRole(userPermissions, role));
   }
 
   /**
    * Checks if a user is the owner or manager
-   * 
+   *
    * @param userPermissions - User permissions
    * @returns True if user is Owner or Manager
    */
@@ -82,7 +82,7 @@ export class PermissionService {
 
   /**
    * Checks if a user is the owner
-   * 
+   *
    * @param userPermissions - User permissions
    * @returns True if user is Owner
    */
@@ -92,7 +92,7 @@ export class PermissionService {
 
   /**
    * Checks if a user can access a specific store
-   * 
+   *
    * @param userPermissions - User permissions
    * @param storeId - Store ID to check
    * @returns True if user has access to the store (Owner/Manager have access to all stores)
@@ -110,7 +110,7 @@ export class PermissionService {
 
   /**
    * Checks if a user can access their own resource
-   * 
+   *
    * @param userPermissions - User permissions
    * @param resourceUserId - User ID of the resource owner
    * @returns True if user is accessing their own resource or is Owner/Manager
@@ -125,4 +125,3 @@ export class PermissionService {
     return this.isOwnerOrManager(userPermissions);
   }
 }
-

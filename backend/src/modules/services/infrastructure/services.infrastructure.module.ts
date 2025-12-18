@@ -1,6 +1,6 @@
 /**
  * Services Infrastructure Module
- * 
+ *
  * NestJS module that provides Firestore implementations for Services module repositories.
  */
 
@@ -29,11 +29,6 @@ import { AppointmentServiceLineRepository } from '../ports/appointment-service-l
       useClass: FirestoreAppointmentServiceLineRepository,
     },
   ],
-  exports: [
-    'ServiceRepository',
-    'AppointmentRepository',
-    'AppointmentServiceLineRepository',
-  ],
+  exports: ['ServiceRepository', 'AppointmentRepository', 'AppointmentServiceLineRepository'],
 })
 export class ServicesInfrastructureModule {}
-

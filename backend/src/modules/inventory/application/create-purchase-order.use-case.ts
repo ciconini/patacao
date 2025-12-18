@@ -1,9 +1,9 @@
 /**
  * Create Purchase Order Use Case (UC-INV-011)
- * 
+ *
  * Application use case for creating a new purchase order.
  * This use case orchestrates domain entities to create purchase orders with line items.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role)
  * - Validate supplier and store existence
@@ -11,7 +11,7 @@
  * - Create PurchaseOrder domain entity
  * - Persist purchase order via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -19,7 +19,11 @@
  * - Persistence implementation details
  */
 
-import { PurchaseOrder, PurchaseOrderStatus, PurchaseOrderLine } from '../domain/purchase-order.entity';
+import {
+  PurchaseOrder,
+  PurchaseOrderStatus,
+  PurchaseOrderLine,
+} from '../domain/purchase-order.entity';
 import { Supplier } from '../domain/supplier.entity';
 import { Store } from '../../administrative/domain/store.entity';
 import { Product } from '../domain/product.entity';
@@ -97,7 +101,7 @@ export interface CreatePurchaseOrderResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -146,16 +150,16 @@ export class CreatePurchaseOrderUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create purchase order use case
-   * 
+   *
    * @param input - Input data for creating purchase order
    * @returns Result containing created purchase order or error
    */
@@ -188,7 +192,7 @@ export class CreatePurchaseOrderUseCase {
         input.storeId,
         validatedLines,
         status,
-        input.performedBy
+        input.performedBy,
       );
 
       // 8. Persist purchase order via repository
@@ -212,12 +216,12 @@ export class CreatePurchaseOrderUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -250,7 +254,7 @@ export class CreatePurchaseOrderUseCase {
    */
   private async validateAndLoadSupplier(supplierId: string): Promise<Supplier> {
     const supplier = await this.supplierRepository.findById(supplierId);
-    
+
     if (!supplier) {
       throw new NotFoundError('Supplier not found');
     }
@@ -263,7 +267,7 @@ export class CreatePurchaseOrderUseCase {
    */
   private async validateAndLoadStore(storeId: string): Promise<Store> {
     const store = await this.storeRepository.findById(storeId);
-    
+
     if (!store) {
       throw new NotFoundError('Store not found');
     }
@@ -275,7 +279,7 @@ export class CreatePurchaseOrderUseCase {
    * Validates order lines
    */
   private async validateOrderLines(
-    lines: CreatePurchaseOrderInput['lines']
+    lines: CreatePurchaseOrderInput['lines'],
   ): Promise<PurchaseOrderLine[]> {
     const validatedLines: PurchaseOrderLine[] = [];
 
@@ -340,7 +344,7 @@ export class CreatePurchaseOrderUseCase {
     storeId: string | undefined,
     orderLines: PurchaseOrderLine[],
     status: PurchaseOrderStatus,
-    createdBy: string
+    createdBy: string,
   ): PurchaseOrder {
     const purchaseOrderId = this.generateId();
     const now = new Date();
@@ -353,7 +357,7 @@ export class CreatePurchaseOrderUseCase {
       storeId,
       status,
       now,
-      now
+      now,
     );
   }
 
@@ -363,7 +367,7 @@ export class CreatePurchaseOrderUseCase {
   private async createAuditLog(
     purchaseOrder: PurchaseOrder,
     supplier: Supplier,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -383,7 +387,7 @@ export class CreatePurchaseOrderUseCase {
             totalAmount: purchaseOrder.calculateTotal(),
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -397,16 +401,13 @@ export class CreatePurchaseOrderUseCase {
   /**
    * Maps PurchaseOrder domain entity to output model
    */
-  private mapToOutput(
-    purchaseOrder: PurchaseOrder,
-    supplier: Supplier
-  ): CreatePurchaseOrderOutput {
+  private mapToOutput(purchaseOrder: PurchaseOrder, supplier: Supplier): CreatePurchaseOrderOutput {
     return {
       id: purchaseOrder.id,
       supplierId: purchaseOrder.supplierId,
       supplierName: supplier.name,
       storeId: purchaseOrder.storeId,
-      lines: purchaseOrder.orderLines.map(line => ({
+      lines: purchaseOrder.orderLines.map((line) => ({
         productId: line.productId,
         quantity: line.quantity,
         unitPrice: line.unitPrice,
@@ -442,4 +443,3 @@ export class CreatePurchaseOrderUseCase {
     };
   }
 }
-

@@ -1,16 +1,16 @@
 /**
  * Create Customer Use Case (UC-ADMIN-005)
- * 
+ *
  * Application use case for creating a new customer record.
  * This use case orchestrates domain entities and domain services to create a customer.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, or Owner role required)
  * - Validate input data and business rules
  * - Create Customer domain entity
  * - Persist customer via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -87,7 +87,7 @@ export interface CreateCustomerResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -133,16 +133,16 @@ export class CreateCustomerUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create customer use case
-   * 
+   *
    * @param input - Input data for creating customer
    * @returns Result containing created customer or error
    */
@@ -175,22 +175,22 @@ export class CreateCustomerUseCase {
 
   /**
    * Validates user authorization (must have Staff, Manager, or Owner role)
-   * 
+   *
    * @param userId - User ID to validate
    * @throws UnauthorizedError if user not found
    * @throws ForbiddenError if user does not have required role
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.userRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
-        return role ? (role.isStaff() || role.isManager() || role.isOwner()) : false;
+        return role ? role.isStaff() || role.isManager() || role.isOwner() : false;
       } catch {
         return false;
       }
@@ -203,7 +203,7 @@ export class CreateCustomerUseCase {
 
   /**
    * Validates and normalizes input data
-   * 
+   *
    * @param input - Raw input data
    * @returns Validated and normalized input
    * @throws ValidationError if validation fails
@@ -247,7 +247,7 @@ export class CreateCustomerUseCase {
           input.address.street,
           input.address.city,
           input.address.postalCode,
-          input.address.country
+          input.address.country,
         );
       } catch (error: any) {
         throw new ValidationError(`Invalid address: ${error.message}`);
@@ -272,7 +272,7 @@ export class CreateCustomerUseCase {
 
   /**
    * Creates Customer domain entity
-   * 
+   *
    * @param validatedInput - Validated input data
    * @returns Customer domain entity
    */
@@ -292,22 +292,24 @@ export class CreateCustomerUseCase {
       validatedInput.fullName,
       validatedInput.email?.value,
       validatedInput.phone?.value,
-      validatedInput.address ? {
-        street: validatedInput.address.street,
-        city: validatedInput.address.city,
-        postalCode: validatedInput.address.postalCode,
-        country: validatedInput.address.country,
-      } : undefined,
+      validatedInput.address
+        ? {
+            street: validatedInput.address.street,
+            city: validatedInput.address.city,
+            postalCode: validatedInput.address.postalCode,
+            country: validatedInput.address.country,
+          }
+        : undefined,
       validatedInput.consentMarketing,
       validatedInput.consentReminders,
       now,
-      now
+      now,
     );
   }
 
   /**
    * Persists customer via repository
-   * 
+   *
    * @param customer - Customer domain entity
    * @returns Persisted customer entity
    * @throws RepositoryError if persistence fails
@@ -322,7 +324,7 @@ export class CreateCustomerUseCase {
 
   /**
    * Creates audit log entry for customer creation
-   * 
+   *
    * @param customer - Created customer entity
    * @param performedBy - User ID who performed the action
    */
@@ -343,7 +345,7 @@ export class CreateCustomerUseCase {
             consentReminders: customer.consentReminders,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -356,7 +358,7 @@ export class CreateCustomerUseCase {
 
   /**
    * Maps Customer domain entity to output model
-   * 
+   *
    * @param customer - Customer domain entity
    * @returns Output model
    */
@@ -366,12 +368,14 @@ export class CreateCustomerUseCase {
       fullName: customer.fullName,
       email: customer.email,
       phone: customer.phone,
-      address: customer.address ? {
-        street: customer.address.street,
-        city: customer.address.city,
-        postalCode: customer.address.postalCode,
-        country: customer.address.country,
-      } : undefined,
+      address: customer.address
+        ? {
+            street: customer.address.street,
+            city: customer.address.city,
+            postalCode: customer.address.postalCode,
+            country: customer.address.country,
+          }
+        : undefined,
       consentMarketing: customer.consentMarketing,
       consentReminders: customer.consentReminders,
       createdAt: customer.createdAt,
@@ -381,7 +385,7 @@ export class CreateCustomerUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -405,4 +409,3 @@ export class CreateCustomerUseCase {
     };
   }
 }
-

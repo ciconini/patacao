@@ -1,33 +1,33 @@
 /**
  * RoleId Value Object
- * 
+ *
  * Represents a role identifier in the petshop management system.
  * This is a pure domain value object that encapsulates role ID validation and business rules.
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates role ID format and length
- * 
+ *
  * Business Rules:
  * - Role ID is required and cannot be empty
  * - Role ID must not exceed 64 characters (VARCHAR(64) in database)
  * - Canonical role IDs: Owner, Manager, Staff, Accountant, Veterinarian
  * - Role ID is case-sensitive for equality comparison
  * - Role ID is trimmed of leading/trailing whitespace
- * 
+ *
  * Invariants:
  * - Role ID value must be non-empty after trimming
  * - Role ID value must not exceed 64 characters
  * - Value object is immutable after creation
- * 
+ *
  * Equality Definition:
  * - Two RoleId instances are equal if their values are equal (case-sensitive)
  * - Equality is based on role ID values, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In User entity:
  *    constructor(
  *      // ... other params
@@ -35,12 +35,12 @@
  *    ) {
  *      this._roleIds = roleIds.map(id => new RoleId(id));
  *    }
- * 
+ *
  *    hasRole(roleId: string | RoleId): boolean {
  *      const roleIdObj = roleId instanceof RoleId ? roleId : new RoleId(roleId);
  *      return this._roleIds.some(id => id.equals(roleIdObj));
  *    }
- * 
+ *
  * 2. In Role entity:
  *    constructor(
  *      id: string,
@@ -48,26 +48,26 @@
  *    ) {
  *      this._id = new RoleId(id);
  *    }
- * 
+ *
  * 3. Creating RoleId:
  *    const ownerRole = RoleId.OWNER;
  *    const managerRole = RoleId.MANAGER;
  *    const fromString = new RoleId("Staff");
  *    const fromStringSafe = RoleId.fromString("Accountant"); // RoleId or null if invalid
- * 
+ *
  * 4. Equality comparison:
  *    const role1 = RoleId.OWNER;
  *    const role2 = new RoleId("Owner");
  *    role1.equals(role2); // true
- * 
+ *
  *    const role3 = new RoleId("owner");
  *    role1.equals(role3); // false (case-sensitive)
- * 
+ *
  * 5. String representation:
  *    const role = RoleId.OWNER;
  *    role.toString(); // "Owner"
  *    role.value; // "Owner"
- * 
+ *
  * 6. Checking canonical roles:
  *    const role = RoleId.OWNER;
  *    role.isOwner(); // true
@@ -98,7 +98,7 @@ export class RoleId {
 
   /**
    * Creates a new RoleId value object
-   * 
+   *
    * @param value - Role ID string
    * @throws Error if value is empty or exceeds maximum length
    */
@@ -109,7 +109,7 @@ export class RoleId {
 
   /**
    * Gets the role ID value
-   * 
+   *
    * @returns Role ID string (trimmed)
    */
   get value(): string {
@@ -118,9 +118,9 @@ export class RoleId {
 
   /**
    * Checks if this RoleId equals another RoleId
-   * 
+   *
    * Equality is determined by comparing values (case-sensitive).
-   * 
+   *
    * @param other - Other RoleId to compare
    * @returns True if values are equal
    */
@@ -138,7 +138,7 @@ export class RoleId {
 
   /**
    * Checks if this RoleId is equal to another RoleId (alias for equals)
-   * 
+   *
    * @param other - Other RoleId to compare
    * @returns True if values are equal
    */
@@ -148,7 +148,7 @@ export class RoleId {
 
   /**
    * Converts the RoleId to string representation
-   * 
+   *
    * @returns Role ID string representation
    */
   toString(): string {
@@ -157,7 +157,7 @@ export class RoleId {
 
   /**
    * Checks if this is the Owner role
-   * 
+   *
    * @returns True if role is Owner
    */
   isOwner(): boolean {
@@ -166,7 +166,7 @@ export class RoleId {
 
   /**
    * Checks if this is the Manager role
-   * 
+   *
    * @returns True if role is Manager
    */
   isManager(): boolean {
@@ -175,7 +175,7 @@ export class RoleId {
 
   /**
    * Checks if this is the Staff role
-   * 
+   *
    * @returns True if role is Staff
    */
   isStaff(): boolean {
@@ -184,7 +184,7 @@ export class RoleId {
 
   /**
    * Checks if this is the Accountant role
-   * 
+   *
    * @returns True if role is Accountant
    */
   isAccountant(): boolean {
@@ -193,7 +193,7 @@ export class RoleId {
 
   /**
    * Checks if this is the Veterinarian role
-   * 
+   *
    * @returns True if role is Veterinarian
    */
   isVeterinarian(): boolean {
@@ -202,7 +202,7 @@ export class RoleId {
 
   /**
    * Checks if this is a canonical role (one of the predefined system roles)
-   * 
+   *
    * @returns True if role is a canonical role
    */
   isCanonical(): boolean {
@@ -211,9 +211,9 @@ export class RoleId {
 
   /**
    * Creates a RoleId instance from a string, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param value - Role ID string
    * @returns RoleId instance or null if invalid
    */
@@ -227,7 +227,7 @@ export class RoleId {
 
   /**
    * Validates if a string can be used to create a RoleId instance
-   * 
+   *
    * @param value - String to validate
    * @returns True if string is valid for RoleId creation
    */
@@ -237,7 +237,7 @@ export class RoleId {
 
   /**
    * Gets all canonical role IDs
-   * 
+   *
    * @returns Array of all canonical role ID strings
    */
   static getCanonicalRoles(): string[] {
@@ -246,22 +246,16 @@ export class RoleId {
 
   /**
    * Gets all canonical RoleId instances
-   * 
+   *
    * @returns Array of all canonical RoleId instances
    */
   static getAllCanonical(): RoleId[] {
-    return [
-      RoleId.OWNER,
-      RoleId.MANAGER,
-      RoleId.STAFF,
-      RoleId.ACCOUNTANT,
-      RoleId.VETERINARIAN,
-    ];
+    return [RoleId.OWNER, RoleId.MANAGER, RoleId.STAFF, RoleId.ACCOUNTANT, RoleId.VETERINARIAN];
   }
 
   /**
    * Checks if a role ID is a canonical role
-   * 
+   *
    * @param value - Role ID string to check
    * @returns True if role is canonical
    */
@@ -273,7 +267,7 @@ export class RoleId {
 
   /**
    * Validates the role ID value
-   * 
+   *
    * @param value - Value to validate
    * @throws Error if value is invalid
    */
@@ -289,8 +283,9 @@ export class RoleId {
     }
 
     if (trimmed.length > RoleId.MAX_LENGTH) {
-      throw new Error(`Role ID cannot exceed ${RoleId.MAX_LENGTH} characters. Current length: ${trimmed.length}`);
+      throw new Error(
+        `Role ID cannot exceed ${RoleId.MAX_LENGTH} characters. Current length: ${trimmed.length}`,
+      );
     }
   }
 }
-

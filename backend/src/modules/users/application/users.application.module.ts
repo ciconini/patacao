@@ -1,11 +1,12 @@
 /**
  * Users Application Module
- * 
+ *
  * NestJS module that registers all use cases for the Users module.
  */
 
 import { Module } from '@nestjs/common';
 import { UsersInfrastructureModule } from '../infrastructure/users.infrastructure.module';
+import { AdministrativeInfrastructureModule } from '../../administrative/infrastructure/administrative.infrastructure.module';
 import { SharedModule } from '../../../shared/shared.module';
 import { AuthModule } from '../../../shared/auth/auth.module';
 import { UserLoginUseCase } from './user-login.use-case';
@@ -19,6 +20,7 @@ import { SearchUsersUseCase } from './search-users.use-case';
 @Module({
   imports: [
     UsersInfrastructureModule,
+    AdministrativeInfrastructureModule, // Import to get StoreRepository
     SharedModule,
     AuthModule, // Import AuthModule to get Firebase integration services
   ],
@@ -42,4 +44,3 @@ import { SearchUsersUseCase } from './search-users.use-case';
   ],
 })
 export class UsersApplicationModule {}
-

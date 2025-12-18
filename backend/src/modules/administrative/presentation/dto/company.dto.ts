@@ -1,11 +1,21 @@
 /**
  * Company DTOs
- * 
+ *
  * Data Transfer Objects for Company API endpoints.
  * These DTOs map HTTP requests/responses to use case input/output models.
  */
 
-import { IsString, IsOptional, IsNumber, IsObject, ValidateNested, Min, Max, IsEmail, IsUrl } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsObject,
+  ValidateNested,
+  Min,
+  Max,
+  IsEmail,
+  IsUrl,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPortugueseNIF } from '../../../../shared/validation/validators/is-portuguese-nif.validator';
 import { IsPortuguesePhone } from '../../../../shared/validation/validators/is-portuguese-phone.validator';
@@ -70,7 +80,6 @@ export class CreateCompanyDto {
  * Update Company Request DTO
  */
 export class UpdateCompanyDto {
-  
   @IsOptional()
   @IsString()
   name?: string;
@@ -79,14 +88,12 @@ export class UpdateCompanyDto {
   @IsPortugueseNIF()
   nif?: string;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => AddressDto)
   @IsObject()
   address?: AddressDto;
 
-  
   @IsOptional()
   @IsString()
   taxRegime?: string;
@@ -96,17 +103,14 @@ export class UpdateCompanyDto {
   @IsVATRate()
   defaultVatRate?: number;
 
-  
   @IsOptional()
   @IsPortuguesePhone()
   phone?: string;
 
-  
   @IsOptional()
   @IsEmail()
   email?: string;
 
-  
   @IsOptional()
   @IsUrl()
   website?: string;
@@ -116,37 +120,25 @@ export class UpdateCompanyDto {
  * Company Response DTO
  */
 export class CompanyResponseDto {
-  
   id!: string;
 
-  
   name!: string;
 
-  
   nif!: string;
 
-  
   address!: AddressDto;
 
-  
   taxRegime!: string;
 
-  
   defaultVatRate?: number;
 
-  
   phone?: string;
 
-  
   email?: string;
 
-  
   website?: string;
 
-  
   createdAt!: Date;
 
-  
   updatedAt!: Date;
 }
-

@@ -1,6 +1,6 @@
 /**
  * Financial Export DTOs
- * 
+ *
  * Data Transfer Objects for Financial Export API endpoints.
  */
 
@@ -63,4 +63,3 @@ export class FinancialExportResponseDto {
   createdBy!: string;
   createdAt!: Date;
 }
-

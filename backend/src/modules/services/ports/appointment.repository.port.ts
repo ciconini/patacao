@@ -1,9 +1,9 @@
 /**
  * AppointmentRepository Port (Interface)
- * 
+ *
  * Repository interface for Appointment domain entity persistence.
  * This is a port in the Hexagonal Architecture pattern.
- * 
+ *
  * Implementations should be provided in the Infrastructure layer.
  */
 
@@ -57,7 +57,7 @@ export interface ConflictSearchParams {
 export interface AppointmentRepository {
   /**
    * Saves an Appointment entity (creates or updates)
-   * 
+   *
    * @param appointment - Appointment domain entity to save
    * @returns Saved Appointment entity
    */
@@ -65,7 +65,7 @@ export interface AppointmentRepository {
 
   /**
    * Updates an existing Appointment entity
-   * 
+   *
    * @param appointment - Appointment domain entity to update
    * @returns Updated Appointment entity
    */
@@ -73,7 +73,7 @@ export interface AppointmentRepository {
 
   /**
    * Finds an Appointment by ID
-   * 
+   *
    * @param id - Appointment ID
    * @returns Appointment entity or null if not found
    */
@@ -81,7 +81,7 @@ export interface AppointmentRepository {
 
   /**
    * Searches for appointments with pagination
-   * 
+   *
    * @param criteria - Search criteria
    * @param pagination - Pagination parameters
    * @param sort - Sort parameters
@@ -90,15 +90,14 @@ export interface AppointmentRepository {
   search(
     criteria: AppointmentSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<Appointment>>;
 
   /**
    * Finds conflicting appointments (overlapping time slots)
-   * 
+   *
    * @param params - Conflict search parameters
    * @returns Array of conflicting appointments
    */
   findConflicts(params: ConflictSearchParams): Promise<Appointment[]>;
 }
-

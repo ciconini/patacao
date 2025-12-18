@@ -1,9 +1,9 @@
 /**
  * Create Credit Note Use Case (UC-FIN-005)
- * 
+ *
  * Application use case for creating a credit note linked to an invoice.
  * This use case orchestrates domain entities to create credit notes for refunds and corrections.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager, Accountant, or Owner role)
  * - Validate invoice exists and is in valid status
@@ -12,7 +12,7 @@
  * - Create CreditNote domain entity
  * - Persist credit note via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -79,7 +79,7 @@ export interface CreateCreditNoteResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -128,16 +128,16 @@ export class CreateCreditNoteUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create credit note use case
-   * 
+   *
    * @param input - Input data for creating credit note
    * @returns Result containing created credit note or error
    */
@@ -171,7 +171,7 @@ export class CreateCreditNoteUseCase {
         input.invoiceId,
         input.amount,
         input.reason,
-        input.performedBy
+        input.performedBy,
       );
 
       // 8. Issue credit note (set issued_at)
@@ -198,12 +198,12 @@ export class CreateCreditNoteUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -231,7 +231,9 @@ export class CreateCreditNoteUseCase {
     }
 
     if (input.reason.length > CreateCreditNoteUseCase.MAX_REASON_LENGTH) {
-      throw new ValidationError(`Reason cannot exceed ${CreateCreditNoteUseCase.MAX_REASON_LENGTH} characters`);
+      throw new ValidationError(
+        `Reason cannot exceed ${CreateCreditNoteUseCase.MAX_REASON_LENGTH} characters`,
+      );
     }
 
     if (input.amount <= 0) {
@@ -242,7 +244,10 @@ export class CreateCreditNoteUseCase {
   /**
    * Calculates outstanding amount for invoice
    */
-  private async calculateOutstandingAmount(invoiceId: string, invoiceTotal: number): Promise<number> {
+  private async calculateOutstandingAmount(
+    invoiceId: string,
+    invoiceTotal: number,
+  ): Promise<number> {
     const existingCreditNotesSum = await this.creditNoteRepository.sumByInvoiceId(invoiceId);
     return invoiceTotal - existingCreditNotesSum;
   }
@@ -257,7 +262,7 @@ export class CreateCreditNoteUseCase {
 
     if (amount > outstandingAmount) {
       throw new ValidationError(
-        `Credit note amount cannot exceed outstanding amount. Outstanding: ${outstandingAmount.toFixed(2)}`
+        `Credit note amount cannot exceed outstanding amount. Outstanding: ${outstandingAmount.toFixed(2)}`,
       );
     }
   }
@@ -269,7 +274,7 @@ export class CreateCreditNoteUseCase {
     invoiceId: string,
     amount: number,
     reason: string,
-    createdBy: string
+    createdBy: string,
   ): CreditNote {
     const creditNoteId = this.generateId();
     const now = new Date();
@@ -281,7 +286,7 @@ export class CreateCreditNoteUseCase {
       createdBy,
       now, // issuedAt - set immediately
       reason,
-      now // createdAt
+      now, // createdAt
     );
   }
 
@@ -291,7 +296,7 @@ export class CreateCreditNoteUseCase {
   private async createAuditLog(
     creditNote: CreditNote,
     invoice: Invoice,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -309,7 +314,7 @@ export class CreateCreditNoteUseCase {
             reason: creditNote.reason,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -359,4 +364,3 @@ export class CreateCreditNoteUseCase {
     };
   }
 }
-

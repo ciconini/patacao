@@ -1,6 +1,6 @@
 /**
  * Auth Controller
- * 
+ *
  * REST API controller for Authentication endpoints.
  */
 
@@ -14,16 +14,35 @@ import {
   Request,
   Headers,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { RateLimitGuard, RateLimit } from '../../../../shared/auth/rate-limit.guard';
-import { LoginDto, LoginResponseDto, LogoutDto, PasswordResetRequestDto, PasswordResetConfirmDto, RefreshTokenDto, RefreshTokenResponseDto } from '../dto/auth.dto';
+import {
+  LoginDto,
+  LoginResponseDto,
+  LogoutDto,
+  PasswordResetRequestDto,
+  PasswordResetConfirmDto,
+  RefreshTokenDto,
+  RefreshTokenResponseDto,
+} from '../dto/auth.dto';
 import { UserLoginUseCase, UserLoginInput } from '../../application/user-login.use-case';
 import { UserLogoutUseCase, UserLogoutInput } from '../../application/user-logout.use-case';
 import { RefreshTokenUseCase, RefreshTokenInput } from '../../application/refresh-token.use-case';
-import { PasswordResetRequestUseCase, PasswordResetRequestInput } from '../../application/password-reset-request.use-case';
-import { PasswordResetConfirmUseCase, PasswordResetConfirmInput } from '../../application/password-reset-confirm.use-case';
+import {
+  PasswordResetRequestUseCase,
+  PasswordResetRequestInput,
+} from '../../application/password-reset-request.use-case';
+import {
+  PasswordResetConfirmUseCase,
+  PasswordResetConfirmInput,
+} from '../../application/password-reset-confirm.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Authentication')
 @Controller('api/v1/auth')
 export class AuthController {
   constructor(
@@ -42,6 +61,28 @@ export class AuthController {
   @UseGuards(RateLimitGuard)
   @RateLimit('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'User login',
+    description: 'Authenticates a user with email and password, returns access and refresh tokens',
+  })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many login attempts',
+  })
   async login(
     @Body() loginDto: LoginDto,
     @Request() req: Request,
@@ -77,6 +118,20 @@ export class AuthController {
   @Post('logout')
   @UseGuards(FirebaseAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'User logout',
+    description: 'Invalidates the current access token and refresh token',
+  })
+  @ApiBody({ type: LogoutDto })
+  @ApiResponse({
+    status: 204,
+    description: 'Logout successful',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
   async logout(
     @Body() logoutDto: LogoutDto,
     @Request() req: AuthenticatedRequest,
@@ -105,9 +160,25 @@ export class AuthController {
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(
-    @Body() refreshDto: RefreshTokenDto,
-  ): Promise<RefreshTokenResponseDto> {
+  @ApiOperation({
+    summary: 'Refresh access token',
+    description: 'Obtains a new access token using a valid refresh token',
+  })
+  @ApiBody({ type: RefreshTokenDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Token refreshed successfully',
+    type: RefreshTokenResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid refresh token',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Refresh token expired or invalid',
+  })
+  async refresh(@Body() refreshDto: RefreshTokenDto): Promise<RefreshTokenResponseDto> {
     const input: RefreshTokenInput = {
       refreshToken: refreshDto.refreshToken,
       rotateRefreshToken: false, // Can be made configurable
@@ -134,6 +205,32 @@ export class AuthController {
   @UseGuards(RateLimitGuard)
   @RateLimit('password_reset')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Request password reset',
+    description: 'Sends a password reset email to the user if the email exists',
+  })
+  @ApiBody({ type: PasswordResetRequestDto })
+  @ApiResponse({
+    status: 200,
+    description: 'If the email exists, a password reset link has been sent',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'If the email exists, a password reset link has been sent.',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid email format',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many password reset requests',
+  })
   async passwordResetRequest(
     @Body() resetDto: PasswordResetRequestDto,
   ): Promise<{ message: string }> {
@@ -158,6 +255,29 @@ export class AuthController {
    */
   @Post('password-reset/confirm')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Confirm password reset',
+    description: 'Resets the user password using a valid reset token',
+  })
+  @ApiBody({ type: PasswordResetConfirmDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password has been reset successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Password has been reset successfully.' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid token or password does not meet requirements',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Reset token expired or invalid',
+  })
   async passwordResetConfirm(
     @Body() confirmDto: PasswordResetConfirmDto,
   ): Promise<{ message: string }> {
@@ -177,4 +297,3 @@ export class AuthController {
     };
   }
 }
-

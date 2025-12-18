@@ -1,10 +1,10 @@
 /**
  * Service Domain Entity
- * 
+ *
  * Represents a service offered by the petshop (e.g., grooming, vaccination, consultation).
  * This entity defines the service catalog with pricing, duration, and inventory requirements.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - Service name is required
  * - Duration must be positive
@@ -33,7 +33,7 @@ export class Service {
 
   /**
    * Creates a new Service entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param name - Service name (required)
    * @param durationMinutes - Service duration in minutes (required, must be positive)
@@ -45,7 +45,7 @@ export class Service {
    * @param tags - Service tags for categorization
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if name is empty
    * @throws Error if durationMinutes is not positive
    * @throws Error if price is negative
@@ -62,7 +62,7 @@ export class Service {
     consumedItems: ConsumedItem[] = [],
     tags: string[] = [],
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateName(name);
@@ -92,7 +92,7 @@ export class Service {
     this._price = price;
     this._requiredResources = [...requiredResources];
     this._consumesInventory = consumesInventory;
-    this._consumedItems = consumedItems.map(item => ({ ...item }));
+    this._consumedItems = consumedItems.map((item) => ({ ...item }));
     this._tags = [...tags];
     this._createdAt = createdAt ? new Date(createdAt) : new Date();
     this._updatedAt = updatedAt ? new Date(updatedAt) : new Date();
@@ -128,7 +128,7 @@ export class Service {
   }
 
   get consumedItems(): ReadonlyArray<ConsumedItem> {
-    return this._consumedItems.map(item => ({ ...item }));
+    return this._consumedItems.map((item) => ({ ...item }));
   }
 
   get tags(): ReadonlyArray<string> {
@@ -145,7 +145,7 @@ export class Service {
 
   /**
    * Updates the service name
-   * 
+   *
    * @param name - New service name
    * @throws Error if name is empty
    */
@@ -157,7 +157,7 @@ export class Service {
 
   /**
    * Updates the service description
-   * 
+   *
    * @param description - New description
    */
   updateDescription(description: string | undefined): void {
@@ -167,7 +167,7 @@ export class Service {
 
   /**
    * Updates the service duration
-   * 
+   *
    * @param durationMinutes - New duration in minutes
    * @throws Error if duration is not positive
    */
@@ -179,7 +179,7 @@ export class Service {
 
   /**
    * Updates the service price
-   * 
+   *
    * @param price - New price
    * @throws Error if price is negative
    */
@@ -191,7 +191,7 @@ export class Service {
 
   /**
    * Adds a required resource
-   * 
+   *
    * @param resourceId - Resource identifier to add
    * @throws Error if resourceId is empty
    */
@@ -208,7 +208,7 @@ export class Service {
 
   /**
    * Removes a required resource
-   * 
+   *
    * @param resourceId - Resource identifier to remove
    */
   removeRequiredResource(resourceId: string): void {
@@ -221,7 +221,7 @@ export class Service {
 
   /**
    * Sets all required resources
-   * 
+   *
    * @param resources - New list of resource identifiers
    * @throws Error if any resource ID is empty
    */
@@ -233,7 +233,7 @@ export class Service {
 
   /**
    * Checks if service requires a specific resource
-   * 
+   *
    * @param resourceId - Resource identifier to check
    * @returns True if resource is required
    */
@@ -243,7 +243,7 @@ export class Service {
 
   /**
    * Enables inventory consumption for this service
-   * 
+   *
    * @param consumedItems - List of products and quantities consumed
    * @throws Error if consumedItems is empty
    */
@@ -254,7 +254,7 @@ export class Service {
 
     this.validateConsumedItems(consumedItems);
     this._consumesInventory = true;
-    this._consumedItems = consumedItems.map(item => ({ ...item }));
+    this._consumedItems = consumedItems.map((item) => ({ ...item }));
     this._updatedAt = new Date();
   }
 
@@ -269,7 +269,7 @@ export class Service {
 
   /**
    * Adds a consumed item to the service
-   * 
+   *
    * @param productId - Product ID
    * @param quantity - Quantity consumed
    * @throws Error if productId is empty or quantity is not positive
@@ -283,13 +283,13 @@ export class Service {
       throw new Error('Consumed item quantity must be positive');
     }
 
-    const existingIndex = this._consumedItems.findIndex(item => item.productId === productId);
-    
+    const existingIndex = this._consumedItems.findIndex((item) => item.productId === productId);
+
     if (existingIndex > -1) {
       // Update existing item quantity
       this._consumedItems[existingIndex] = {
         productId,
-        quantity: this._consumedItems[existingIndex].quantity + quantity
+        quantity: this._consumedItems[existingIndex].quantity + quantity,
       };
     } else {
       // Add new item
@@ -306,26 +306,26 @@ export class Service {
 
   /**
    * Removes a consumed item from the service
-   * 
+   *
    * @param productId - Product ID to remove
    */
   removeConsumedItem(productId: string): void {
-    const index = this._consumedItems.findIndex(item => item.productId === productId);
+    const index = this._consumedItems.findIndex((item) => item.productId === productId);
     if (index > -1) {
       this._consumedItems.splice(index, 1);
-      
+
       // If no consumed items remain, disable inventory consumption
       if (this._consumedItems.length === 0) {
         this._consumesInventory = false;
       }
-      
+
       this._updatedAt = new Date();
     }
   }
 
   /**
    * Updates the quantity of a consumed item
-   * 
+   *
    * @param productId - Product ID
    * @param quantity - New quantity
    * @throws Error if productId not found or quantity is not positive
@@ -335,7 +335,7 @@ export class Service {
       throw new Error('Consumed item quantity must be positive');
     }
 
-    const index = this._consumedItems.findIndex(item => item.productId === productId);
+    const index = this._consumedItems.findIndex((item) => item.productId === productId);
     if (index === -1) {
       throw new Error(`Consumed item with product ID ${productId} not found`);
     }
@@ -346,18 +346,18 @@ export class Service {
 
   /**
    * Gets the consumed quantity for a specific product
-   * 
+   *
    * @param productId - Product ID
    * @returns Quantity consumed, or 0 if product is not consumed
    */
   getConsumedQuantity(productId: string): number {
-    const item = this._consumedItems.find(item => item.productId === productId);
+    const item = this._consumedItems.find((item) => item.productId === productId);
     return item ? item.quantity : 0;
   }
 
   /**
    * Adds a tag to the service
-   * 
+   *
    * @param tag - Tag to add
    * @throws Error if tag is empty
    */
@@ -374,7 +374,7 @@ export class Service {
 
   /**
    * Removes a tag from the service
-   * 
+   *
    * @param tag - Tag to remove
    */
   removeTag(tag: string): void {
@@ -387,7 +387,7 @@ export class Service {
 
   /**
    * Sets all tags
-   * 
+   *
    * @param tags - New list of tags
    * @throws Error if any tag is empty
    */
@@ -399,7 +399,7 @@ export class Service {
 
   /**
    * Checks if service has a specific tag
-   * 
+   *
    * @param tag - Tag to check
    * @returns True if service has the tag
    */
@@ -409,7 +409,7 @@ export class Service {
 
   /**
    * Calculates the service duration in hours
-   * 
+   *
    * @returns Duration in hours (decimal)
    */
   getDurationHours(): number {
@@ -418,7 +418,7 @@ export class Service {
 
   /**
    * Checks if the service consumes inventory
-   * 
+   *
    * @returns True if service consumes inventory
    */
   consumesInventoryItems(): boolean {
@@ -427,7 +427,7 @@ export class Service {
 
   /**
    * Gets the total number of different products consumed
-   * 
+   *
    * @returns Number of unique products consumed
    */
   getConsumedProductsCount(): number {
@@ -476,7 +476,7 @@ export class Service {
     }
 
     // Check for duplicate product IDs
-    const productIds = consumedItems.map(item => item.productId);
+    const productIds = consumedItems.map((item) => item.productId);
     const uniqueProductIds = new Set(productIds);
     if (uniqueProductIds.size !== productIds.length) {
       throw new Error('Consumed items cannot have duplicate product IDs');
@@ -499,4 +499,3 @@ export class Service {
     }
   }
 }
-

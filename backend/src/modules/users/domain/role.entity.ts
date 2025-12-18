@@ -1,10 +1,10 @@
 /**
  * Role Domain Entity
- * 
+ *
  * Represents a role in the petshop management system for access control and authorization.
  * Roles define what permissions users have in the system.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - Role ID is a canonical identifier (string, not UUID)
  * - Role name must be one of the predefined role names
@@ -29,13 +29,13 @@ export class Role {
 
   /**
    * Creates a new Role entity
-   * 
+   *
    * @param id - Canonical role identifier (string, e.g., "Owner", "Manager")
    * @param name - Role name (must be one of: Owner, Manager, Staff, Accountant, Veterinarian)
    * @param permissions - List of permission keys
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if name is empty or invalid
    */
@@ -44,7 +44,7 @@ export class Role {
     name: string,
     permissions: string[] = [],
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateName(name);
@@ -79,7 +79,7 @@ export class Role {
 
   /**
    * Updates the role name
-   * 
+   *
    * @param name - New role name
    * @throws Error if name is empty or invalid
    */
@@ -91,7 +91,7 @@ export class Role {
 
   /**
    * Adds a permission to the role
-   * 
+   *
    * @param permission - Permission key to add
    * @throws Error if permission is empty
    */
@@ -108,7 +108,7 @@ export class Role {
 
   /**
    * Removes a permission from the role
-   * 
+   *
    * @param permission - Permission key to remove
    */
   removePermission(permission: string): void {
@@ -121,7 +121,7 @@ export class Role {
 
   /**
    * Sets all permissions for the role
-   * 
+   *
    * @param permissions - New list of permission keys
    */
   setPermissions(permissions: string[]): void {
@@ -131,7 +131,7 @@ export class Role {
 
   /**
    * Checks if the role has a specific permission
-   * 
+   *
    * @param permission - Permission key to check
    * @returns True if role has the permission
    */
@@ -141,27 +141,27 @@ export class Role {
 
   /**
    * Checks if the role has all specified permissions
-   * 
+   *
    * @param permissions - List of permission keys to check
    * @returns True if role has all permissions
    */
   hasAllPermissions(permissions: string[]): boolean {
-    return permissions.every(permission => this._permissions.includes(permission));
+    return permissions.every((permission) => this._permissions.includes(permission));
   }
 
   /**
    * Checks if the role has any of the specified permissions
-   * 
+   *
    * @param permissions - List of permission keys to check
    * @returns True if role has at least one permission
    */
   hasAnyPermission(permissions: string[]): boolean {
-    return permissions.some(permission => this._permissions.includes(permission));
+    return permissions.some((permission) => this._permissions.includes(permission));
   }
 
   /**
    * Checks if this is the Owner role
-   * 
+   *
    * @returns True if role is Owner
    */
   isOwner(): boolean {
@@ -171,7 +171,7 @@ export class Role {
   /**
    * Checks if this is a sensitive role (Owner)
    * Sensitive roles have restricted creation flows
-   * 
+   *
    * @returns True if role is sensitive
    */
   isSensitive(): boolean {
@@ -180,7 +180,7 @@ export class Role {
 
   /**
    * Gets the number of permissions assigned to this role
-   * 
+   *
    * @returns Number of permissions
    */
   getPermissionCount(): number {
@@ -209,7 +209,7 @@ export class Role {
 
     if (!validNames.includes(trimmedName as RoleName)) {
       throw new Error(
-        `Invalid role name: ${trimmedName}. Valid names are: ${validNames.join(', ')}`
+        `Invalid role name: ${trimmedName}. Valid names are: ${validNames.join(', ')}`,
       );
     }
 
@@ -218,4 +218,3 @@ export class Role {
     }
   }
 }
-

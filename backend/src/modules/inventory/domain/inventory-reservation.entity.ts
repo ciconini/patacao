@@ -1,10 +1,10 @@
 /**
  * InventoryReservation Domain Entity
- * 
+ *
  * Represents a reservation of inventory items for a specific purpose (appointment or order) in the petshop management system.
  * Reservations reduce available stock for other operations but the final decrement happens at sale completion.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - InventoryReservation must be linked to a Product (invariant)
  * - Quantity must be positive
@@ -24,14 +24,14 @@ export class InventoryReservation {
 
   /**
    * Creates a new InventoryReservation entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param productId - Product ID being reserved (required)
    * @param quantity - Quantity to reserve (required, must be positive)
    * @param reservedFor - ID of appointment or order this reservation is for (required)
    * @param expiresAt - Expiration date for the reservation
    * @param createdAt - Creation timestamp (defaults to now)
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if productId is empty
    * @throws Error if quantity is not positive
@@ -43,7 +43,7 @@ export class InventoryReservation {
     quantity: number,
     reservedFor: string,
     expiresAt?: Date,
-    createdAt?: Date
+    createdAt?: Date,
   ) {
     this.validateId(id);
     this.validateProductId(productId);
@@ -85,7 +85,7 @@ export class InventoryReservation {
 
   /**
    * Updates the reserved quantity
-   * 
+   *
    * @param quantity - New quantity to reserve
    * @throws Error if quantity is not positive
    */
@@ -96,7 +96,7 @@ export class InventoryReservation {
 
   /**
    * Increases the reserved quantity by the specified amount
-   * 
+   *
    * @param amount - Amount to add to reserved quantity
    * @throws Error if amount is not positive
    */
@@ -109,7 +109,7 @@ export class InventoryReservation {
 
   /**
    * Decreases the reserved quantity by the specified amount
-   * 
+   *
    * @param amount - Amount to subtract from reserved quantity
    * @throws Error if amount is not positive or would result in non-positive quantity
    */
@@ -125,7 +125,7 @@ export class InventoryReservation {
 
   /**
    * Updates the expiration date
-   * 
+   *
    * @param expiresAt - New expiration date
    */
   updateExpiresAt(expiresAt: Date | undefined): void {
@@ -141,7 +141,7 @@ export class InventoryReservation {
 
   /**
    * Checks if the reservation is expired
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to now)
    * @returns True if reservation has an expiry date and it has passed
    */
@@ -154,7 +154,7 @@ export class InventoryReservation {
 
   /**
    * Checks if the reservation is active (not expired)
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to now)
    * @returns True if reservation is not expired
    */
@@ -164,7 +164,7 @@ export class InventoryReservation {
 
   /**
    * Checks if the reservation has an expiration date
-   * 
+   *
    * @returns True if expiration date is set
    */
   hasExpiration(): boolean {
@@ -173,7 +173,7 @@ export class InventoryReservation {
 
   /**
    * Calculates days until expiration
-   * 
+   *
    * @param referenceDate - Date to calculate from (defaults to now)
    * @returns Days until expiration, or undefined if no expiry date or already expired
    */
@@ -192,7 +192,7 @@ export class InventoryReservation {
 
   /**
    * Calculates days since reservation was created
-   * 
+   *
    * @param referenceDate - Date to calculate to (defaults to now)
    * @returns Days since creation
    */
@@ -205,7 +205,7 @@ export class InventoryReservation {
    * Checks if the reservation is for an appointment
    * Note: This is a heuristic check - assumes appointment IDs follow a pattern
    * More accurate determination should be done at repository/use case level
-   * 
+   *
    * @returns True if reservedFor appears to be an appointment ID
    */
   isForAppointment(): boolean {
@@ -219,7 +219,7 @@ export class InventoryReservation {
    * Checks if the reservation is for an order
    * Note: This is a heuristic check - assumes order IDs follow a pattern
    * More accurate determination should be done at repository/use case level
-   * 
+   *
    * @returns True if reservedFor appears to be an order ID
    */
   isForOrder(): boolean {
@@ -239,7 +239,9 @@ export class InventoryReservation {
 
   private validateProductId(productId: string): void {
     if (!productId || productId.trim().length === 0) {
-      throw new Error('Product ID is required - an InventoryReservation must be linked to a Product');
+      throw new Error(
+        'Product ID is required - an InventoryReservation must be linked to a Product',
+      );
     }
   }
 
@@ -251,8 +253,9 @@ export class InventoryReservation {
 
   private validateReservedFor(reservedFor: string): void {
     if (!reservedFor || reservedFor.trim().length === 0) {
-      throw new Error('Reserved for ID is required - reservation must specify appointment_id or order_id');
+      throw new Error(
+        'Reserved for ID is required - reservation must specify appointment_id or order_id',
+      );
     }
   }
 }
-

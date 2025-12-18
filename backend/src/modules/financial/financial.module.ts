@@ -1,6 +1,6 @@
 /**
  * Financial Module
- * 
+ *
  * Main NestJS module for the Financial domain.
  * Consolidates Application, Presentation, and Infrastructure layers.
  */
@@ -13,8 +13,8 @@ import { FinancialInfrastructureModule } from './infrastructure/financial.infras
 @Module({
   imports: [
     FinancialInfrastructureModule, // Infrastructure first (repositories)
-    FinancialApplicationModule,    // Then application (use cases depend on repositories)
-    FinancialPresentationModule,   // Finally presentation (controllers depend on use cases)
+    FinancialApplicationModule, // Then application (use cases depend on repositories)
+    FinancialPresentationModule, // Finally presentation (controllers depend on use cases)
   ],
   exports: [
     // Export infrastructure for other modules that need repositories
@@ -24,4 +24,3 @@ import { FinancialInfrastructureModule } from './infrastructure/financial.infras
   ],
 })
 export class FinancialModule {}
-

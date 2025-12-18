@@ -1,33 +1,33 @@
 /**
  * SKU Value Object
- * 
+ *
  * Represents a Stock Keeping Unit (SKU) identifier in the petshop management system.
  * This is a pure domain value object that encapsulates SKU validation and business rules.
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates SKU format and length
- * 
+ *
  * Business Rules:
  * - SKU is required and cannot be empty
  * - SKU must not exceed 100 characters
  * - SKU must be unique per Company (enforced at repository/use case level)
  * - SKU is case-sensitive for equality comparison
  * - SKU is trimmed of leading/trailing whitespace
- * 
+ *
  * Invariants:
  * - SKU value must be non-empty after trimming
  * - SKU value must not exceed 100 characters
  * - Value object is immutable after creation
- * 
+ *
  * Equality Definition:
  * - Two SKU instances are equal if their values are equal (case-sensitive)
  * - Equality is based on SKU values, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In Product entity:
  *    constructor(
  *      // ... other params
@@ -35,23 +35,23 @@
  *    ) {
  *      this._sku = new SKU(sku);
  *    }
- * 
+ *
  *    get sku(): SKU {
  *      return this._sku;
  *    }
- * 
+ *
  * 2. Creating SKU:
  *    const sku = new SKU("PROD-001");
  *    const fromString = SKU.fromString("PROD-002"); // SKU or null if invalid
- * 
+ *
  * 3. Equality comparison:
  *    const sku1 = new SKU("PROD-001");
  *    const sku2 = new SKU("PROD-001");
  *    sku1.equals(sku2); // true
- * 
+ *
  *    const sku3 = new SKU("prod-001");
  *    sku1.equals(sku3); // false (case-sensitive)
- * 
+ *
  * 4. String representation:
  *    const sku = new SKU("PROD-001");
  *    sku.toString(); // "PROD-001"
@@ -66,7 +66,7 @@ export class SKU {
 
   /**
    * Creates a new SKU value object
-   * 
+   *
    * @param value - SKU identifier string
    * @throws Error if value is empty or exceeds maximum length
    */
@@ -77,7 +77,7 @@ export class SKU {
 
   /**
    * Gets the SKU value
-   * 
+   *
    * @returns SKU string (trimmed)
    */
   get value(): string {
@@ -86,9 +86,9 @@ export class SKU {
 
   /**
    * Checks if this SKU equals another SKU
-   * 
+   *
    * Equality is determined by comparing values (case-sensitive).
-   * 
+   *
    * @param other - Other SKU to compare
    * @returns True if values are equal
    */
@@ -106,7 +106,7 @@ export class SKU {
 
   /**
    * Checks if this SKU is equal to another SKU (alias for equals)
-   * 
+   *
    * @param other - Other SKU to compare
    * @returns True if values are equal
    */
@@ -116,7 +116,7 @@ export class SKU {
 
   /**
    * Converts the SKU to string representation
-   * 
+   *
    * @returns SKU string representation
    */
   toString(): string {
@@ -125,9 +125,9 @@ export class SKU {
 
   /**
    * Creates a SKU instance from a string, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param value - SKU string
    * @returns SKU instance or null if invalid
    */
@@ -141,7 +141,7 @@ export class SKU {
 
   /**
    * Validates if a string can be used to create a SKU instance
-   * 
+   *
    * @param value - String to validate
    * @returns True if string is valid for SKU creation
    */
@@ -153,7 +153,7 @@ export class SKU {
 
   /**
    * Validates the SKU value
-   * 
+   *
    * @param value - Value to validate
    * @throws Error if value is invalid
    */
@@ -169,8 +169,9 @@ export class SKU {
     }
 
     if (trimmed.length > SKU.MAX_LENGTH) {
-      throw new Error(`SKU cannot exceed ${SKU.MAX_LENGTH} characters. Current length: ${trimmed.length}`);
+      throw new Error(
+        `SKU cannot exceed ${SKU.MAX_LENGTH} characters. Current length: ${trimmed.length}`,
+      );
     }
   }
 }
-

@@ -50,7 +50,12 @@ import { AppConfigService } from '../../shared/config/config.service';
               // Try default path: config/secrets/firebase-service-account.json
               try {
                 const path = require('path');
-                const defaultPath = path.join(process.cwd(), 'config', 'secrets', 'firebase-service-account.json');
+                const defaultPath = path.join(
+                  process.cwd(),
+                  'config',
+                  'secrets',
+                  'firebase-service-account.json',
+                );
                 const serviceAccount = require(defaultPath);
                 admin.initializeApp({
                   credential: admin.credential.cert(serviceAccount),
@@ -88,4 +93,3 @@ import { AppConfigService } from '../../shared/config/config.service';
   exports: ['FIREBASE_ADMIN', 'FIRESTORE', 'UnitOfWork', 'AuditLogRepository'],
 })
 export class DatabaseModule {}
-

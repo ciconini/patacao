@@ -1,6 +1,6 @@
 /**
  * Supplier Controller
- * 
+ *
  * REST API controller for Supplier management endpoints.
  */
 
@@ -16,17 +16,24 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
 import { CreateSupplierDto, UpdateSupplierDto, SupplierResponseDto } from '../dto/supplier.dto';
-import { CreateSupplierUseCase, CreateSupplierInput } from '../../application/create-supplier.use-case';
+import {
+  CreateSupplierUseCase,
+  CreateSupplierInput,
+} from '../../application/create-supplier.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Inventory')
+@ApiBearerAuth('JWT-auth')
 @Controller('api/v1/suppliers')
 @UseGuards(FirebaseAuthGuard)
 export class SupplierController {
-  constructor(
-    private readonly createSupplierUseCase: CreateSupplierUseCase,
-  ) {}
+  constructor(private readonly createSupplierUseCase: CreateSupplierUseCase) {}
 
   /**
    * Create a new supplier
@@ -34,6 +41,8 @@ export class SupplierController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create supplier', description: 'Creates a new supplier' })
+  @ApiBody({ type: CreateSupplierDto })
   async create(
     @Body() createDto: CreateSupplierDto,
     @Request() req: AuthenticatedRequest,
@@ -65,6 +74,9 @@ export class SupplierController {
    * PUT /api/v1/suppliers/:id
    */
   @Put(':id')
+  @ApiOperation({ summary: 'Update supplier', description: 'Updates an existing supplier' })
+  @ApiParam({ name: 'id', description: 'Supplier UUID' })
+  @ApiBody({ type: UpdateSupplierDto })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateSupplierDto,
@@ -99,4 +111,3 @@ export class SupplierController {
     };
   }
 }
-

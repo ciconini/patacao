@@ -1,9 +1,9 @@
 /**
  * Stock Adjustment Use Case (UC-INV-002)
- * 
+ *
  * Application use case for recording manual stock adjustments.
  * This use case orchestrates domain entities to create stock movements for adjustments.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role, Staff only if explicitly permitted)
  * - Validate store/location access
@@ -13,7 +13,7 @@
  * - Update product on-hand quantity
  * - Persist changes via repositories
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -90,7 +90,7 @@ export interface StockAdjustmentResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -142,16 +142,16 @@ export class StockAdjustmentUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the stock adjustment use case
-   * 
+   *
    * @param input - Input data for stock adjustment
    * @returns Result containing adjustment details or error
    */
@@ -169,7 +169,7 @@ export class StockAdjustmentUseCase {
       // 4. Validate user has store access
       const hasAccess = await this.currentUserRepository.hasStoreAccess(
         input.performedBy,
-        input.storeId
+        input.storeId,
       );
       if (!hasAccess) {
         throw new ForbiddenError('You do not have access to this store');
@@ -180,7 +180,9 @@ export class StockAdjustmentUseCase {
 
       // 6. Validate product is stock-tracked
       if (!product.stockTracked) {
-        throw new ValidationError(`Product ${product.name} (${product.sku}) is not stock-tracked. Adjustments can only be made for stock-tracked products.`);
+        throw new ValidationError(
+          `Product ${product.name} (${product.sku}) is not stock-tracked. Adjustments can only be made for stock-tracked products.`,
+        );
       }
 
       // 7. Validate negative adjustment won't result in negative stock
@@ -190,7 +192,7 @@ export class StockAdjustmentUseCase {
         const absoluteChange = Math.abs(input.quantityChange);
         if (absoluteChange > currentStock) {
           throw new ValidationError(
-            `Adjustment would result in negative stock. Current stock: ${currentStock}, Adjustment: ${input.quantityChange}`
+            `Adjustment would result in negative stock. Current stock: ${currentStock}, Adjustment: ${input.quantityChange}`,
           );
         }
       }
@@ -202,19 +204,17 @@ export class StockAdjustmentUseCase {
         locationId,
         input.reason,
         input.referenceId,
-        input.performedBy
+        input.performedBy,
       );
 
       // 9. Validate movement using domain service
       const validationResult = this.stockMovementDomainService.validateMovementLegality(
         movement,
-        product
+        product,
       );
 
       if (!validationResult.isValid) {
-        throw new ValidationError(
-          `Invalid stock movement: ${validationResult.errors.join(', ')}`
-        );
+        throw new ValidationError(`Invalid stock movement: ${validationResult.errors.join(', ')}`);
       }
 
       // 10. Persist stock movement
@@ -241,13 +241,13 @@ export class StockAdjustmentUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
     // Check if user has Manager or Owner role
-    const hasManagerOrOwnerRole = user.roleIds.some(roleId => {
+    const hasManagerOrOwnerRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -258,7 +258,7 @@ export class StockAdjustmentUseCase {
     });
 
     // Check if user has Staff role
-    const hasStaffRole = user.roleIds.some(roleId => {
+    const hasStaffRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -271,13 +271,17 @@ export class StockAdjustmentUseCase {
     // Staff can only adjust if explicitly permitted
     if (hasStaffRole && !hasManagerOrOwnerRole) {
       if (!StockAdjustmentUseCase.ALLOW_STAFF_ADJUSTMENTS) {
-        throw new ForbiddenError('You do not have permission to adjust stock. Only Manager or Owner role can adjust stock.');
+        throw new ForbiddenError(
+          'You do not have permission to adjust stock. Only Manager or Owner role can adjust stock.',
+        );
       }
     }
 
     // If user has neither Manager/Owner nor Staff role, deny access
     if (!hasManagerOrOwnerRole && !hasStaffRole) {
-      throw new ForbiddenError('You do not have permission to adjust stock. Only Manager or Owner role can adjust stock.');
+      throw new ForbiddenError(
+        'You do not have permission to adjust stock. Only Manager or Owner role can adjust stock.',
+      );
     }
   }
 
@@ -303,7 +307,7 @@ export class StockAdjustmentUseCase {
 
     if (input.reason.length > StockAdjustmentUseCase.MAX_REASON_LENGTH) {
       throw new ValidationError(
-        `Reason cannot exceed ${StockAdjustmentUseCase.MAX_REASON_LENGTH} characters`
+        `Reason cannot exceed ${StockAdjustmentUseCase.MAX_REASON_LENGTH} characters`,
       );
     }
   }
@@ -313,7 +317,7 @@ export class StockAdjustmentUseCase {
    */
   private async validateAndLoadStore(storeId: string): Promise<Store> {
     const store = await this.storeRepository.findById(storeId);
-    
+
     if (!store) {
       throw new NotFoundError('Store not found');
     }
@@ -326,7 +330,7 @@ export class StockAdjustmentUseCase {
    */
   private async validateAndLoadProduct(productId: string): Promise<Product> {
     const product = await this.productRepository.findById(productId);
-    
+
     if (!product) {
       throw new NotFoundError('Product not found');
     }
@@ -343,7 +347,7 @@ export class StockAdjustmentUseCase {
     locationId: string,
     reason: string,
     referenceId: string | undefined,
-    performedBy: string
+    performedBy: string,
   ): StockMovement {
     const movementId = this.generateId();
     const now = new Date();
@@ -357,7 +361,7 @@ export class StockAdjustmentUseCase {
       locationId,
       undefined, // batchId - adjustments typically not batch-specific
       referenceId,
-      now
+      now,
     );
   }
 
@@ -382,7 +386,7 @@ export class StockAdjustmentUseCase {
             referenceId: movement.referenceId,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -432,4 +436,3 @@ export class StockAdjustmentUseCase {
     };
   }
 }
-

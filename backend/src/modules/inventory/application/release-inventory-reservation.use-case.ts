@@ -1,9 +1,9 @@
 /**
  * Release Inventory Reservation Use Case (UC-INV-010)
- * 
+ *
  * Application use case for releasing a previously created inventory reservation.
  * This use case orchestrates domain entities and domain services to release reservations.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, or Owner role)
  * - Validate reservation exists and is active
@@ -12,7 +12,7 @@
  * - Update available stock
  * - Persist changes via repositories
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -76,7 +76,7 @@ export interface ReleaseInventoryReservationResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -133,20 +133,22 @@ export class ReleaseInventoryReservationUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the release inventory reservation use case
-   * 
+   *
    * @param input - Input data for releasing reservation
    * @returns Result containing released reservation details or error
    */
-  async execute(input: ReleaseInventoryReservationInput): Promise<ReleaseInventoryReservationResult> {
+  async execute(
+    input: ReleaseInventoryReservationInput,
+  ): Promise<ReleaseInventoryReservationResult> {
     try {
       // 1. Validate user exists and has required role
       await this.validateUserAuthorization(input.performedBy);
@@ -168,7 +170,9 @@ export class ReleaseInventoryReservationUseCase {
 
       // 5. Validate product is stock-tracked
       if (!product.stockTracked) {
-        throw new ValidationError('Product is not stock tracked. Reservation release not applicable');
+        throw new ValidationError(
+          'Product is not stock tracked. Reservation release not applicable',
+        );
       }
 
       // 6. Capture reservation state for audit log
@@ -216,12 +220,12 @@ export class ReleaseInventoryReservationUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -258,7 +262,7 @@ export class ReleaseInventoryReservationUseCase {
    */
   private async createAuditLog(
     beforeState: Record<string, any>,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -275,7 +279,7 @@ export class ReleaseInventoryReservationUseCase {
             releasedBy: performedBy,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -309,4 +313,3 @@ export class ReleaseInventoryReservationUseCase {
     };
   }
 }
-

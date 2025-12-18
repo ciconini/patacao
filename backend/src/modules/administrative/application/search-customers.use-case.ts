@@ -1,15 +1,15 @@
 /**
  * Search Customers Use Case (UC-ADMIN-010)
- * 
+ *
  * Application use case for searching and filtering customer records.
  * This use case orchestrates domain entities and repository ports to search customers.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, Accountant, or Owner role required)
  * - Validate search criteria and pagination parameters
  * - Execute search via repository
  * - Return paginated results with metadata
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -22,7 +22,11 @@ import { RoleId } from '../../shared/domain/role-id.value-object';
 
 // Repository interfaces (ports)
 export interface CustomerRepository {
-  search(criteria: SearchCriteria, pagination: Pagination, sort: Sort): Promise<PaginatedResult<Customer>>;
+  search(
+    criteria: SearchCriteria,
+    pagination: Pagination,
+    sort: Sort,
+  ): Promise<PaginatedResult<Customer>>;
 }
 
 export interface CurrentUserRepository {
@@ -122,7 +126,7 @@ export interface SearchCustomersResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -172,12 +176,12 @@ export class SearchCustomersUseCase {
 
   constructor(
     private readonly customerRepository: CustomerRepository,
-    private readonly currentUserRepository: CurrentUserRepository
+    private readonly currentUserRepository: CurrentUserRepository,
   ) {}
 
   /**
    * Executes the search customers use case
-   * 
+   *
    * @param input - Search input data
    * @returns Result containing paginated customer list or error
    */
@@ -213,19 +217,19 @@ export class SearchCustomersUseCase {
 
   /**
    * Validates user authorization (must have Staff, Manager, Accountant, or Owner role)
-   * 
+   *
    * @param userId - User ID to validate
    * @throws UnauthorizedError if user not found
    * @throws ForbiddenError if user does not have required role
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -236,13 +240,15 @@ export class SearchCustomersUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Manager, Accountant, or Owner role can search customers');
+      throw new ForbiddenError(
+        'Only Staff, Manager, Accountant, or Owner role can search customers',
+      );
     }
   }
 
   /**
    * Validates and normalizes search criteria
-   * 
+   *
    * @param input - Search input
    * @returns Validated search criteria
    * @throws ValidationError if validation fails
@@ -253,7 +259,9 @@ export class SearchCustomersUseCase {
     // General search query
     if (input.q !== undefined) {
       if (input.q.length > SearchCustomersUseCase.MAX_QUERY_LENGTH) {
-        throw new ValidationError(`Search query cannot exceed ${SearchCustomersUseCase.MAX_QUERY_LENGTH} characters`);
+        throw new ValidationError(
+          `Search query cannot exceed ${SearchCustomersUseCase.MAX_QUERY_LENGTH} characters`,
+        );
       }
       criteria.q = input.q.trim();
     }
@@ -307,7 +315,7 @@ export class SearchCustomersUseCase {
 
   /**
    * Validates and normalizes pagination parameters
-   * 
+   *
    * @param input - Search input
    * @returns Validated pagination
    * @throws ValidationError if validation fails
@@ -320,8 +328,13 @@ export class SearchCustomersUseCase {
       throw new ValidationError(`Page must be >= ${SearchCustomersUseCase.MIN_PAGE}`);
     }
 
-    if (perPage < SearchCustomersUseCase.MIN_PER_PAGE || perPage > SearchCustomersUseCase.MAX_PER_PAGE) {
-      throw new ValidationError(`Per page must be between ${SearchCustomersUseCase.MIN_PER_PAGE} and ${SearchCustomersUseCase.MAX_PER_PAGE}`);
+    if (
+      perPage < SearchCustomersUseCase.MIN_PER_PAGE ||
+      perPage > SearchCustomersUseCase.MAX_PER_PAGE
+    ) {
+      throw new ValidationError(
+        `Per page must be between ${SearchCustomersUseCase.MIN_PER_PAGE} and ${SearchCustomersUseCase.MAX_PER_PAGE}`,
+      );
     }
 
     return { page, perPage };
@@ -329,7 +342,7 @@ export class SearchCustomersUseCase {
 
   /**
    * Validates and normalizes sort parameter
-   * 
+   *
    * @param sortString - Sort string (e.g., "name", "-name", "created_at")
    * @returns Validated sort object
    * @throws ValidationError if validation fails
@@ -347,7 +360,9 @@ export class SearchCustomersUseCase {
     const field = isDescending ? sortString.substring(1) : sortString;
 
     if (!SearchCustomersUseCase.VALID_SORT_FIELDS.includes(field)) {
-      throw new ValidationError(`Invalid sort field: ${field}. Valid fields are: ${SearchCustomersUseCase.VALID_SORT_FIELDS.join(', ')}`);
+      throw new ValidationError(
+        `Invalid sort field: ${field}. Valid fields are: ${SearchCustomersUseCase.VALID_SORT_FIELDS.join(', ')}`,
+      );
     }
 
     return {
@@ -358,7 +373,7 @@ export class SearchCustomersUseCase {
 
   /**
    * Executes search via repository
-   * 
+   *
    * @param criteria - Search criteria
    * @param pagination - Pagination parameters
    * @param sort - Sort parameters
@@ -368,7 +383,7 @@ export class SearchCustomersUseCase {
   private async executeSearch(
     criteria: SearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<Customer>> {
     try {
       return await this.customerRepository.search(criteria, pagination, sort);
@@ -379,23 +394,25 @@ export class SearchCustomersUseCase {
 
   /**
    * Maps repository results to output format
-   * 
+   *
    * @param result - Repository search result
    * @returns Output model
    */
   private mapToOutput(result: PaginatedResult<Customer>): SearchCustomersOutput {
     return {
-      items: result.items.map(customer => ({
+      items: result.items.map((customer) => ({
         id: customer.id,
         fullName: customer.fullName,
         email: customer.email,
         phone: customer.phone,
-        address: customer.address ? {
-          street: customer.address.street,
-          city: customer.address.city,
-          postalCode: customer.address.postalCode,
-          country: customer.address.country,
-        } : undefined,
+        address: customer.address
+          ? {
+              street: customer.address.street,
+              city: customer.address.city,
+              postalCode: customer.address.postalCode,
+              country: customer.address.country,
+            }
+          : undefined,
         consentMarketing: customer.consentMarketing,
         consentReminders: customer.consentReminders,
         createdAt: customer.createdAt,
@@ -407,7 +424,7 @@ export class SearchCustomersUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -431,4 +448,3 @@ export class SearchCustomersUseCase {
     };
   }
 }
-

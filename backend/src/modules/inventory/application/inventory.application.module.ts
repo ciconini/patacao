@@ -1,6 +1,6 @@
 /**
  * Inventory Application Module
- * 
+ *
  * NestJS module that registers all use cases for the Inventory module.
  */
 
@@ -21,10 +21,7 @@ import { ReleaseInventoryReservationUseCase } from './release-inventory-reservat
 import { SearchStockMovementsUseCase } from './search-stock-movements.use-case';
 
 @Module({
-  imports: [
-    InventoryInfrastructureModule,
-    SharedModule,
-  ],
+  imports: [InventoryInfrastructureModule, SharedModule],
   providers: [
     CreateProductUseCase,
     UpdateProductUseCase,
@@ -55,4 +52,3 @@ import { SearchStockMovementsUseCase } from './search-stock-movements.use-case';
   ],
 })
 export class InventoryApplicationModule {}
-

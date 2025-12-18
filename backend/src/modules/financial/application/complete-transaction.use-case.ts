@@ -1,9 +1,9 @@
 /**
  * Complete Transaction Use Case (UC-FIN-007)
- * 
+ *
  * Application use case for completing a pending transaction.
  * This use case orchestrates domain entities and domain services to complete transactions.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, Accountant, or Owner role)
  * - Validate transaction is in pending status
@@ -12,7 +12,7 @@
  * - Mark transaction as paid (if payment info provided)
  * - Persist transaction and stock movements
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -93,7 +93,7 @@ export interface CompleteTransactionResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -149,16 +149,16 @@ export class CompleteTransactionUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the complete transaction use case
-   * 
+   *
    * @param input - Input data for completing transaction
    * @returns Result containing completed transaction or error
    */
@@ -178,7 +178,9 @@ export class CompleteTransactionUseCase {
 
       // 4. Validate transaction is in pending status
       if (!transaction.isPending()) {
-        throw new ValidationError('Transaction is not in pending status. Only pending transactions can be completed');
+        throw new ValidationError(
+          'Transaction is not in pending status. Only pending transactions can be completed',
+        );
       }
 
       // 5. Check stock availability for tracked products
@@ -199,7 +201,7 @@ export class CompleteTransactionUseCase {
           const hasStock = await this.productRepository.checkStock(product.id, lineItem.quantity);
           if (!hasStock) {
             throw new ConflictError(
-              `Insufficient stock for product ${product.name} (${product.sku}). Required: ${lineItem.quantity}`
+              `Insufficient stock for product ${product.name} (${product.sku}). Required: ${lineItem.quantity}`,
             );
           }
 
@@ -209,18 +211,18 @@ export class CompleteTransactionUseCase {
             -lineItem.quantity, // Negative for decrement
             transaction.storeId,
             transaction.id,
-            input.performedBy
+            input.performedBy,
           );
 
           // Validate movement legality using domain service
           const validationResult = this.stockMovementDomainService.validateMovementLegality(
             stockMovement,
-            product
+            product,
           );
 
           if (!validationResult.isValid) {
             throw new ValidationError(
-              `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`
+              `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`,
             );
           }
 
@@ -240,7 +242,7 @@ export class CompleteTransactionUseCase {
         // Decrement product stock
         await this.productRepository.decrementStock(
           stockMovement.productId,
-          Math.abs(stockMovement.quantityChange)
+          Math.abs(stockMovement.quantityChange),
         );
 
         // Persist stock movement
@@ -268,12 +270,12 @@ export class CompleteTransactionUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -284,7 +286,9 @@ export class CompleteTransactionUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Manager, Accountant, or Owner role can complete transactions');
+      throw new ForbiddenError(
+        'Only Staff, Manager, Accountant, or Owner role can complete transactions',
+      );
     }
   }
 
@@ -318,7 +322,7 @@ export class CompleteTransactionUseCase {
     quantityChange: number, // Negative for decrement
     locationId: string,
     referenceId: string,
-    performedBy: string
+    performedBy: string,
   ): StockMovement {
     const movementId = this.generateId();
     const now = new Date();
@@ -332,7 +336,7 @@ export class CompleteTransactionUseCase {
       locationId,
       undefined, // batchId
       referenceId, // transaction ID
-      now
+      now,
     );
   }
 
@@ -342,7 +346,7 @@ export class CompleteTransactionUseCase {
   private async createAuditLog(
     transaction: Transaction,
     stockMovements: StockMovement[],
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -359,7 +363,7 @@ export class CompleteTransactionUseCase {
             stockMovementsCount: stockMovements.length,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -376,7 +380,7 @@ export class CompleteTransactionUseCase {
   private mapToOutput(
     transaction: Transaction,
     stockMovements: StockMovement[],
-    input: CompleteTransactionInput
+    input: CompleteTransactionInput,
   ): CompleteTransactionOutput {
     return {
       id: transaction.id,
@@ -387,7 +391,7 @@ export class CompleteTransactionUseCase {
       paidAt: input.paidAt,
       externalReference: input.externalReference,
       updatedAt: transaction.updatedAt,
-      stockMovements: stockMovements.map(movement => ({
+      stockMovements: stockMovements.map((movement) => ({
         id: movement.id,
         productId: movement.productId,
         quantityChange: movement.quantityChange,
@@ -419,4 +423,3 @@ export class CompleteTransactionUseCase {
     };
   }
 }
-

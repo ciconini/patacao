@@ -1,6 +1,6 @@
 /**
  * ServiceRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for ServiceRepository port.
  */
 
@@ -32,7 +32,7 @@ export class FirestoreServiceRepository implements ServiceRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   async save(service: Service): Promise<Service> {
@@ -60,7 +60,7 @@ export class FirestoreServiceRepository implements ServiceRepository {
       price: service.price,
       requiredResources: [...service.requiredResources],
       consumesInventory: service.consumesInventory,
-      consumedItems: service.consumedItems.map(item => ({
+      consumedItems: service.consumedItems.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
       })),
@@ -71,7 +71,7 @@ export class FirestoreServiceRepository implements ServiceRepository {
   }
 
   private toEntity(id: string, doc: ServiceDocument): Service {
-    const consumedItems: ConsumedItem[] = doc.consumedItems.map(item => ({
+    const consumedItems: ConsumedItem[] = doc.consumedItems.map((item) => ({
       productId: item.productId,
       quantity: item.quantity,
     }));
@@ -87,7 +87,7 @@ export class FirestoreServiceRepository implements ServiceRepository {
       consumedItems,
       doc.tags,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
@@ -99,4 +99,3 @@ export class FirestoreServiceRepository implements ServiceRepository {
     return timestamp.toDate();
   }
 }
-

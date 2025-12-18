@@ -1,15 +1,15 @@
 /**
  * UserRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for UserRepository port.
  * This implementation handles persistence of User domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map User domain entities to Firestore documents
  * - Map Firestore documents to User domain entities
  * - Implement repository interface methods
  * - Handle Firestore-specific operations (queries, transactions, search)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -63,13 +63,13 @@ export class FirestoreUserRepository implements UserRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a User entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
-   * 
+   *
    * @param user - User domain entity to save
    * @returns Saved User entity
    */
@@ -81,17 +81,23 @@ export class FirestoreUserRepository implements UserRepository {
     const existingDoc = await docRef.get();
     if (existingDoc.exists) {
       const existingData = existingDoc.data() as UserDocument;
-      await docRef.set({
-        ...document,
-        lastLogin: existingData.lastLogin,
-        failedLoginAttempts: existingData.failedLoginAttempts || 0,
-        lockoutExpiry: existingData.lockoutExpiry,
-      }, { merge: true });
+      await docRef.set(
+        {
+          ...document,
+          lastLogin: existingData.lastLogin,
+          failedLoginAttempts: existingData.failedLoginAttempts || 0,
+          lockoutExpiry: existingData.lockoutExpiry,
+        },
+        { merge: true },
+      );
     } else {
-      await docRef.set({
-        ...document,
-        failedLoginAttempts: 0,
-      }, { merge: true });
+      await docRef.set(
+        {
+          ...document,
+          failedLoginAttempts: 0,
+        },
+        { merge: true },
+      );
     }
 
     return user;
@@ -99,7 +105,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Finds a User by ID
-   * 
+   *
    * @param id - User ID
    * @returns User entity or null if not found
    */
@@ -116,7 +122,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Finds a User by email
-   * 
+   *
    * @param email - Email address to search for
    * @returns User entity or null if not found
    */
@@ -137,7 +143,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Finds a User by username
-   * 
+   *
    * @param username - Username to search for
    * @returns User entity or null if not found
    */
@@ -158,7 +164,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Updates user password
-   * 
+   *
    * @param userId - User ID
    * @param passwordHash - New password hash
    */
@@ -175,7 +181,7 @@ export class FirestoreUserRepository implements UserRepository {
    * Note: This method is a placeholder. Password verification should be handled
    * by a PasswordHasher service that compares the provided password with the stored hash.
    * This method is included in the interface for compatibility but should not be used directly.
-   * 
+   *
    * @param userId - User ID
    * @param password - Plain text password to verify
    * @returns Always returns false (password verification should use PasswordHasher service)
@@ -189,7 +195,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Updates last login timestamp
-   * 
+   *
    * @param userId - User ID
    */
   async updateLastLogin(userId: string): Promise<void> {
@@ -202,13 +208,13 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Increments failed login attempts counter
-   * 
+   *
    * @param userId - User ID
    */
   async incrementFailedLoginAttempts(userId: string): Promise<void> {
     const docRef = this.firestore.collection(this.collectionName).doc(userId);
     const doc = await docRef.get();
-    
+
     if (!doc.exists) {
       return;
     }
@@ -222,7 +228,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Resets failed login attempts counter
-   * 
+   *
    * @param userId - User ID
    */
   async resetFailedLoginAttempts(userId: string): Promise<void> {
@@ -235,7 +241,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Locks user account
-   * 
+   *
    * @param userId - User ID
    * @param lockoutExpiry - Lockout expiration date
    */
@@ -249,7 +255,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Checks if user account is locked
-   * 
+   *
    * @param userId - User ID
    * @returns True if account is locked
    */
@@ -273,7 +279,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Searches for users with pagination
-   * 
+   *
    * @param criteria - Search criteria
    * @param pagination - Pagination parameters
    * @param sort - Sort parameters
@@ -282,7 +288,7 @@ export class FirestoreUserRepository implements UserRepository {
   async search(
     criteria: UserSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<User>> {
     let query: FirebaseFirestore.Query = this.firestore.collection(this.collectionName);
 
@@ -301,27 +307,28 @@ export class FirestoreUserRepository implements UserRepository {
 
     // Get total count (before pagination)
     const countSnapshot = await query.get();
-    let allUsers = countSnapshot.docs.map(doc => 
-      this.toEntity(doc.id, doc.data() as UserDocument)
+    let allUsers = countSnapshot.docs.map((doc) =>
+      this.toEntity(doc.id, doc.data() as UserDocument),
     );
 
     // Apply role filter if specified
     if (criteria.role) {
-      allUsers = allUsers.filter(user => user.roleIds.includes(criteria.role!));
+      allUsers = allUsers.filter((user) => user.roleIds.includes(criteria.role!));
     }
 
     // Apply store filter if specified
     if (criteria.storeId) {
-      allUsers = allUsers.filter(user => user.storeIds.includes(criteria.storeId!));
+      allUsers = allUsers.filter((user) => user.storeIds.includes(criteria.storeId!));
     }
 
     // Apply text search if specified (client-side filtering)
     if (criteria.q) {
       const searchTerm = criteria.q.toLowerCase();
-      allUsers = allUsers.filter(user => 
-        user.fullName.toLowerCase().includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm) ||
-        (user.username && user.username.toLowerCase().includes(searchTerm))
+      allUsers = allUsers.filter(
+        (user) =>
+          user.fullName.toLowerCase().includes(searchTerm) ||
+          user.email.toLowerCase().includes(searchTerm) ||
+          (user.username && user.username.toLowerCase().includes(searchTerm)),
       );
     }
 
@@ -381,7 +388,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Assigns roles to a user
-   * 
+   *
    * @param userId - User ID
    * @param roleIds - List of role IDs to assign
    */
@@ -395,7 +402,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Assigns stores to a user
-   * 
+   *
    * @param userId - User ID
    * @param storeIds - List of store IDs to assign
    */
@@ -409,7 +416,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Links a Firebase UID to a user
-   * 
+   *
    * @param userId - User ID
    * @param firebaseUid - Firebase user UID
    */
@@ -423,11 +430,13 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Converts User domain entity to Firestore document
-   * 
+   *
    * @param user - User domain entity
    * @returns Firestore document (without infrastructure fields)
    */
-  private toDocument(user: User): Omit<UserDocument, 'lastLogin' | 'failedLoginAttempts' | 'lockoutExpiry'> {
+  private toDocument(
+    user: User,
+  ): Omit<UserDocument, 'lastLogin' | 'failedLoginAttempts' | 'lockoutExpiry'> {
     const doc: any = {
       id: user.id,
       email: user.email.toLowerCase(),
@@ -451,14 +460,14 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Converts Firestore document to User domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns User domain entity
    */
   private toEntity(id: string, doc: UserDocument): User {
-    const workingHours: WeeklySchedule | undefined = doc.workingHours 
-      ? this.copySchedule(doc.workingHours) 
+    const workingHours: WeeklySchedule | undefined = doc.workingHours
+      ? this.copySchedule(doc.workingHours)
       : undefined;
 
     return new User(
@@ -474,21 +483,29 @@ export class FirestoreUserRepository implements UserRepository {
       doc.serviceSkills,
       doc.active,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
   /**
    * Deep copies working hours schedule structure
-   * 
+   *
    * @param schedule - WeeklySchedule to copy
    * @returns Deep copy of schedule
    */
   private copySchedule(schedule: WeeklySchedule): WeeklySchedule {
     const result: any = {};
 
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
-    
+    const days = [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday',
+    ] as const;
+
     for (const day of days) {
       if (schedule[day]) {
         result[day] = {
@@ -504,7 +521,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -515,7 +532,7 @@ export class FirestoreUserRepository implements UserRepository {
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -523,4 +540,3 @@ export class FirestoreUserRepository implements UserRepository {
     return timestamp.toDate();
   }
 }
-

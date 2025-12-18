@@ -1,6 +1,6 @@
 /**
  * JWT Token Generator Service
- * 
+ *
  * Service for generating and verifying JWT access tokens and refresh tokens.
  * This service implements the TokenGenerator interface used by authentication use cases.
  */
@@ -28,14 +28,15 @@ export class JwtTokenGeneratorService {
     @Inject(ConfigService)
     private readonly configService: ConfigService,
   ) {
-    this.accessTokenSecret = this.configService.get<string>('JWT_SECRET') || 'change-me-in-production';
+    this.accessTokenSecret =
+      this.configService.get<string>('JWT_SECRET') || 'change-me-in-production';
     this.accessTokenExpirySeconds = this.configService.get<number>('JWT_EXPIRY_SECONDS') || 15 * 60; // 15 minutes
     this.refreshTokenLength = 32; // 32 bytes = 64 hex characters
   }
 
   /**
    * Generates a JWT access token
-   * 
+   *
    * @param userId - User ID
    * @param roles - User roles
    * @returns JWT access token string
@@ -62,13 +63,17 @@ export class JwtTokenGeneratorService {
   /**
    * Generates a JWT access token with session ID
    * This is an extended method that allows passing sessionId
-   * 
+   *
    * @param userId - User ID
    * @param roles - User roles
    * @param sessionId - Session ID
    * @returns JWT access token string
    */
-  async generateAccessTokenWithSession(userId: string, roles: string[], sessionId: string): Promise<string> {
+  async generateAccessTokenWithSession(
+    userId: string,
+    roles: string[],
+    sessionId: string,
+  ): Promise<string> {
     const now = Math.floor(Date.now() / 1000);
     const payload: AccessTokenPayload = {
       userId,
@@ -85,7 +90,7 @@ export class JwtTokenGeneratorService {
 
   /**
    * Generates a random refresh token
-   * 
+   *
    * @returns Refresh token string (hex encoded)
    */
   async generateRefreshToken(): Promise<string> {
@@ -94,7 +99,7 @@ export class JwtTokenGeneratorService {
 
   /**
    * Verifies and decodes a JWT access token
-   * 
+   *
    * @param token - JWT token string
    * @returns Decoded token payload or null if invalid
    */
@@ -111,7 +116,7 @@ export class JwtTokenGeneratorService {
 
   /**
    * Extracts session ID from a JWT access token
-   * 
+   *
    * @param token - JWT token string
    * @returns Session ID or null if invalid
    */

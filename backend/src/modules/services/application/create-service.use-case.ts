@@ -1,9 +1,9 @@
 /**
  * Create Service Use Case (UC-SVC-001)
- * 
+ *
  * Application use case for creating a new service in the service catalog.
  * This use case orchestrates domain entities to create services.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role)
  * - Validate service data
@@ -11,7 +11,7 @@
  * - Create Service domain entity
  * - Persist service via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -87,7 +87,7 @@ export interface CreateServiceResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -141,16 +141,16 @@ export class CreateServiceUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create service use case
-   * 
+   *
    * @param input - Input data for creating service
    * @returns Result containing created service or error
    */
@@ -168,7 +168,7 @@ export class CreateServiceUseCase {
       // 4. Validate consumed items if service consumes inventory
       const validatedConsumedItems = await this.validateConsumedItems(
         input.consumesInventory,
-        input.consumedItems
+        input.consumedItems,
       );
 
       // 5. Create Service domain entity
@@ -195,12 +195,12 @@ export class CreateServiceUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -247,14 +247,17 @@ export class CreateServiceUseCase {
 
     if (input.name.length > CreateServiceUseCase.MAX_NAME_LENGTH) {
       throw new ValidationError(
-        `Service name cannot exceed ${CreateServiceUseCase.MAX_NAME_LENGTH} characters`
+        `Service name cannot exceed ${CreateServiceUseCase.MAX_NAME_LENGTH} characters`,
       );
     }
 
     // Validate description
-    if (input.description && input.description.length > CreateServiceUseCase.MAX_DESCRIPTION_LENGTH) {
+    if (
+      input.description &&
+      input.description.length > CreateServiceUseCase.MAX_DESCRIPTION_LENGTH
+    ) {
       throw new ValidationError(
-        `Service description cannot exceed ${CreateServiceUseCase.MAX_DESCRIPTION_LENGTH} characters`
+        `Service description cannot exceed ${CreateServiceUseCase.MAX_DESCRIPTION_LENGTH} characters`,
       );
     }
 
@@ -272,7 +275,7 @@ export class CreateServiceUseCase {
     if (input.requiredResources) {
       if (input.requiredResources.length > CreateServiceUseCase.MAX_REQUIRED_RESOURCES) {
         throw new ValidationError(
-          `Required resources cannot exceed ${CreateServiceUseCase.MAX_REQUIRED_RESOURCES} items`
+          `Required resources cannot exceed ${CreateServiceUseCase.MAX_REQUIRED_RESOURCES} items`,
         );
       }
 
@@ -283,7 +286,7 @@ export class CreateServiceUseCase {
 
         if (resourceId.length > CreateServiceUseCase.MAX_RESOURCE_ID_LENGTH) {
           throw new ValidationError(
-            `Resource ID cannot exceed ${CreateServiceUseCase.MAX_RESOURCE_ID_LENGTH} characters`
+            `Resource ID cannot exceed ${CreateServiceUseCase.MAX_RESOURCE_ID_LENGTH} characters`,
           );
         }
       }
@@ -292,9 +295,7 @@ export class CreateServiceUseCase {
     // Validate tags
     if (input.tags) {
       if (input.tags.length > CreateServiceUseCase.MAX_TAGS) {
-        throw new ValidationError(
-          `Tags cannot exceed ${CreateServiceUseCase.MAX_TAGS} items`
-        );
+        throw new ValidationError(`Tags cannot exceed ${CreateServiceUseCase.MAX_TAGS} items`);
       }
 
       for (const tag of input.tags) {
@@ -304,7 +305,7 @@ export class CreateServiceUseCase {
 
         if (tag.length > CreateServiceUseCase.MAX_TAG_LENGTH) {
           throw new ValidationError(
-            `Tag cannot exceed ${CreateServiceUseCase.MAX_TAG_LENGTH} characters`
+            `Tag cannot exceed ${CreateServiceUseCase.MAX_TAG_LENGTH} characters`,
           );
         }
       }
@@ -316,7 +317,7 @@ export class CreateServiceUseCase {
    */
   private async validateConsumedItems(
     consumesInventory: boolean,
-    consumedItems?: CreateServiceInput['consumedItems']
+    consumedItems?: CreateServiceInput['consumedItems'],
   ): Promise<ConsumedItem[]> {
     if (!consumesInventory) {
       return [];
@@ -339,14 +340,14 @@ export class CreateServiceUseCase {
 
       const product = await this.productRepository.findById(item.productId);
       if (!product) {
-        throw new NotFoundError(`Consumed item ${itemIndex}: Product with ID ${item.productId} not found`);
+        throw new NotFoundError(
+          `Consumed item ${itemIndex}: Product with ID ${item.productId} not found`,
+        );
       }
 
       // Validate quantity
       if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-        throw new ValidationError(
-          `Consumed item ${itemIndex}: Quantity must be greater than 0`
-        );
+        throw new ValidationError(`Consumed item ${itemIndex}: Quantity must be greater than 0`);
       }
 
       validatedItems.push({
@@ -356,7 +357,7 @@ export class CreateServiceUseCase {
     }
 
     // Check for duplicate product IDs
-    const productIds = validatedItems.map(item => item.productId);
+    const productIds = validatedItems.map((item) => item.productId);
     const uniqueProductIds = new Set(productIds);
     if (uniqueProductIds.size !== productIds.length) {
       throw new ValidationError('Consumed items cannot have duplicate product IDs');
@@ -368,10 +369,7 @@ export class CreateServiceUseCase {
   /**
    * Creates Service domain entity
    */
-  private createServiceEntity(
-    input: CreateServiceInput,
-    consumedItems: ConsumedItem[]
-  ): Service {
+  private createServiceEntity(input: CreateServiceInput, consumedItems: ConsumedItem[]): Service {
     const serviceId = this.generateId();
     const now = new Date();
 
@@ -386,17 +384,14 @@ export class CreateServiceUseCase {
       consumedItems,
       input.tags || [],
       now,
-      now
+      now,
     );
   }
 
   /**
    * Creates audit log entry for service creation
    */
-  private async createAuditLog(
-    service: Service,
-    performedBy: string
-  ): Promise<void> {
+  private async createAuditLog(service: Service, performedBy: string): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
         this.generateId(),
@@ -414,7 +409,7 @@ export class CreateServiceUseCase {
             consumedItemsCount: service.consumedItems.length,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -436,7 +431,7 @@ export class CreateServiceUseCase {
       durationMinutes: service.durationMinutes,
       price: service.price,
       consumesInventory: service.consumesInventory,
-      consumedItems: service.consumedItems.map(item => ({ ...item })),
+      consumedItems: service.consumedItems.map((item) => ({ ...item })),
       requiredResources: [...service.requiredResources],
       tags: [...service.tags],
       createdAt: service.createdAt,
@@ -467,4 +462,3 @@ export class CreateServiceUseCase {
     };
   }
 }
-

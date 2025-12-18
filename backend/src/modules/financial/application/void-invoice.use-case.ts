@@ -1,9 +1,9 @@
 /**
  * Void Invoice Use Case (UC-FIN-004)
- * 
+ *
  * Application use case for voiding an issued invoice.
  * This use case orchestrates domain entities to void invoices.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager, Accountant, or Owner role)
  * - Validate invoice is in issued or paid status
@@ -11,7 +11,7 @@
  * - Check for blocking transactions
  * - Cancel invoice using domain entity method
  * - Create audit log entry with reason
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -71,7 +71,7 @@ export interface VoidInvoiceResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -127,16 +127,16 @@ export class VoidInvoiceUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the void invoice use case
-   * 
+   *
    * @param input - Input data for voiding invoice
    * @returns Result containing voided invoice or error
    */
@@ -189,12 +189,12 @@ export class VoidInvoiceUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -218,7 +218,9 @@ export class VoidInvoiceUseCase {
     }
 
     if (reason.length > VoidInvoiceUseCase.MAX_REASON_LENGTH) {
-      throw new ValidationError(`Reason cannot exceed ${VoidInvoiceUseCase.MAX_REASON_LENGTH} characters`);
+      throw new ValidationError(
+        `Reason cannot exceed ${VoidInvoiceUseCase.MAX_REASON_LENGTH} characters`,
+      );
     }
   }
 
@@ -228,17 +230,19 @@ export class VoidInvoiceUseCase {
   private async checkBlockingTransactions(invoiceId: string): Promise<void> {
     try {
       const transactions = await this.transactionRepository.findByInvoiceId(invoiceId);
-      
+
       // Check if any transactions are in a state that blocks voiding
       // Business rule: completed transactions may block voiding
-      const blockingTransactions = transactions.filter(tx => {
+      const blockingTransactions = transactions.filter((tx) => {
         // Example: completed transactions block voiding
         // Adjust based on actual business rules
         return tx.status === 'completed';
       });
 
       if (blockingTransactions.length > 0) {
-        throw new ConflictError('Invoice cannot be voided due to linked transactions. Reverse transactions first');
+        throw new ConflictError(
+          'Invoice cannot be voided due to linked transactions. Reverse transactions first',
+        );
       }
     } catch (error) {
       // If error is ConflictError, rethrow it
@@ -258,7 +262,7 @@ export class VoidInvoiceUseCase {
     invoice: Invoice,
     beforeStatus: InvoiceStatus,
     reason: string,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -278,7 +282,7 @@ export class VoidInvoiceUseCase {
             voidReason: reason,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -324,4 +328,3 @@ export class VoidInvoiceUseCase {
     };
   }
 }
-

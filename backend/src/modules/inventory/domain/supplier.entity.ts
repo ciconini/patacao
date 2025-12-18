@@ -1,10 +1,10 @@
 /**
  * Supplier Domain Entity
- * 
+ *
  * Represents a supplier/vendor in the petshop management system.
  * Suppliers provide products to the petshop and are used for purchase orders and inventory management.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - Supplier name is required
  * - Email format must be validated when provided
@@ -23,7 +23,7 @@ export class Supplier {
 
   /**
    * Creates a new Supplier entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param name - Supplier name (required)
    * @param contactEmail - Contact email address
@@ -31,7 +31,7 @@ export class Supplier {
    * @param defaultLeadTimeDays - Default lead time in days for orders
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if name is empty
    * @throws Error if contactEmail format is invalid (when provided)
@@ -44,7 +44,7 @@ export class Supplier {
     phone?: string,
     defaultLeadTimeDays?: number,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateName(name);
@@ -97,7 +97,7 @@ export class Supplier {
 
   /**
    * Updates the supplier name
-   * 
+   *
    * @param name - New supplier name
    * @throws Error if name is empty
    */
@@ -109,7 +109,7 @@ export class Supplier {
 
   /**
    * Updates the contact email
-   * 
+   *
    * @param contactEmail - New contact email
    * @throws Error if email format is invalid
    */
@@ -123,7 +123,7 @@ export class Supplier {
 
   /**
    * Updates the phone number
-   * 
+   *
    * @param phone - New phone number
    */
   updatePhone(phone: string | undefined): void {
@@ -133,7 +133,7 @@ export class Supplier {
 
   /**
    * Updates the default lead time in days
-   * 
+   *
    * @param defaultLeadTimeDays - New default lead time in days
    * @throws Error if defaultLeadTimeDays is negative
    */
@@ -147,7 +147,7 @@ export class Supplier {
 
   /**
    * Calculates the expected arrival date based on default lead time
-   * 
+   *
    * @param orderDate - Date when order is placed (defaults to now)
    * @returns Expected arrival date, or undefined if lead time is not set
    */
@@ -163,7 +163,7 @@ export class Supplier {
 
   /**
    * Calculates the expected arrival date based on a custom lead time
-   * 
+   *
    * @param orderDate - Date when order is placed (defaults to now)
    * @param leadTimeDays - Custom lead time in days
    * @returns Expected arrival date
@@ -181,7 +181,7 @@ export class Supplier {
 
   /**
    * Checks if the supplier has a default lead time set
-   * 
+   *
    * @returns True if default lead time is set
    */
   hasDefaultLeadTime(): boolean {
@@ -190,7 +190,7 @@ export class Supplier {
 
   /**
    * Checks if the supplier has contact email
-   * 
+   *
    * @returns True if contact email is set
    */
   hasContactEmail(): boolean {
@@ -199,7 +199,7 @@ export class Supplier {
 
   /**
    * Checks if the supplier has phone number
-   * 
+   *
    * @returns True if phone is set
    */
   hasPhone(): boolean {
@@ -227,7 +227,7 @@ export class Supplier {
   /**
    * Validates email format
    * Uses a basic email validation pattern
-   * 
+   *
    * @param email - Email address to validate
    * @throws Error if email format is invalid
    */
@@ -253,4 +253,3 @@ export class Supplier {
     }
   }
 }
-

@@ -1,54 +1,54 @@
 /**
  * AppointmentStatus Value Object
- * 
+ *
  * Represents the status of an appointment in the petshop management system.
  * This is a pure domain value object that encapsulates appointment status validation and business rules,
  * including valid status values and status transition rules.
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates status value
- * 
+ *
  * Business Rules:
  * - Valid status values: booked, confirmed, checked_in, completed, cancelled, needs-reschedule
  * - Status transitions follow a specific lifecycle
  * - Status determines what operations are allowed on the appointment
- * 
+ *
  * Invariants:
  * - Status value must be one of the valid status values
  * - Value object is immutable after creation
- * 
+ *
  * Equality Definition:
  * - Two AppointmentStatus instances are equal if their status values are equal
  * - Equality is based on status values, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In Appointment entity:
  *    constructor(
  *      // ... other params
  *      status: AppointmentStatus | string = AppointmentStatus.BOOKED,
  *    ) {
- *      this._status = status instanceof AppointmentStatus 
- *        ? status 
+ *      this._status = status instanceof AppointmentStatus
+ *        ? status
  *        : AppointmentStatus.fromString(status);
  *    }
- * 
+ *
  *    confirm(): void {
  *      if (!this._status.canTransitionTo(AppointmentStatus.CONFIRMED)) {
  *        throw new Error(`Cannot confirm appointment with status: ${this._status.value}`);
  *      }
  *      this._status = AppointmentStatus.CONFIRMED;
  *    }
- * 
+ *
  * 2. Creating AppointmentStatus:
  *    const booked = AppointmentStatus.BOOKED;
  *    const confirmed = AppointmentStatus.CONFIRMED;
  *    const fromString = AppointmentStatus.fromString("booked"); // AppointmentStatus.BOOKED
  *    const fromStringSafe = AppointmentStatus.fromStringSafe("invalid"); // null
- * 
+ *
  * 3. Checking status:
  *    const status = AppointmentStatus.BOOKED;
  *    status.isBooked(); // true
@@ -57,18 +57,18 @@
  *    status.isTerminal(); // false
  *    status.isCompleted(); // false
  *    status.isCancelled(); // false
- * 
+ *
  * 4. Status transitions:
  *    const booked = AppointmentStatus.BOOKED;
  *    booked.canTransitionTo(AppointmentStatus.CONFIRMED); // true
  *    booked.canTransitionTo(AppointmentStatus.COMPLETED); // false
  *    booked.canTransitionTo(AppointmentStatus.CANCELLED); // true
- * 
+ *
  * 5. Equality comparison:
  *    const status1 = AppointmentStatus.BOOKED;
  *    const status2 = AppointmentStatus.fromString("booked");
  *    status1.equals(status2); // true
- * 
+ *
  * 6. String representation:
  *    const status = AppointmentStatus.BOOKED;
  *    status.toString(); // "booked"
@@ -99,21 +99,21 @@ export class AppointmentStatus {
 
   // Status display names
   private static readonly DISPLAY_NAMES: { [key: string]: string } = {
-    'booked': 'Booked',
-    'confirmed': 'Confirmed',
-    'checked_in': 'Checked In',
-    'completed': 'Completed',
-    'cancelled': 'Cancelled',
+    booked: 'Booked',
+    confirmed: 'Confirmed',
+    checked_in: 'Checked In',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
     'needs-reschedule': 'Needs Reschedule',
   };
 
   /**
    * Creates a new AppointmentStatus value object
-   * 
+   *
    * Private constructor - use static factory methods or predefined constants instead:
    * - AppointmentStatus.BOOKED
    * - AppointmentStatus.fromString(value)
-   * 
+   *
    * @param value - Status value (must be one of the valid status values)
    * @throws Error if value is not a valid status
    */
@@ -124,7 +124,7 @@ export class AppointmentStatus {
 
   /**
    * Gets the status value
-   * 
+   *
    * @returns Status value string
    */
   get value(): string {
@@ -133,7 +133,7 @@ export class AppointmentStatus {
 
   /**
    * Gets the display name for the status
-   * 
+   *
    * @returns Human-readable display name
    */
   get displayName(): string {
@@ -142,9 +142,9 @@ export class AppointmentStatus {
 
   /**
    * Checks if this AppointmentStatus equals another AppointmentStatus
-   * 
+   *
    * Equality is determined by comparing status values.
-   * 
+   *
    * @param other - Other AppointmentStatus to compare
    * @returns True if status values are equal
    */
@@ -162,7 +162,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if this AppointmentStatus is equal to another AppointmentStatus (alias for equals)
-   * 
+   *
    * @param other - Other AppointmentStatus to compare
    * @returns True if status values are equal
    */
@@ -172,7 +172,7 @@ export class AppointmentStatus {
 
   /**
    * Converts the AppointmentStatus to string representation
-   * 
+   *
    * @returns Status value string
    */
   toString(): string {
@@ -183,7 +183,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if status is BOOKED
-   * 
+   *
    * @returns True if status is booked
    */
   isBooked(): boolean {
@@ -192,7 +192,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if status is CONFIRMED
-   * 
+   *
    * @returns True if status is confirmed
    */
   isConfirmed(): boolean {
@@ -201,7 +201,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if status is CHECKED_IN
-   * 
+   *
    * @returns True if status is checked_in
    */
   isCheckedIn(): boolean {
@@ -210,7 +210,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if status is COMPLETED
-   * 
+   *
    * @returns True if status is completed
    */
   isCompleted(): boolean {
@@ -219,7 +219,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if status is CANCELLED
-   * 
+   *
    * @returns True if status is cancelled
    */
   isCancelled(): boolean {
@@ -228,7 +228,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if status is NEEDS_RESCHEDULE
-   * 
+   *
    * @returns True if status is needs-reschedule
    */
   isNeedsReschedule(): boolean {
@@ -237,7 +237,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if status is active (not completed or cancelled)
-   * 
+   *
    * @returns True if status is active
    */
   isActive(): boolean {
@@ -246,7 +246,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if status is terminal (completed or cancelled)
-   * 
+   *
    * @returns True if status is terminal
    */
   isTerminal(): boolean {
@@ -255,7 +255,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if appointment can be modified in this status
-   * 
+   *
    * @returns True if appointment can be modified
    */
   allowsModification(): boolean {
@@ -264,7 +264,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if appointment can be cancelled in this status
-   * 
+   *
    * @returns True if appointment can be cancelled
    */
   allowsCancellation(): boolean {
@@ -273,7 +273,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if appointment can be rescheduled in this status
-   * 
+   *
    * @returns True if appointment can be rescheduled
    */
   allowsReschedule(): boolean {
@@ -284,7 +284,7 @@ export class AppointmentStatus {
 
   /**
    * Checks if this status can transition to another status
-   * 
+   *
    * Valid transitions:
    * - BOOKED -> CONFIRMED, CANCELLED, NEEDS_RESCHEDULE
    * - CONFIRMED -> CHECKED_IN, CANCELLED, NEEDS_RESCHEDULE
@@ -292,7 +292,7 @@ export class AppointmentStatus {
    * - COMPLETED -> (terminal, no transitions)
    * - CANCELLED -> (terminal, no transitions)
    * - NEEDS_RESCHEDULE -> BOOKED, CANCELLED
-   * 
+   *
    * @param targetStatus - Target status to transition to
    * @returns True if transition is allowed
    */
@@ -308,12 +308,12 @@ export class AppointmentStatus {
 
     // Define valid transitions
     const validTransitions: { [key: string]: string[] } = {
-      'booked': ['confirmed', 'cancelled', 'needs-reschedule'],
-      'confirmed': ['checked_in', 'cancelled', 'needs-reschedule'],
-      'checked_in': ['completed', 'cancelled', 'needs-reschedule'],
+      booked: ['confirmed', 'cancelled', 'needs-reschedule'],
+      confirmed: ['checked_in', 'cancelled', 'needs-reschedule'],
+      checked_in: ['completed', 'cancelled', 'needs-reschedule'],
       'needs-reschedule': ['booked', 'cancelled'],
-      'completed': [], // Terminal
-      'cancelled': [], // Terminal
+      completed: [], // Terminal
+      cancelled: [], // Terminal
     };
 
     const allowedTargets = validTransitions[this._value] || [];
@@ -322,7 +322,7 @@ export class AppointmentStatus {
 
   /**
    * Gets all valid target statuses from this status
-   * 
+   *
    * @returns Array of valid target AppointmentStatus instances
    */
   getValidTransitions(): AppointmentStatus[] {
@@ -331,21 +331,21 @@ export class AppointmentStatus {
     }
 
     const validTransitions: { [key: string]: string[] } = {
-      'booked': ['confirmed', 'cancelled', 'needs-reschedule'],
-      'confirmed': ['checked_in', 'cancelled', 'needs-reschedule'],
-      'checked_in': ['completed', 'cancelled', 'needs-reschedule'],
+      booked: ['confirmed', 'cancelled', 'needs-reschedule'],
+      confirmed: ['checked_in', 'cancelled', 'needs-reschedule'],
+      checked_in: ['completed', 'cancelled', 'needs-reschedule'],
       'needs-reschedule': ['booked', 'cancelled'],
     };
 
     const targetValues = validTransitions[this._value] || [];
-    return targetValues.map(value => AppointmentStatus.fromString(value));
+    return targetValues.map((value) => AppointmentStatus.fromString(value));
   }
 
   // Factory methods
 
   /**
    * Creates an AppointmentStatus from a string value
-   * 
+   *
    * @param value - Status value string
    * @returns AppointmentStatus instance
    * @throws Error if value is not a valid status
@@ -365,15 +365,17 @@ export class AppointmentStatus {
       case 'needs-reschedule':
         return AppointmentStatus.NEEDS_RESCHEDULE;
       default:
-        throw new Error(`Invalid appointment status: "${value}". Valid values are: ${AppointmentStatus.VALID_VALUES.join(', ')}`);
+        throw new Error(
+          `Invalid appointment status: "${value}". Valid values are: ${AppointmentStatus.VALID_VALUES.join(', ')}`,
+        );
     }
   }
 
   /**
    * Creates an AppointmentStatus from a string value, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param value - Status value string
    * @returns AppointmentStatus instance or null if invalid
    */
@@ -387,7 +389,7 @@ export class AppointmentStatus {
 
   /**
    * Validates if a string value is a valid appointment status
-   * 
+   *
    * @param value - Status value to validate
    * @returns True if value is a valid status
    */
@@ -397,7 +399,7 @@ export class AppointmentStatus {
 
   /**
    * Gets all valid appointment status values
-   * 
+   *
    * @returns Array of all valid status values
    */
   static getAllValues(): string[] {
@@ -406,7 +408,7 @@ export class AppointmentStatus {
 
   /**
    * Gets all appointment status instances
-   * 
+   *
    * @returns Array of all AppointmentStatus instances
    */
   static getAll(): AppointmentStatus[] {
@@ -424,7 +426,7 @@ export class AppointmentStatus {
 
   /**
    * Validates the status value
-   * 
+   *
    * @param value - Status value to validate
    * @throws Error if value is not valid
    */
@@ -435,9 +437,8 @@ export class AppointmentStatus {
 
     if (!AppointmentStatus.VALID_VALUES.includes(value as any)) {
       throw new Error(
-        `Invalid appointment status: "${value}". Valid values are: ${AppointmentStatus.VALID_VALUES.join(', ')}`
+        `Invalid appointment status: "${value}". Valid values are: ${AppointmentStatus.VALID_VALUES.join(', ')}`,
       );
     }
   }
 }
-

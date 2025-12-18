@@ -1,11 +1,11 @@
 /**
  * Invoice Domain Entity
- * 
+ *
  * Represents an invoice in the petshop management system.
  * Invoices are fiscal documents that record sales transactions with customers.
  * Once issued, invoices become immutable and corrections require void/credit-note flows.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - Invoice must be linked to a Company and Store (invariants)
  * - Invoice number must be sequential and unique (enforced at repository/use case level)
@@ -53,7 +53,7 @@ export class Invoice {
 
   /**
    * Creates a new Invoice entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param companyId - Company ID that issues the invoice (required)
    * @param storeId - Store ID where invoice is issued (required)
@@ -68,7 +68,7 @@ export class Invoice {
    * @param externalReference - External reference (e.g., payment gateway reference)
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if companyId is empty
    * @throws Error if storeId is empty
@@ -90,7 +90,7 @@ export class Invoice {
     paymentMethod?: string,
     externalReference?: string,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateCompanyId(companyId);
@@ -112,7 +112,7 @@ export class Invoice {
     this._storeId = storeId;
     this._invoiceNumber = invoiceNumber;
     this._buyerCustomerId = buyerCustomerId;
-    this._lines = lines.map(line => ({ ...line }));
+    this._lines = lines.map((line) => ({ ...line }));
     this._status = status;
     this._createdBy = createdBy;
     this._issuedAt = issuedAt ? new Date(issuedAt) : undefined;
@@ -152,7 +152,7 @@ export class Invoice {
   }
 
   get lines(): ReadonlyArray<InvoiceLine> {
-    return this._lines.map(line => ({ ...line }));
+    return this._lines.map((line) => ({ ...line }));
   }
 
   get subtotal(): number {
@@ -198,7 +198,7 @@ export class Invoice {
   /**
    * Updates the invoice number
    * Note: Invoice number uniqueness must be validated at repository/use case level
-   * 
+   *
    * @param invoiceNumber - New invoice number
    * @throws Error if invoiceNumber is empty
    * @throws Error if invoice is already issued
@@ -214,7 +214,7 @@ export class Invoice {
 
   /**
    * Updates the buyer customer ID
-   * 
+   *
    * @param buyerCustomerId - New buyer customer ID
    * @throws Error if invoice is already issued
    */
@@ -228,7 +228,7 @@ export class Invoice {
 
   /**
    * Adds an invoice line item
-   * 
+   *
    * @param line - Invoice line to add
    * @throws Error if line is invalid
    * @throws Error if invoice is already issued
@@ -245,7 +245,7 @@ export class Invoice {
 
   /**
    * Removes an invoice line item by index
-   * 
+   *
    * @param index - Index of the line to remove
    * @throws Error if index is out of bounds
    * @throws Error if invoice is already issued
@@ -264,7 +264,7 @@ export class Invoice {
 
   /**
    * Updates an invoice line item by index
-   * 
+   *
    * @param index - Index of the line to update
    * @param line - New line data
    * @throws Error if index is out of bounds or line is invalid
@@ -285,7 +285,7 @@ export class Invoice {
 
   /**
    * Sets all invoice lines
-   * 
+   *
    * @param lines - New list of invoice lines
    * @throws Error if any line is invalid
    * @throws Error if invoice is already issued
@@ -295,7 +295,7 @@ export class Invoice {
       throw new Error('Cannot set lines after invoice is issued');
     }
     this.validateInvoiceLines(lines);
-    this._lines = lines.map(line => ({ ...line }));
+    this._lines = lines.map((line) => ({ ...line }));
     this.recalculateTotals();
     this._updatedAt = new Date();
   }
@@ -303,7 +303,7 @@ export class Invoice {
   /**
    * Issues the invoice
    * Note: Company NIF and sequential invoice_number validation must be done at use case level
-   * 
+   *
    * @param issuedAt - Date when invoice is issued (defaults to now)
    * @throws Error if invoice is not in DRAFT status
    */
@@ -321,7 +321,7 @@ export class Invoice {
 
   /**
    * Marks the invoice as paid
-   * 
+   *
    * @param paidAt - Date when invoice was paid (defaults to now)
    * @param paymentMethod - Payment method used
    * @param externalReference - External reference (e.g., payment gateway reference)
@@ -340,7 +340,7 @@ export class Invoice {
 
   /**
    * Cancels the invoice
-   * 
+   *
    * @throws Error if invoice is already paid, cancelled, or refunded
    */
   cancel(): void {
@@ -359,7 +359,7 @@ export class Invoice {
 
   /**
    * Marks the invoice as refunded
-   * 
+   *
    * @throws Error if invoice is not in PAID status
    */
   markAsRefunded(): void {
@@ -381,7 +381,7 @@ export class Invoice {
     for (const line of this._lines) {
       const lineSubtotal = line.quantity * line.unitPrice;
       const lineVat = lineSubtotal * (line.vatRate / 100);
-      
+
       subtotal += lineSubtotal;
       vatTotal += lineVat;
     }
@@ -393,7 +393,7 @@ export class Invoice {
 
   /**
    * Checks if the invoice can be modified
-   * 
+   *
    * @returns True if invoice is in DRAFT status
    */
   canBeModified(): boolean {
@@ -402,7 +402,7 @@ export class Invoice {
 
   /**
    * Checks if the invoice can be issued
-   * 
+   *
    * @returns True if invoice is in DRAFT status and has lines
    */
   canBeIssued(): boolean {
@@ -411,18 +411,20 @@ export class Invoice {
 
   /**
    * Checks if the invoice can be cancelled
-   * 
+   *
    * @returns True if invoice can be cancelled
    */
   canBeCancelled(): boolean {
-    return this._status !== InvoiceStatus.PAID && 
-           this._status !== InvoiceStatus.CANCELLED &&
-           this._status !== InvoiceStatus.REFUNDED;
+    return (
+      this._status !== InvoiceStatus.PAID &&
+      this._status !== InvoiceStatus.CANCELLED &&
+      this._status !== InvoiceStatus.REFUNDED
+    );
   }
 
   /**
    * Checks if the invoice is in draft status
-   * 
+   *
    * @returns True if status is DRAFT
    */
   isDraft(): boolean {
@@ -431,7 +433,7 @@ export class Invoice {
 
   /**
    * Checks if the invoice is issued
-   * 
+   *
    * @returns True if status is ISSUED
    */
   isIssued(): boolean {
@@ -440,7 +442,7 @@ export class Invoice {
 
   /**
    * Checks if the invoice is paid
-   * 
+   *
    * @returns True if status is PAID
    */
   isPaid(): boolean {
@@ -449,7 +451,7 @@ export class Invoice {
 
   /**
    * Checks if the invoice is cancelled
-   * 
+   *
    * @returns True if status is CANCELLED
    */
   isCancelled(): boolean {
@@ -458,7 +460,7 @@ export class Invoice {
 
   /**
    * Checks if the invoice is refunded
-   * 
+   *
    * @returns True if status is REFUNDED
    */
   isRefunded(): boolean {
@@ -467,7 +469,7 @@ export class Invoice {
 
   /**
    * Checks if the invoice has a buyer customer
-   * 
+   *
    * @returns True if buyer customer ID is set
    */
   hasBuyer(): boolean {
@@ -476,7 +478,7 @@ export class Invoice {
 
   /**
    * Gets the number of line items
-   * 
+   *
    * @returns Number of invoice lines
    */
   getLineCount(): number {
@@ -542,4 +544,3 @@ export class Invoice {
     }
   }
 }
-

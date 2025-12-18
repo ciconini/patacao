@@ -1,10 +1,10 @@
 /**
  * Session Domain Entity
- * 
+ *
  * Represents an authentication session for a user in the petshop management system.
  * This entity tracks user sessions for access control and security.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - A Session must be linked to a User (invariant)
  * - Revoking a Session immediately denies access
@@ -22,14 +22,14 @@ export class Session {
 
   /**
    * Creates a new Session entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param userId - User ID that owns this session (required)
    * @param createdAt - Session creation timestamp (defaults to now)
    * @param expiresAt - Session expiration timestamp
    * @param revoked - Whether the session is revoked (default false)
    * @param revokedAt - Timestamp when session was revoked
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if userId is empty
    * @throws Error if expiresAt is before createdAt
@@ -40,13 +40,13 @@ export class Session {
     createdAt?: Date,
     expiresAt?: Date,
     revoked: boolean = false,
-    revokedAt?: Date
+    revokedAt?: Date,
   ) {
     this.validateId(id);
     this.validateUserId(userId);
 
     const created = createdAt ? new Date(createdAt) : new Date();
-    
+
     if (expiresAt) {
       this.validateExpirationDate(created, expiresAt);
     }
@@ -90,7 +90,7 @@ export class Session {
 
   /**
    * Sets the expiration date for the session
-   * 
+   *
    * @param expiresAt - Expiration timestamp
    * @throws Error if expiresAt is before createdAt
    */
@@ -116,7 +116,7 @@ export class Session {
 
   /**
    * Checks if the session is valid (not revoked and not expired)
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to now)
    * @returns True if session is valid
    */
@@ -134,7 +134,7 @@ export class Session {
 
   /**
    * Checks if the session is expired
-   * 
+   *
    * @param referenceDate - Date to check against (defaults to now)
    * @returns True if session is expired
    */
@@ -148,7 +148,7 @@ export class Session {
 
   /**
    * Checks if the session is revoked
-   * 
+   *
    * @returns True if session is revoked
    */
   isRevoked(): boolean {
@@ -157,7 +157,7 @@ export class Session {
 
   /**
    * Calculates the remaining time until expiration in milliseconds
-   * 
+   *
    * @param referenceDate - Date to calculate from (defaults to now)
    * @returns Remaining time in milliseconds, or undefined if no expiration or already expired
    */
@@ -175,7 +175,7 @@ export class Session {
 
   /**
    * Calculates the remaining time until expiration in seconds
-   * 
+   *
    * @param referenceDate - Date to calculate from (defaults to now)
    * @returns Remaining time in seconds, or undefined if no expiration or already expired
    */
@@ -186,19 +186,19 @@ export class Session {
 
   /**
    * Calculates the session duration in milliseconds
-   * 
+   *
    * @param referenceDate - Date to calculate to (defaults to now, or expiresAt if expired)
    * @returns Session duration in milliseconds
    */
   getDurationMs(referenceDate?: Date): number {
-    const endDate = referenceDate || 
-                    (this._expiresAt && this.isExpired() ? this._expiresAt : new Date());
+    const endDate =
+      referenceDate || (this._expiresAt && this.isExpired() ? this._expiresAt : new Date());
     return endDate.getTime() - this._createdAt.getTime();
   }
 
   /**
    * Calculates the session duration in seconds
-   * 
+   *
    * @param referenceDate - Date to calculate to (defaults to now, or expiresAt if expired)
    * @returns Session duration in seconds
    */
@@ -226,4 +226,3 @@ export class Session {
     }
   }
 }
-

@@ -1,10 +1,10 @@
 /**
  * Cancel Appointment Use Case (UC-SVC-005)
- * 
+ *
  * Application use case for cancelling a booked, confirmed, or checked-in appointment.
  * This use case orchestrates domain entities to cancel appointments and release
  * inventory reservations if the appointment was confirmed.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, or Owner role)
  * - Validate appointment exists and is in valid status
@@ -14,7 +14,7 @@
  * - Record cancellation reason and no-show flag
  * - Persist changes via repositories
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -81,7 +81,7 @@ export interface CancelAppointmentResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -130,16 +130,16 @@ export class CancelAppointmentUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the cancel appointment use case
-   * 
+   *
    * @param input - Input data for cancelling appointment
    * @returns Result containing cancelled appointment or error
    */
@@ -166,22 +166,24 @@ export class CancelAppointmentUseCase {
       // 4. Verify user has store access
       const hasAccess = await this.currentUserRepository.hasStoreAccess(
         input.performedBy,
-        appointment.storeId
+        appointment.storeId,
       );
       if (!hasAccess) {
-        throw new ForbiddenError('You do not have access to this appointment\'s store');
+        throw new ForbiddenError("You do not have access to this appointment's store");
       }
 
       // 5. Validate reason length
       if (input.reason && input.reason.length > CancelAppointmentUseCase.MAX_REASON_LENGTH) {
         throw new ValidationError(
-          `Reason cannot exceed ${CancelAppointmentUseCase.MAX_REASON_LENGTH} characters`
+          `Reason cannot exceed ${CancelAppointmentUseCase.MAX_REASON_LENGTH} characters`,
         );
       }
 
       // 6. Release inventory reservations if appointment was confirmed or checked-in
-      if (appointment.status === AppointmentStatus.CONFIRMED || 
-          appointment.status === AppointmentStatus.CHECKED_IN) {
+      if (
+        appointment.status === AppointmentStatus.CONFIRMED ||
+        appointment.status === AppointmentStatus.CHECKED_IN
+      ) {
         await this.releaseInventoryReservations(appointment.id);
       }
 
@@ -195,7 +197,7 @@ export class CancelAppointmentUseCase {
         const currentNotes = appointment.notes || '';
         const cancellationNote = `[CANCELLED] ${input.reason}`;
         appointment.updateNotes(
-          currentNotes ? `${currentNotes}\n${cancellationNote}` : cancellationNote
+          currentNotes ? `${currentNotes}\n${cancellationNote}` : cancellationNote,
         );
       }
 
@@ -207,7 +209,7 @@ export class CancelAppointmentUseCase {
         updatedAppointment,
         input.reason,
         input.markNoShow || false,
-        input.performedBy
+        input.performedBy,
       );
 
       // 11. Return success result
@@ -233,12 +235,12 @@ export class CancelAppointmentUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -257,8 +259,9 @@ export class CancelAppointmentUseCase {
    * Releases inventory reservations for the appointment
    */
   private async releaseInventoryReservations(appointmentId: string): Promise<void> {
-    const reservations = await this.inventoryReservationRepository.findByAppointmentId(appointmentId);
-    
+    const reservations =
+      await this.inventoryReservationRepository.findByAppointmentId(appointmentId);
+
     for (const reservation of reservations) {
       // Delete reservation (releasing the hold)
       await this.inventoryReservationRepository.delete(reservation.id);
@@ -272,7 +275,7 @@ export class CancelAppointmentUseCase {
     appointment: Appointment,
     reason: string | undefined,
     noShow: boolean,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -289,7 +292,7 @@ export class CancelAppointmentUseCase {
             noShow,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -323,4 +326,3 @@ export class CancelAppointmentUseCase {
     };
   }
 }
-

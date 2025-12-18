@@ -1,16 +1,16 @@
 /**
  * Search Products Use Case (UC-INV-007)
- * 
+ *
  * Application use case for searching and filtering product records.
  * This use case orchestrates domain entities and repository ports to search products.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, Accountant, or Owner role)
  * - Validate search criteria and pagination parameters
  * - Execute search via repository
  * - Calculate current stock for stock-tracked products
  * - Return paginated results with metadata
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -23,7 +23,11 @@ import { RoleId } from '../../shared/domain/role-id.value-object';
 
 // Repository interfaces (ports)
 export interface ProductRepository {
-  search(criteria: SearchCriteria, pagination: Pagination, sort: Sort): Promise<PaginatedResult<Product>>;
+  search(
+    criteria: SearchCriteria,
+    pagination: Pagination,
+    sort: Sort,
+  ): Promise<PaginatedResult<Product>>;
   calculateCurrentStock(productId: string): Promise<number>;
 }
 
@@ -123,7 +127,7 @@ export interface SearchProductsResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -164,12 +168,12 @@ export class SearchProductsUseCase {
 
   constructor(
     private readonly productRepository: ProductRepository,
-    private readonly currentUserRepository: CurrentUserRepository
+    private readonly currentUserRepository: CurrentUserRepository,
   ) {}
 
   /**
    * Executes the search products use case
-   * 
+   *
    * @param input - Input data for searching products
    * @returns Result containing paginated product list or error
    */
@@ -211,12 +215,12 @@ export class SearchProductsUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -227,7 +231,9 @@ export class SearchProductsUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Manager, Accountant, or Owner role can search products');
+      throw new ForbiddenError(
+        'Only Staff, Manager, Accountant, or Owner role can search products',
+      );
     }
   }
 
@@ -235,15 +241,17 @@ export class SearchProductsUseCase {
    * Validates and normalizes pagination parameters
    */
   private validateAndNormalizePagination(page?: number, perPage?: number): Pagination {
-    const normalizedPage = page !== undefined && page >= SearchProductsUseCase.MIN_PAGE
-      ? page
-      : SearchProductsUseCase.MIN_PAGE;
+    const normalizedPage =
+      page !== undefined && page >= SearchProductsUseCase.MIN_PAGE
+        ? page
+        : SearchProductsUseCase.MIN_PAGE;
 
-    const normalizedPerPage = perPage !== undefined &&
+    const normalizedPerPage =
+      perPage !== undefined &&
       perPage >= SearchProductsUseCase.MIN_PER_PAGE &&
       perPage <= SearchProductsUseCase.MAX_PER_PAGE
-      ? perPage
-      : SearchProductsUseCase.DEFAULT_PER_PAGE;
+        ? perPage
+        : SearchProductsUseCase.DEFAULT_PER_PAGE;
 
     return {
       page: normalizedPage,
@@ -267,7 +275,7 @@ export class SearchProductsUseCase {
 
     if (!SearchProductsUseCase.VALID_SORT_FIELDS.includes(field)) {
       throw new ValidationError(
-        `Invalid sort field. Valid fields: ${SearchProductsUseCase.VALID_SORT_FIELDS.join(', ')}`
+        `Invalid sort field. Valid fields: ${SearchProductsUseCase.VALID_SORT_FIELDS.join(', ')}`,
       );
     }
 
@@ -317,7 +325,9 @@ export class SearchProductsUseCase {
   /**
    * Enriches products with current stock for stock-tracked products
    */
-  private async enrichWithCurrentStock(products: Product[]): Promise<SearchProductsOutput['items']> {
+  private async enrichWithCurrentStock(
+    products: Product[],
+  ): Promise<SearchProductsOutput['items']> {
     const enrichedItems: SearchProductsOutput['items'] = [];
 
     for (const product of products) {
@@ -375,4 +385,3 @@ export class SearchProductsUseCase {
     };
   }
 }
-

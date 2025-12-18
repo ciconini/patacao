@@ -1,9 +1,9 @@
 /**
  * Application Error Base Classes
- * 
+ *
  * Centralized error classes for use across all application use cases.
  * These errors are thrown by use cases and caught by the global exception filter.
- * 
+ *
  * This belongs to the Application layer (shared across modules).
  */
 
@@ -15,7 +15,7 @@ export class ApplicationError extends Error {
     public readonly code: string,
     message: string,
     public readonly httpStatus: number = 500,
-    public readonly details?: Record<string, any>
+    public readonly details?: Record<string, any>,
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -117,7 +117,10 @@ export class BusinessRuleViolationError extends ApplicationError {
  * Repository error - Database/persistence error
  */
 export class RepositoryError extends ApplicationError {
-  constructor(message: string = 'An error occurred during persistence', details?: Record<string, any>) {
+  constructor(
+    message: string = 'An error occurred during persistence',
+    details?: Record<string, any>,
+  ) {
     super('REPOSITORY_ERROR', message, 500, details);
   }
 }
@@ -130,4 +133,3 @@ export class DomainError extends ApplicationError {
     super('DOMAIN_ERROR', message, 400, details);
   }
 }
-

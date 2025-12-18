@@ -1,49 +1,49 @@
 /**
  * EmailAddress Value Object
- * 
+ *
  * Represents an email address in the petshop management system.
  * This is a pure domain value object that encapsulates email validation and business rules.
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates the email address format
- * 
+ *
  * Business Rules:
  * - Email address must match valid email format
  * - Email address must not exceed 255 characters
  * - Email address is case-insensitive for equality comparison
  * - Email address is normalized (trimmed and lowercased) for consistency
- * 
+ *
  * Invariants:
  * - Email address value must be non-empty after trimming
  * - Email address must match valid format pattern
  * - Email address length must not exceed 255 characters
  * - Normalized email address is always lowercase
- * 
+ *
  * Equality Definition:
  * - Two EmailAddress instances are equal if their normalized values are equal
  * - Equality is case-insensitive
  * - Equality is based on the email address value, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In User entity:
  *    const userEmail = new EmailAddress('John.Doe@Example.com');
  *    // Normalized to: 'john.doe@example.com'
  *    this._email = userEmail;
- * 
+ *
  * 2. In Company entity (optional):
  *    if (email) {
  *      this._email = new EmailAddress(email);
  *    }
- * 
+ *
  * 3. Equality comparison:
  *    const email1 = new EmailAddress('user@example.com');
  *    const email2 = new EmailAddress('USER@EXAMPLE.COM');
  *    email1.equals(email2); // true (case-insensitive)
- * 
+ *
  * 4. String representation:
  *    const email = new EmailAddress('user@example.com');
  *    email.toString(); // 'user@example.com'
@@ -56,7 +56,7 @@ export class EmailAddress {
 
   /**
    * Creates a new EmailAddress value object
-   * 
+   *
    * @param email - Email address string
    * @throws Error if email is empty or invalid format
    * @throws Error if email exceeds 255 characters
@@ -72,7 +72,7 @@ export class EmailAddress {
 
   /**
    * Gets the email address value
-   * 
+   *
    * @returns Email address string (original case preserved)
    */
   get value(): string {
@@ -81,7 +81,7 @@ export class EmailAddress {
 
   /**
    * Gets the normalized email address (lowercase)
-   * 
+   *
    * @returns Normalized email address string
    */
   get normalized(): string {
@@ -90,7 +90,7 @@ export class EmailAddress {
 
   /**
    * Gets the local part of the email address (before @)
-   * 
+   *
    * @returns Local part of the email
    */
   get localPart(): string {
@@ -100,7 +100,7 @@ export class EmailAddress {
 
   /**
    * Gets the domain part of the email address (after @)
-   * 
+   *
    * @returns Domain part of the email
    */
   get domain(): string {
@@ -112,9 +112,9 @@ export class EmailAddress {
 
   /**
    * Checks if this email address equals another email address
-   * 
+   *
    * Equality is determined by comparing normalized (lowercase) values.
-   * 
+   *
    * @param other - Other EmailAddress to compare
    * @returns True if email addresses are equal (case-insensitive)
    */
@@ -132,7 +132,7 @@ export class EmailAddress {
 
   /**
    * Converts the email address to string representation
-   * 
+   *
    * @returns Email address string
    */
   toString(): string {
@@ -141,9 +141,9 @@ export class EmailAddress {
 
   /**
    * Creates an EmailAddress from a string, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param email - Email address string
    * @returns EmailAddress instance or null if invalid
    */
@@ -161,7 +161,7 @@ export class EmailAddress {
 
   /**
    * Validates if a string is a valid email address format
-   * 
+   *
    * @param email - Email address string to validate
    * @returns True if email format is valid
    */
@@ -187,7 +187,7 @@ export class EmailAddress {
 
   /**
    * Validates the email address format and length
-   * 
+   *
    * @param email - Email address string to validate
    * @throws Error if email is empty, invalid format, or exceeds length limit
    */
@@ -232,4 +232,3 @@ export class EmailAddress {
     }
   }
 }
-

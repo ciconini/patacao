@@ -1,6 +1,6 @@
 /**
  * Authentication Module
- * 
+ *
  * NestJS module that provides authentication services and guards.
  * This module integrates Firebase Authentication with the backend and provides
  * JWT token generation, password hashing, rate limiting, and permission checking.
@@ -90,4 +90,3 @@ import { FirebaseUserLookupService } from './firebase-user-lookup.service';
   ],
 })
 export class AuthModule {}
-

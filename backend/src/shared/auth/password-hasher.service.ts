@@ -1,6 +1,6 @@
 /**
  * Password Hasher Service
- * 
+ *
  * Service for hashing and verifying passwords using bcrypt.
  * This service implements the PasswordHasher interface used by authentication use cases.
  */
@@ -19,7 +19,7 @@ export class PasswordHasherService implements PasswordHasher {
 
   /**
    * Hashes a password using bcrypt
-   * 
+   *
    * @param password - Plain text password
    * @returns Hashed password
    */
@@ -29,7 +29,7 @@ export class PasswordHasherService implements PasswordHasher {
 
   /**
    * Verifies a password against a hash
-   * 
+   *
    * @param password - Plain text password
    * @param hash - Hashed password to compare against
    * @returns True if password matches hash, false otherwise

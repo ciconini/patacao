@@ -1,11 +1,11 @@
 /**
  * StockMovement Domain Entity
- * 
+ *
  * Represents a stock movement (receipt, sale, adjustment, etc.) in the petshop management system.
  * StockMovement is an immutable audit record of all inventory changes. All stock changes must be
  * recorded and cannot be deleted; corrections are made with compensating movements.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - StockMovement must be linked to a Product (invariant)
  * - Quantity change must be non-zero integer (positive for receipt, negative for decrement)
@@ -37,7 +37,7 @@ export class StockMovement {
 
   /**
    * Creates a new StockMovement entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param productId - Product ID this movement affects (required)
    * @param quantityChange - Quantity change (positive for receipt, negative for decrement, must be non-zero)
@@ -47,7 +47,7 @@ export class StockMovement {
    * @param batchId - Batch ID if movement is batch-specific
    * @param referenceId - Reference ID (e.g., invoice id, purchase_order id)
    * @param createdAt - Creation timestamp (defaults to now)
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if productId is empty
    * @throws Error if quantityChange is zero
@@ -63,7 +63,7 @@ export class StockMovement {
     locationId: string,
     batchId?: string,
     referenceId?: string,
-    createdAt?: Date
+    createdAt?: Date,
   ) {
     this.validateId(id);
     this.validateProductId(productId);
@@ -121,7 +121,7 @@ export class StockMovement {
 
   /**
    * Checks if this is a receipt movement (positive quantity change)
-   * 
+   *
    * @returns True if quantity change is positive
    */
   isReceipt(): boolean {
@@ -130,7 +130,7 @@ export class StockMovement {
 
   /**
    * Checks if this is a decrement movement (negative quantity change)
-   * 
+   *
    * @returns True if quantity change is negative
    */
   isDecrement(): boolean {
@@ -139,7 +139,7 @@ export class StockMovement {
 
   /**
    * Gets the absolute quantity change (always positive)
-   * 
+   *
    * @returns Absolute value of quantity change
    */
   getAbsoluteQuantity(): number {
@@ -148,7 +148,7 @@ export class StockMovement {
 
   /**
    * Checks if the movement is batch-specific
-   * 
+   *
    * @returns True if batch ID is set
    */
   isBatchSpecific(): boolean {
@@ -157,7 +157,7 @@ export class StockMovement {
 
   /**
    * Checks if the movement has a reference ID
-   * 
+   *
    * @returns True if reference ID is set
    */
   hasReference(): boolean {
@@ -166,7 +166,7 @@ export class StockMovement {
 
   /**
    * Checks if the movement reason is a receipt
-   * 
+   *
    * @returns True if reason is RECEIPT
    */
   isReceiptReason(): boolean {
@@ -175,7 +175,7 @@ export class StockMovement {
 
   /**
    * Checks if the movement reason is a sale
-   * 
+   *
    * @returns True if reason is SALE
    */
   isSaleReason(): boolean {
@@ -184,7 +184,7 @@ export class StockMovement {
 
   /**
    * Checks if the movement reason is an adjustment
-   * 
+   *
    * @returns True if reason is ADJUSTMENT
    */
   isAdjustmentReason(): boolean {
@@ -193,7 +193,7 @@ export class StockMovement {
 
   /**
    * Checks if the movement reason is a transfer
-   * 
+   *
    * @returns True if reason is TRANSFER
    */
   isTransferReason(): boolean {
@@ -202,7 +202,7 @@ export class StockMovement {
 
   /**
    * Checks if the movement reason is a reservation release
-   * 
+   *
    * @returns True if reason is RESERVATION_RELEASE
    */
   isReservationReleaseReason(): boolean {
@@ -212,7 +212,7 @@ export class StockMovement {
   /**
    * Creates a compensating movement to reverse this movement
    * This is used to correct errors instead of deleting movements
-   * 
+   *
    * @param id - ID for the compensating movement
    * @param performedBy - User ID performing the correction
    * @param referenceId - Optional reference ID for the correction
@@ -223,7 +223,7 @@ export class StockMovement {
     id: string,
     performedBy: string,
     referenceId?: string,
-    createdAt?: Date
+    createdAt?: Date,
   ): StockMovement {
     // Reverse the quantity change
     const compensatingQuantityChange = -this._quantityChange;
@@ -240,7 +240,7 @@ export class StockMovement {
       this._locationId,
       this._batchId,
       referenceId,
-      createdAt
+      createdAt,
     );
   }
 
@@ -270,7 +270,9 @@ export class StockMovement {
 
   private validatePerformedBy(performedBy: string): void {
     if (!performedBy || performedBy.trim().length === 0) {
-      throw new Error('Performed by user ID is required - all stock changes must be recorded with performer');
+      throw new Error(
+        'Performed by user ID is required - all stock changes must be recorded with performer',
+      );
     }
   }
 
@@ -280,4 +282,3 @@ export class StockMovement {
     }
   }
 }
-

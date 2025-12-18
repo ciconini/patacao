@@ -1,16 +1,16 @@
 /**
  * InvoiceRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for InvoiceRepository port.
  * This implementation handles persistence of Invoice domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map Invoice domain entities to Firestore documents
  * - Map Firestore documents to Invoice domain entities
  * - Implement repository interface methods
  * - Handle invoice number generation
  * - Handle Firestore-specific operations (queries, transactions)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -56,13 +56,13 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves an Invoice entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
-   * 
+   *
    * @param invoice - Invoice domain entity to save
    * @returns Saved Invoice entity
    */
@@ -77,7 +77,7 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
 
   /**
    * Updates an Invoice entity in Firestore
-   * 
+   *
    * @param invoice - Invoice domain entity to update
    * @returns Updated Invoice entity
    */
@@ -87,7 +87,7 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
 
   /**
    * Finds an Invoice by ID
-   * 
+   *
    * @param id - Invoice ID
    * @returns Invoice entity or null if not found
    */
@@ -104,7 +104,7 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
 
   /**
    * Finds an invoice by invoice number and company
-   * 
+   *
    * @param invoiceNumber - Invoice number
    * @param companyId - Company ID
    * @returns Invoice entity or null if not found
@@ -128,7 +128,7 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
   /**
    * Generates the next sequential invoice number for a company and store
    * Uses a counter document in Firestore to ensure sequential numbering
-   * 
+   *
    * @param companyId - Company ID
    * @param storeId - Store ID
    * @returns Next invoice number (format: YYYY/XXXX where XXXX is sequential)
@@ -169,17 +169,13 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
 
   /**
    * Finds invoices by company and period
-   * 
+   *
    * @param companyId - Company ID
    * @param start - Start date of period
    * @param end - End date of period
    * @returns Array of invoices
    */
-  async findByCompanyAndPeriod(
-    companyId: string,
-    start: Date,
-    end: Date
-  ): Promise<Invoice[]> {
+  async findByCompanyAndPeriod(companyId: string, start: Date, end: Date): Promise<Invoice[]> {
     const startTimestamp = this.toTimestamp(start);
     const endTimestamp = this.toTimestamp(end);
 
@@ -191,14 +187,12 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
       .where('issuedAt', '<=', endTimestamp)
       .get();
 
-    return snapshot.docs.map(doc => 
-      this.toEntity(doc.id, doc.data() as InvoiceDocument)
-    );
+    return snapshot.docs.map((doc) => this.toEntity(doc.id, doc.data() as InvoiceDocument));
   }
 
   /**
    * Converts Invoice domain entity to Firestore document
-   * 
+   *
    * @param invoice - Invoice domain entity
    * @returns Firestore document
    */
@@ -210,7 +204,7 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
       invoiceNumber: invoice.invoiceNumber,
       issuedAt: invoice.issuedAt ? this.toTimestamp(invoice.issuedAt) : undefined,
       buyerCustomerId: invoice.buyerCustomerId,
-      lines: invoice.lines.map(line => ({
+      lines: invoice.lines.map((line) => ({
         description: line.description,
         productId: line.productId,
         serviceId: line.serviceId,
@@ -233,13 +227,13 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
 
   /**
    * Converts Firestore document to Invoice domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns Invoice domain entity
    */
   private toEntity(id: string, doc: InvoiceDocument): Invoice {
-    const lines: InvoiceLine[] = doc.lines.map(line => ({
+    const lines: InvoiceLine[] = doc.lines.map((line) => ({
       description: line.description,
       productId: line.productId,
       serviceId: line.serviceId,
@@ -262,13 +256,13 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
       doc.paymentMethod,
       doc.externalReference,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -278,7 +272,7 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -286,4 +280,3 @@ export class FirestoreInvoiceRepository implements InvoiceRepository {
     return timestamp.toDate();
   }
 }
-

@@ -1,6 +1,6 @@
 /**
  * Users Module
- * 
+ *
  * Main NestJS module for the Users domain.
  * Consolidates Application, Presentation, and Infrastructure layers.
  */
@@ -13,8 +13,8 @@ import { UsersInfrastructureModule } from './infrastructure/users.infrastructure
 @Module({
   imports: [
     UsersInfrastructureModule, // Infrastructure first (repositories)
-    UsersApplicationModule,    // Then application (use cases depend on repositories)
-    UsersPresentationModule,    // Finally presentation (controllers depend on use cases)
+    UsersApplicationModule, // Then application (use cases depend on repositories)
+    UsersPresentationModule, // Finally presentation (controllers depend on use cases)
   ],
   exports: [
     // Export infrastructure for other modules that need repositories
@@ -24,4 +24,3 @@ import { UsersInfrastructureModule } from './infrastructure/users.infrastructure
   ],
 })
 export class UsersModule {}
-

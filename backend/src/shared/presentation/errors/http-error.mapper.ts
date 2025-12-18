@@ -1,6 +1,6 @@
 /**
  * HTTP Error Mapper
- * 
+ *
  * Maps application errors to HTTP status codes and responses.
  */
 
@@ -31,7 +31,7 @@ export function mapApplicationErrorToHttpException(error: {
     case 'INVALID_STATUS':
     case 'DOMAIN_ERROR':
       return new BadRequestException(error.message);
-    
+
     // Authentication Errors (401)
     case 'UNAUTHORIZED':
     case 'INVALID_CREDENTIALS':
@@ -39,17 +39,17 @@ export function mapApplicationErrorToHttpException(error: {
     case 'TOKEN_EXPIRED':
     case 'TOKEN_INVALID':
       return new UnauthorizedException(error.message);
-    
+
     // Authorization Errors (403)
     case 'FORBIDDEN':
     case 'INSUFFICIENT_PERMISSIONS':
       return new ForbiddenException(error.message);
-    
+
     // Not Found Errors (404)
     case 'NOT_FOUND':
     case 'RESOURCE_NOT_FOUND':
       return new NotFoundException(error.message);
-    
+
     // Conflict Errors (409)
     case 'DUPLICATE_NIF':
     case 'DUPLICATE_EMAIL':
@@ -60,11 +60,11 @@ export function mapApplicationErrorToHttpException(error: {
     case 'INSUFFICIENT_STOCK':
     case 'INVENTORY_CONFLICT':
       return new ConflictException(error.message);
-    
+
     // Rate Limiting (429)
     case 'RATE_LIMIT_EXCEEDED':
       return new HttpException(error.message, HttpStatus.TOO_MANY_REQUESTS);
-    
+
     // Server Errors (500)
     case 'REPOSITORY_ERROR':
     case 'DATABASE_ERROR':
@@ -81,11 +81,11 @@ export function mapApplicationErrorToHttpException(error: {
 export function createErrorResponse(
   error: HttpException,
   errorCode?: string,
-  details?: Record<string, any>
+  details?: Record<string, any>,
 ) {
   const response = error.getResponse();
   const statusCode = error.getStatus();
-  
+
   // Extract message from response
   let message: string;
   if (typeof response === 'string') {
@@ -118,4 +118,3 @@ export function createErrorResponse(
 
   return errorResponse;
 }
-

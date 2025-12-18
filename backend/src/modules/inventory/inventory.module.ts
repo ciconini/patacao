@@ -1,6 +1,6 @@
 /**
  * Inventory Module
- * 
+ *
  * Main NestJS module for the Inventory domain.
  * Consolidates Application, Presentation, and Infrastructure layers.
  */
@@ -13,8 +13,8 @@ import { InventoryInfrastructureModule } from './infrastructure/inventory.infras
 @Module({
   imports: [
     InventoryInfrastructureModule, // Infrastructure first (repositories)
-    InventoryApplicationModule,     // Then application (use cases depend on repositories)
-    InventoryPresentationModule,    // Finally presentation (controllers depend on use cases)
+    InventoryApplicationModule, // Then application (use cases depend on repositories)
+    InventoryPresentationModule, // Finally presentation (controllers depend on use cases)
   ],
   exports: [
     // Export infrastructure for other modules that need repositories
@@ -24,4 +24,3 @@ import { InventoryInfrastructureModule } from './infrastructure/inventory.infras
   ],
 })
 export class InventoryModule {}
-

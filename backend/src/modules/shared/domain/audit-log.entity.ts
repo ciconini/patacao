@@ -1,11 +1,11 @@
 /**
  * AuditLog Domain Entity
- * 
+ *
  * Represents an audit log entry in the petshop management system.
  * AuditLog is a cross-cutting entity that tracks all changes to domain entities for compliance
  * and audit purposes. Entries are append-only and immutable once created.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - AuditLog entries are append-only; editing is not allowed
  * - Entity type and entity ID are required to identify the audited entity
@@ -40,7 +40,7 @@ export class AuditLog {
 
   /**
    * Creates a new AuditLog entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param entityType - Type of entity being audited (required)
    * @param entityId - ID of the entity being audited (required)
@@ -48,7 +48,7 @@ export class AuditLog {
    * @param performedBy - User ID who performed the action (required)
    * @param timestamp - Timestamp when action occurred (defaults to now)
    * @param meta - Optional metadata with before/after state
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if entityType is empty
    * @throws Error if entityId is empty
@@ -61,7 +61,7 @@ export class AuditLog {
     action: AuditAction,
     performedBy: string,
     timestamp?: Date,
-    meta?: AuditMeta
+    meta?: AuditMeta,
   ) {
     this.validateId(id);
     this.validateEntityType(entityType);
@@ -108,7 +108,7 @@ export class AuditLog {
 
   /**
    * Checks if the audit log has metadata
-   * 
+   *
    * @returns True if meta data is present
    */
   hasMeta(): boolean {
@@ -117,7 +117,7 @@ export class AuditLog {
 
   /**
    * Gets the before state from metadata
-   * 
+   *
    * @returns Before state object, or undefined if not present
    */
   getBeforeState(): Record<string, unknown> | undefined {
@@ -126,7 +126,7 @@ export class AuditLog {
 
   /**
    * Gets the after state from metadata
-   * 
+   *
    * @returns After state object, or undefined if not present
    */
   getAfterState(): Record<string, unknown> | undefined {
@@ -135,7 +135,7 @@ export class AuditLog {
 
   /**
    * Checks if the action is CREATE
-   * 
+   *
    * @returns True if action is CREATE
    */
   isCreateAction(): boolean {
@@ -144,7 +144,7 @@ export class AuditLog {
 
   /**
    * Checks if the action is UPDATE
-   * 
+   *
    * @returns True if action is UPDATE
    */
   isUpdateAction(): boolean {
@@ -153,7 +153,7 @@ export class AuditLog {
 
   /**
    * Checks if the action is DELETE
-   * 
+   *
    * @returns True if action is DELETE
    */
   isDeleteAction(): boolean {
@@ -162,7 +162,7 @@ export class AuditLog {
 
   /**
    * Checks if the action is VOID
-   * 
+   *
    * @returns True if action is VOID
    */
   isVoidAction(): boolean {
@@ -171,7 +171,7 @@ export class AuditLog {
 
   /**
    * Checks if the audit log has before state
-   * 
+   *
    * @returns True if before state is present in metadata
    */
   hasBeforeState(): boolean {
@@ -180,7 +180,7 @@ export class AuditLog {
 
   /**
    * Checks if the audit log has after state
-   * 
+   *
    * @returns True if after state is present in metadata
    */
   hasAfterState(): boolean {
@@ -213,13 +213,15 @@ export class AuditLog {
 
   private validatePerformedBy(performedBy: string): void {
     if (!performedBy || performedBy.trim().length === 0) {
-      throw new Error('Performed by user ID is required - all audit log entries must record the performer');
+      throw new Error(
+        'Performed by user ID is required - all audit log entries must record the performer',
+      );
     }
   }
 
   /**
    * Creates a deep copy of metadata to ensure immutability
-   * 
+   *
    * @param meta - Metadata to copy
    * @returns Deep copy of metadata
    */
@@ -229,7 +231,12 @@ export class AuditLog {
     for (const key in meta) {
       if (meta.hasOwnProperty(key)) {
         const value = meta[key];
-        if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+        if (
+          value &&
+          typeof value === 'object' &&
+          !Array.isArray(value) &&
+          !(value instanceof Date)
+        ) {
           // Deep copy nested objects
           copied[key] = JSON.parse(JSON.stringify(value));
         } else {
@@ -242,4 +249,3 @@ export class AuditLog {
     return copied as AuditMeta;
   }
 }
-

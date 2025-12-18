@@ -1,31 +1,31 @@
 /**
  * Quantity Value Object
- * 
+ *
  * Represents a quantity value in the petshop management system.
  * This is a pure domain value object that encapsulates quantity validation and business rules.
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates quantity value
- * 
+ *
  * Business Rules:
  * - Quantity must be a non-negative integer (0 or positive)
  * - Quantity represents whole units (no fractional quantities)
  * - Maximum quantity is limited to prevent overflow (e.g., 2^31 - 1)
- * 
+ *
  * Invariants:
  * - Quantity value must be a non-negative integer
  * - Quantity value must not exceed maximum allowed value
  * - Value object is immutable after creation
- * 
+ *
  * Equality Definition:
  * - Two Quantity instances are equal if their values are equal
  * - Equality is based on quantity values, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In StockBatch entity:
  *    constructor(
  *      // ... other params
@@ -33,7 +33,7 @@
  *    ) {
  *      this._quantity = new Quantity(quantity);
  *    }
- * 
+ *
  * 2. In StockMovement entity:
  *    constructor(
  *      // ... other params
@@ -41,33 +41,33 @@
  *    ) {
  *      this._quantityChange = new Quantity(quantityChange);
  *    }
- * 
+ *
  * 3. In InvoiceLine entity:
  *    export interface InvoiceLine {
  *      readonly quantity: Quantity; // Quantity value object
  *      readonly unitPrice: number;
  *      // ... other fields
  *    }
- * 
+ *
  * 4. Creating Quantity:
  *    const qty = new Quantity(10); // 10 units
  *    const zero = Quantity.zero(); // 0 units
  *    const fromNumber = Quantity.fromNumber(5); // 5 units or null if invalid
- * 
+ *
  * 5. Arithmetic operations:
  *    const qty1 = new Quantity(10);
  *    const qty2 = new Quantity(5);
  *    const sum = qty1.add(qty2); // 15
  *    const diff = qty1.subtract(qty2); // 5
  *    const multiplied = qty1.multiply(2); // 20
- * 
+ *
  * 6. Comparison operations:
  *    const qty1 = new Quantity(10);
  *    const qty2 = new Quantity(5);
  *    qty1.isGreaterThan(qty2); // true
  *    qty1.isLessThan(qty2); // false
  *    qty1.isZero(); // false
- * 
+ *
  * 7. Equality comparison:
  *    const qty1 = new Quantity(10);
  *    const qty2 = new Quantity(10);
@@ -82,7 +82,7 @@ export class Quantity {
 
   /**
    * Creates a new Quantity value object
-   * 
+   *
    * @param value - Quantity value (must be non-negative integer)
    * @throws Error if value is negative, not an integer, or exceeds maximum
    */
@@ -93,7 +93,7 @@ export class Quantity {
 
   /**
    * Gets the quantity value
-   * 
+   *
    * @returns Quantity as number
    */
   get value(): number {
@@ -102,9 +102,9 @@ export class Quantity {
 
   /**
    * Checks if this Quantity equals another Quantity
-   * 
+   *
    * Equality is determined by comparing values.
-   * 
+   *
    * @param other - Other Quantity to compare
    * @returns True if values are equal
    */
@@ -122,7 +122,7 @@ export class Quantity {
 
   /**
    * Checks if this Quantity is equal to another Quantity (alias for equals)
-   * 
+   *
    * @param other - Other Quantity to compare
    * @returns True if values are equal
    */
@@ -132,7 +132,7 @@ export class Quantity {
 
   /**
    * Checks if this Quantity is greater than another Quantity
-   * 
+   *
    * @param other - Other Quantity to compare
    * @returns True if this value is greater than other value
    */
@@ -142,7 +142,7 @@ export class Quantity {
 
   /**
    * Checks if this Quantity is greater than or equal to another Quantity
-   * 
+   *
    * @param other - Other Quantity to compare
    * @returns True if this value is greater than or equal to other value
    */
@@ -152,7 +152,7 @@ export class Quantity {
 
   /**
    * Checks if this Quantity is less than another Quantity
-   * 
+   *
    * @param other - Other Quantity to compare
    * @returns True if this value is less than other value
    */
@@ -162,7 +162,7 @@ export class Quantity {
 
   /**
    * Checks if this Quantity is less than or equal to another Quantity
-   * 
+   *
    * @param other - Other Quantity to compare
    * @returns True if this value is less than or equal to other value
    */
@@ -172,7 +172,7 @@ export class Quantity {
 
   /**
    * Checks if this Quantity is zero
-   * 
+   *
    * @returns True if value is zero
    */
   isZero(): boolean {
@@ -181,7 +181,7 @@ export class Quantity {
 
   /**
    * Checks if this Quantity is positive (greater than zero)
-   * 
+   *
    * @returns True if value is positive
    */
   isPositive(): boolean {
@@ -190,9 +190,9 @@ export class Quantity {
 
   /**
    * Adds another Quantity to this Quantity
-   * 
+   *
    * Returns a new Quantity instance (immutability).
-   * 
+   *
    * @param other - Quantity to add
    * @returns New Quantity instance with sum of values
    */
@@ -206,10 +206,10 @@ export class Quantity {
 
   /**
    * Subtracts another Quantity from this Quantity
-   * 
+   *
    * Returns a new Quantity instance (immutability).
    * Result cannot be negative (throws error).
-   * 
+   *
    * @param other - Quantity to subtract
    * @returns New Quantity instance with difference of values
    * @throws Error if result would be negative
@@ -217,16 +217,18 @@ export class Quantity {
   subtract(other: Quantity): Quantity {
     const result = this._value - other._value;
     if (result < 0) {
-      throw new Error(`Cannot subtract ${other._value} from ${this._value}: result would be negative`);
+      throw new Error(
+        `Cannot subtract ${other._value} from ${this._value}: result would be negative`,
+      );
     }
     return new Quantity(result);
   }
 
   /**
    * Multiplies this Quantity by a factor
-   * 
+   *
    * Returns a new Quantity instance (immutability).
-   * 
+   *
    * @param factor - Multiplication factor (must be non-negative integer)
    * @returns New Quantity instance with multiplied value
    * @throws Error if factor is negative or not an integer
@@ -244,7 +246,7 @@ export class Quantity {
 
   /**
    * Converts the Quantity to string representation
-   * 
+   *
    * @returns Quantity string representation
    */
   toString(): string {
@@ -253,7 +255,7 @@ export class Quantity {
 
   /**
    * Creates a zero Quantity instance
-   * 
+   *
    * @returns New Quantity instance with zero value
    */
   static zero(): Quantity {
@@ -262,9 +264,9 @@ export class Quantity {
 
   /**
    * Creates a Quantity instance from a number, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param value - Quantity value
    * @returns Quantity instance or null if invalid
    */
@@ -278,7 +280,7 @@ export class Quantity {
 
   /**
    * Validates if a number can be used to create a Quantity instance
-   * 
+   *
    * @param value - Value to validate
    * @returns True if value is valid for Quantity creation
    */
@@ -288,7 +290,7 @@ export class Quantity {
 
   /**
    * Sums an array of Quantity instances
-   * 
+   *
    * @param quantities - Array of Quantity instances
    * @returns New Quantity instance with sum of all values
    * @throws Error if array is empty or sum exceeds maximum
@@ -311,7 +313,7 @@ export class Quantity {
 
   /**
    * Gets the maximum Quantity from an array
-   * 
+   *
    * @param quantities - Array of Quantity instances
    * @returns Maximum Quantity instance
    * @throws Error if array is empty
@@ -336,7 +338,7 @@ export class Quantity {
 
   /**
    * Gets the minimum Quantity from an array
-   * 
+   *
    * @param quantities - Array of Quantity instances
    * @returns Minimum Quantity instance
    * @throws Error if array is empty
@@ -363,7 +365,7 @@ export class Quantity {
 
   /**
    * Validates the quantity value
-   * 
+   *
    * @param value - Value to validate
    * @throws Error if value is invalid
    */
@@ -385,4 +387,3 @@ export class Quantity {
     }
   }
 }
-

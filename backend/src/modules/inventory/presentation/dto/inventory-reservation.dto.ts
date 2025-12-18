@@ -1,6 +1,6 @@
 /**
  * Inventory Reservation DTOs
- * 
+ *
  * Data Transfer Objects for Inventory Reservation API endpoints.
  */
 
@@ -49,4 +49,3 @@ export class InventoryReservationResponseDto {
   createdAt!: Date;
   updatedAt!: Date;
 }
-

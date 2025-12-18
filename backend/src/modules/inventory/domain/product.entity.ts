@@ -1,10 +1,10 @@
 /**
  * Product Domain Entity
- * 
+ *
  * Represents an inventory sellable item in the petshop management system.
  * Products are physical items that can be sold, tracked in inventory, and managed through stock movements.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - Product SKU is required and must be unique (enforced at repository/use case level)
  * - Product name is required
@@ -29,7 +29,7 @@ export class Product {
 
   /**
    * Creates a new Product entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param sku - Stock Keeping Unit (SKU) identifier (required, must be unique)
    * @param name - Product name (required)
@@ -41,7 +41,7 @@ export class Product {
    * @param reorderThreshold - Reorder threshold for stock management
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if sku is empty
    * @throws Error if name is empty
@@ -60,7 +60,7 @@ export class Product {
     category?: string,
     reorderThreshold?: number,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateSku(sku);
@@ -133,7 +133,7 @@ export class Product {
   /**
    * Updates the SKU
    * Note: SKU uniqueness must be validated at repository/use case level
-   * 
+   *
    * @param sku - New SKU
    * @throws Error if sku is empty
    */
@@ -145,7 +145,7 @@ export class Product {
 
   /**
    * Updates the product name
-   * 
+   *
    * @param name - New product name
    * @throws Error if name is empty
    */
@@ -157,7 +157,7 @@ export class Product {
 
   /**
    * Updates the product description
-   * 
+   *
    * @param description - New description
    */
   updateDescription(description: string | undefined): void {
@@ -167,7 +167,7 @@ export class Product {
 
   /**
    * Updates the product category
-   * 
+   *
    * @param category - New category
    */
   updateCategory(category: string | undefined): void {
@@ -177,7 +177,7 @@ export class Product {
 
   /**
    * Updates the unit price
-   * 
+   *
    * @param unitPrice - New unit price
    * @throws Error if unitPrice is negative
    */
@@ -189,7 +189,7 @@ export class Product {
 
   /**
    * Updates the VAT rate
-   * 
+   *
    * @param vatRate - New VAT rate (0-100)
    * @throws Error if vatRate is not between 0 and 100
    */
@@ -217,7 +217,7 @@ export class Product {
 
   /**
    * Updates the reorder threshold
-   * 
+   *
    * @param reorderThreshold - New reorder threshold
    * @throws Error if reorderThreshold is negative
    */
@@ -231,7 +231,7 @@ export class Product {
 
   /**
    * Calculates the price with VAT included
-   * 
+   *
    * @returns Price with VAT (unitPrice * (1 + vatRate / 100))
    */
   getPriceWithVat(): number {
@@ -240,7 +240,7 @@ export class Product {
 
   /**
    * Calculates the VAT amount for the unit price
-   * 
+   *
    * @returns VAT amount (unitPrice * vatRate / 100)
    */
   getVatAmount(): number {
@@ -249,7 +249,7 @@ export class Product {
 
   /**
    * Calculates the total price with VAT for a given quantity
-   * 
+   *
    * @param quantity - Quantity to calculate for
    * @returns Total price with VAT (quantity * price with VAT)
    * @throws Error if quantity is not positive
@@ -263,7 +263,7 @@ export class Product {
 
   /**
    * Calculates the total VAT amount for a given quantity
-   * 
+   *
    * @param quantity - Quantity to calculate for
    * @returns Total VAT amount (quantity * VAT amount)
    * @throws Error if quantity is not positive
@@ -277,7 +277,7 @@ export class Product {
 
   /**
    * Checks if stock tracking is enabled
-   * 
+   *
    * @returns True if stock is tracked
    */
   isStockTracked(): boolean {
@@ -286,7 +286,7 @@ export class Product {
 
   /**
    * Checks if the product has a reorder threshold set
-   * 
+   *
    * @returns True if reorder threshold is set
    */
   hasReorderThreshold(): boolean {
@@ -296,7 +296,7 @@ export class Product {
   /**
    * Checks if current stock level is below reorder threshold
    * Note: This method requires current stock level from repository/use case
-   * 
+   *
    * @param currentStock - Current stock level
    * @returns True if stock is below threshold (only if threshold is set and stock tracking is enabled)
    */
@@ -353,4 +353,3 @@ export class Product {
     }
   }
 }
-

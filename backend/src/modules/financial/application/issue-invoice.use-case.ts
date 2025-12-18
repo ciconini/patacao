@@ -1,9 +1,9 @@
 /**
  * Issue Invoice Use Case (UC-FIN-002)
- * 
+ *
  * Application use case for issuing a draft invoice.
  * This use case orchestrates domain entities and domain services to issue invoices.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager, Accountant, or Owner role)
  * - Validate invoice is in draft status
@@ -11,7 +11,7 @@
  * - Generate sequential invoice number
  * - Issue invoice using domain entity method
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -91,7 +91,7 @@ export interface IssueInvoiceResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -139,16 +139,16 @@ export class IssueInvoiceUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the issue invoice use case
-   * 
+   *
    * @param input - Input data for issuing invoice
    * @returns Result containing issued invoice or error
    */
@@ -165,7 +165,9 @@ export class IssueInvoiceUseCase {
 
       // 3. Validate invoice is in draft status
       if (invoice.status !== InvoiceStatus.DRAFT) {
-        throw new ValidationError('Invoice is not in draft status. Only draft invoices can be issued');
+        throw new ValidationError(
+          'Invoice is not in draft status. Only draft invoices can be issued',
+        );
       }
 
       // 4. Load company
@@ -175,7 +177,10 @@ export class IssueInvoiceUseCase {
       }
 
       // 5. Validate invoice can be issued using domain service
-      const validationResult = this.invoiceIssuanceDomainService.validateInvoiceIssuance(invoice, company);
+      const validationResult = this.invoiceIssuanceDomainService.validateInvoiceIssuance(
+        invoice,
+        company,
+      );
       if (!validationResult.canIssue) {
         throw new ValidationError(`Cannot issue invoice: ${validationResult.errors.join(', ')}`);
       }
@@ -186,17 +191,26 @@ export class IssueInvoiceUseCase {
       const maxAttempts = 5;
 
       while (attempts < maxAttempts) {
-        invoiceNumber = await this.invoiceRepository.generateInvoiceNumber(invoice.companyId, invoice.storeId);
-        
+        invoiceNumber = await this.invoiceRepository.generateInvoiceNumber(
+          invoice.companyId,
+          invoice.storeId,
+        );
+
         // Check if invoice number already exists
-        const existingInvoice = await this.invoiceRepository.findByInvoiceNumber(invoiceNumber, invoice.companyId);
+        const existingInvoice = await this.invoiceRepository.findByInvoiceNumber(
+          invoiceNumber,
+          invoice.companyId,
+        );
         if (!existingInvoice) {
           break; // Invoice number is unique
         }
-        
+
         attempts++;
         if (attempts >= maxAttempts) {
-          throw new ApplicationError('INVOICE_NUMBER_CONFLICT', 'Failed to generate unique invoice number');
+          throw new ApplicationError(
+            'INVOICE_NUMBER_CONFLICT',
+            'Failed to generate unique invoice number',
+          );
         }
       }
 
@@ -230,12 +244,12 @@ export class IssueInvoiceUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -256,7 +270,7 @@ export class IssueInvoiceUseCase {
   private async createAuditLog(
     invoice: Invoice,
     beforeStatus: InvoiceStatus,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -276,7 +290,7 @@ export class IssueInvoiceUseCase {
             issuedAt: invoice.issuedAt,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -298,7 +312,7 @@ export class IssueInvoiceUseCase {
       invoiceNumber: invoice.invoiceNumber,
       issuedAt: invoice.issuedAt!,
       buyerCustomerId: invoice.buyerCustomerId,
-      lines: invoice.lines.map(line => ({
+      lines: invoice.lines.map((line) => ({
         description: line.description,
         productId: line.productId,
         serviceId: line.serviceId,
@@ -339,4 +353,3 @@ export class IssueInvoiceUseCase {
     };
   }
 }
-

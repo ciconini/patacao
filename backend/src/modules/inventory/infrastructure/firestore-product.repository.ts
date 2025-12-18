@@ -1,6 +1,6 @@
 /**
  * ProductRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for ProductRepository port.
  */
 
@@ -44,7 +44,7 @@ export class FirestoreProductRepository implements ProductRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   async save(product: Product): Promise<Product> {
@@ -85,7 +85,7 @@ export class FirestoreProductRepository implements ProductRepository {
   async search(
     criteria: ProductSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<Product>> {
     let query: FirebaseFirestore.Query = this.firestore.collection(this.collectionName);
 
@@ -100,17 +100,18 @@ export class FirestoreProductRepository implements ProductRepository {
 
     // Get total count (before pagination)
     const countSnapshot = await query.get();
-    let allProducts = countSnapshot.docs.map(doc => 
-      this.toEntity(doc.id, doc.data() as ProductDocument)
+    let allProducts = countSnapshot.docs.map((doc) =>
+      this.toEntity(doc.id, doc.data() as ProductDocument),
     );
 
     // Apply text search if specified (client-side filtering)
     if (criteria.q) {
       const searchTerm = criteria.q.toLowerCase();
-      allProducts = allProducts.filter(product => 
-        product.sku.toLowerCase().includes(searchTerm) ||
-        product.name.toLowerCase().includes(searchTerm) ||
-        (product.description && product.description.toLowerCase().includes(searchTerm))
+      allProducts = allProducts.filter(
+        (product) =>
+          product.sku.toLowerCase().includes(searchTerm) ||
+          product.name.toLowerCase().includes(searchTerm) ||
+          (product.description && product.description.toLowerCase().includes(searchTerm)),
       );
     }
 
@@ -208,7 +209,7 @@ export class FirestoreProductRepository implements ProductRepository {
 
     await this.firestore.runTransaction(async (transaction) => {
       const stockDoc = await transaction.get(stockRef);
-      const currentStock = stockDoc.exists ? (stockDoc.data()?.onHand || 0) : 0;
+      const currentStock = stockDoc.exists ? stockDoc.data()?.onHand || 0 : 0;
       const newStock = currentStock + delta;
 
       if (stockDoc.exists) {
@@ -277,7 +278,7 @@ export class FirestoreProductRepository implements ProductRepository {
       doc.category,
       doc.reorderThreshold,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
@@ -289,4 +290,3 @@ export class FirestoreProductRepository implements ProductRepository {
     return timestamp.toDate();
   }
 }
-

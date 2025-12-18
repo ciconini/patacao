@@ -1,6 +1,6 @@
 /**
  * Credit Note DTOs
- * 
+ *
  * Data Transfer Objects for Credit Note API endpoints.
  */
 
@@ -34,4 +34,3 @@ export class CreditNoteResponseDto {
   createdBy!: string;
   createdAt!: Date;
 }
-

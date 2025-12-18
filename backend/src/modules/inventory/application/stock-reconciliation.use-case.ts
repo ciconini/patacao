@@ -1,10 +1,10 @@
 /**
  * Stock Reconciliation Use Case (UC-INV-004)
- * 
+ *
  * Application use case for performing stock reconciliation (stock count).
  * This use case orchestrates domain entities to compare counted quantities with system quantities
  * and create adjustments for variances.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role)
  * - Validate store/location access
@@ -14,7 +14,7 @@
  * - Update product on-hand quantities
  * - Persist all changes via repositories
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -108,7 +108,7 @@ export interface StockReconciliationResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -158,16 +158,16 @@ export class StockReconciliationUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the stock reconciliation use case
-   * 
+   *
    * @param input - Input data for stock reconciliation
    * @returns Result containing reconciliation details or error
    */
@@ -185,14 +185,18 @@ export class StockReconciliationUseCase {
       // 4. Validate user has store access
       const hasAccess = await this.currentUserRepository.hasStoreAccess(
         input.performedBy,
-        input.storeId
+        input.storeId,
       );
       if (!hasAccess) {
         throw new ForbiddenError('You do not have access to this store');
       }
 
       // 5. Validate count entries
-      const validatedCounts = await this.validateCountEntries(input.counts, input.storeId, input.locationId);
+      const validatedCounts = await this.validateCountEntries(
+        input.counts,
+        input.storeId,
+        input.locationId,
+      );
 
       // 6. Calculate variances and create adjustments
       const reconciliationId = this.generateId();
@@ -209,10 +213,12 @@ export class StockReconciliationUseCase {
           // Batch-specific count
           const batch = await this.stockBatchRepository.findByProductAndBatch(
             count.productId,
-            count.batchNumber
+            count.batchNumber,
           );
           if (!batch) {
-            throw new NotFoundError(`Batch ${count.batchNumber} not found for product ${count.productId}`);
+            throw new NotFoundError(
+              `Batch ${count.batchNumber} not found for product ${count.productId}`,
+            );
           }
           systemQuantity = batch.quantity;
         } else {
@@ -246,7 +252,7 @@ export class StockReconciliationUseCase {
             if (absoluteVariance > systemQuantity) {
               throw new ValidationError(
                 `Adjustment for product ${product.name} would result in negative stock. ` +
-                `System quantity: ${systemQuantity}, Variance: ${variance}`
+                  `System quantity: ${systemQuantity}, Variance: ${variance}`,
               );
             }
           }
@@ -258,18 +264,18 @@ export class StockReconciliationUseCase {
             locationId,
             count.batchNumber,
             reconciliationId,
-            input.performedBy
+            input.performedBy,
           );
 
           // Validate movement using domain service
           const validationResult = this.stockMovementDomainService.validateMovementLegality(
             movement,
-            product
+            product,
           );
 
           if (!validationResult.isValid) {
             throw new ValidationError(
-              `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`
+              `Invalid stock movement for product ${product.name}: ${validationResult.errors.join(', ')}`,
             );
           }
 
@@ -295,7 +301,7 @@ export class StockReconciliationUseCase {
         input,
         countResults,
         adjustments,
-        input.performedBy
+        input.performedBy,
       );
 
       // 8. Return success result
@@ -320,12 +326,12 @@ export class StockReconciliationUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -358,7 +364,7 @@ export class StockReconciliationUseCase {
    */
   private async validateAndLoadStore(storeId: string): Promise<Store> {
     const store = await this.storeRepository.findById(storeId);
-    
+
     if (!store) {
       throw new NotFoundError('Store not found');
     }
@@ -372,7 +378,7 @@ export class StockReconciliationUseCase {
   private async validateCountEntries(
     counts: StockReconciliationInput['counts'],
     storeId: string,
-    locationId?: string
+    locationId?: string,
   ): Promise<StockReconciliationInput['counts']> {
     const validatedCounts: StockReconciliationInput['counts'] = [];
 
@@ -394,14 +400,14 @@ export class StockReconciliationUseCase {
       if (!product.stockTracked) {
         throw new ValidationError(
           `Count ${countIndex}: Product ${product.name} (${product.sku}) is not stock-tracked. ` +
-          `Reconciliation can only be performed for stock-tracked products.`
+            `Reconciliation can only be performed for stock-tracked products.`,
         );
       }
 
       // Validate counted quantity
       if (!Number.isInteger(count.countedQuantity) || count.countedQuantity < 0) {
         throw new ValidationError(
-          `Count ${countIndex}: Counted quantity must be a non-negative integer`
+          `Count ${countIndex}: Counted quantity must be a non-negative integer`,
         );
       }
 
@@ -409,11 +415,11 @@ export class StockReconciliationUseCase {
       if (count.batchNumber) {
         const batch = await this.stockBatchRepository.findByProductAndBatch(
           count.productId,
-          count.batchNumber
+          count.batchNumber,
         );
         if (!batch) {
           throw new NotFoundError(
-            `Count ${countIndex}: Batch ${count.batchNumber} not found for product ${product.name}`
+            `Count ${countIndex}: Batch ${count.batchNumber} not found for product ${product.name}`,
           );
         }
       }
@@ -433,7 +439,7 @@ export class StockReconciliationUseCase {
     locationId: string,
     batchNumber: string | undefined,
     reconciliationId: string,
-    performedBy: string
+    performedBy: string,
   ): StockMovement {
     const movementId = this.generateId();
     const now = new Date();
@@ -448,7 +454,7 @@ export class StockReconciliationUseCase {
       locationId,
       undefined, // batchId - would need to be resolved from batchNumber if needed
       reconciliationId, // Reference to reconciliation session
-      now
+      now,
     );
   }
 
@@ -460,7 +466,7 @@ export class StockReconciliationUseCase {
     input: StockReconciliationInput,
     counts: StockReconciliationOutput['counts'],
     adjustments: StockReconciliationOutput['adjustments'],
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -477,14 +483,14 @@ export class StockReconciliationUseCase {
             countsCount: counts.length,
             adjustmentsCount: adjustments.length,
             variances: counts
-              .filter(c => c.variance !== 0)
-              .map(c => ({
+              .filter((c) => c.variance !== 0)
+              .map((c) => ({
                 productId: c.productId,
                 variance: c.variance,
               })),
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -518,4 +524,3 @@ export class StockReconciliationUseCase {
     };
   }
 }
-

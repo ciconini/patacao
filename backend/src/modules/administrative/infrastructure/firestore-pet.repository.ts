@@ -1,15 +1,15 @@
 /**
  * PetRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for PetRepository port.
  * This implementation handles persistence of Pet domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map Pet domain entities to Firestore documents
  * - Map Firestore documents to Pet domain entities
  * - Implement repository interface methods
  * - Handle Firestore-specific operations (queries, transactions)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -47,13 +47,13 @@ export class FirestorePetRepository implements PetRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a Pet entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
-   * 
+   *
    * @param pet - Pet domain entity to save
    * @returns Saved Pet entity
    */
@@ -68,7 +68,7 @@ export class FirestorePetRepository implements PetRepository {
 
   /**
    * Finds a Pet by ID
-   * 
+   *
    * @param id - Pet ID
    * @returns Pet entity or null if not found
    */
@@ -85,7 +85,7 @@ export class FirestorePetRepository implements PetRepository {
 
   /**
    * Counts pets by customer ID
-   * 
+   *
    * @param customerId - Customer ID
    * @returns Number of pets for the customer
    */
@@ -101,7 +101,7 @@ export class FirestorePetRepository implements PetRepository {
 
   /**
    * Converts Pet domain entity to Firestore document
-   * 
+   *
    * @param pet - Pet domain entity
    * @returns Firestore document
    */
@@ -115,7 +115,7 @@ export class FirestorePetRepository implements PetRepository {
       dateOfBirth: pet.dateOfBirth ? this.toTimestamp(pet.dateOfBirth) : undefined,
       microchipId: pet.microchipId,
       medicalNotes: pet.medicalNotes,
-      vaccinationRecords: pet.vaccinationRecords.map(record => ({
+      vaccinationRecords: pet.vaccinationRecords.map((record) => ({
         vaccineType: record.vaccineType,
         administeredDate: this.toTimestamp(record.administeredDate),
         nextDueDate: record.nextDueDate ? this.toTimestamp(record.nextDueDate) : undefined,
@@ -129,13 +129,13 @@ export class FirestorePetRepository implements PetRepository {
 
   /**
    * Converts Firestore document to Pet domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns Pet domain entity
    */
   private toEntity(id: string, doc: PetDocument): Pet {
-    const vaccinationRecords: VaccinationRecord[] = doc.vaccinationRecords.map(record => ({
+    const vaccinationRecords: VaccinationRecord[] = doc.vaccinationRecords.map((record) => ({
       vaccineType: record.vaccineType,
       administeredDate: this.toDate(record.administeredDate),
       nextDueDate: record.nextDueDate ? this.toDate(record.nextDueDate) : undefined,
@@ -154,13 +154,13 @@ export class FirestorePetRepository implements PetRepository {
       doc.medicalNotes,
       vaccinationRecords,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -170,7 +170,7 @@ export class FirestorePetRepository implements PetRepository {
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -178,4 +178,3 @@ export class FirestorePetRepository implements PetRepository {
     return timestamp.toDate();
   }
 }
-

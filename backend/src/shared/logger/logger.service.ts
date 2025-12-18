@@ -1,6 +1,6 @@
 /**
  * Logger Service
- * 
+ *
  * Enhanced Winston logger with structured logging, log rotation, and filtering.
  * Provides NestJS-compatible logger interface with additional features.
  */
@@ -32,13 +32,11 @@ export class Logger implements NestLoggerService {
   private logger: winston.Logger;
   private readonly logDir: string;
 
-  constructor(
-    private readonly config: AppConfigService
-  ) {
+  constructor(private readonly config: AppConfigService) {
     const logLevel = this.config.logLevel;
     const logFormat = this.config.logFormat;
     const nodeEnv = this.config.nodeEnv;
-    
+
     // Create logs directory if it doesn't exist
     this.logDir = this.config.logDir;
     if (!fs.existsSync(this.logDir)) {
@@ -57,11 +55,11 @@ export class Logger implements NestLoggerService {
           timestamp,
           level: level.toUpperCase(),
           message,
-          ...(context && { context }),
+          ...(context && typeof context === 'object' ? { context } : {}),
           ...meta,
         };
         return JSON.stringify(logEntry);
-      })
+      }),
     );
 
     // Pretty format for development
@@ -73,7 +71,7 @@ export class Logger implements NestLoggerService {
         const contextStr = context ? `[${context}]` : '';
         const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta, null, 2)}` : '';
         return `${timestamp} ${level} ${contextStr} ${message}${metaStr}`;
-      })
+      }),
     );
 
     const format = logFormat === 'pretty' ? prettyFormat : structuredFormat;
@@ -88,7 +86,8 @@ export class Logger implements NestLoggerService {
     ];
 
     // File transports for production
-    if (nodeEnv === 'production' || this.configService.get('LOG_TO_FILE', 'false') === 'true') {
+    const logToFile = process.env.LOG_TO_FILE === 'true';
+    if (nodeEnv === 'production' || logToFile) {
       // Error logs
       transports.push(
         new winston.transports.File({
@@ -97,7 +96,7 @@ export class Logger implements NestLoggerService {
           format: structuredFormat,
           maxsize: 5242880, // 5MB
           maxFiles: 5,
-        })
+        }),
       );
 
       // Combined logs
@@ -107,7 +106,7 @@ export class Logger implements NestLoggerService {
           format: structuredFormat,
           maxsize: 5242880, // 5MB
           maxFiles: 5,
-        })
+        }),
       );
 
       // Access logs (HTTP requests)
@@ -118,7 +117,7 @@ export class Logger implements NestLoggerService {
           format: structuredFormat,
           maxsize: 5242880, // 5MB
           maxFiles: 5,
-        })
+        }),
       );
     }
 
@@ -180,14 +179,24 @@ export class Logger implements NestLoggerService {
   /**
    * Logs with custom metadata
    */
-  logWithMetadata(level: 'info' | 'warn' | 'error' | 'debug' | 'verbose', message: string, metadata: LogMetadata): void {
+  logWithMetadata(
+    level: 'info' | 'warn' | 'error' | 'debug' | 'verbose',
+    message: string,
+    metadata: LogMetadata,
+  ): void {
     this.logger.log(level, message, metadata);
   }
 
   /**
    * Logs HTTP request
    */
-  logRequest(method: string, path: string, statusCode: number, duration: number, metadata?: LogMetadata): void {
+  logRequest(
+    method: string,
+    path: string,
+    statusCode: number,
+    duration: number,
+    metadata?: LogMetadata,
+  ): void {
     this.logger.info('HTTP Request', {
       type: 'http_request',
       method,
@@ -201,7 +210,13 @@ export class Logger implements NestLoggerService {
   /**
    * Logs HTTP response
    */
-  logResponse(method: string, path: string, statusCode: number, duration: number, metadata?: LogMetadata): void {
+  logResponse(
+    method: string,
+    path: string,
+    statusCode: number,
+    duration: number,
+    metadata?: LogMetadata,
+  ): void {
     this.logger.info('HTTP Response', {
       type: 'http_response',
       method,
@@ -212,4 +227,3 @@ export class Logger implements NestLoggerService {
     });
   }
 }
-

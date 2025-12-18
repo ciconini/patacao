@@ -1,6 +1,6 @@
 /**
  * Request Logger Middleware
- * 
+ *
  * Logs HTTP requests and responses with structured metadata.
  * Captures method, path, status code, duration, IP, user agent, etc.
  */
@@ -21,7 +21,7 @@ export class RequestLoggerMiddleware implements NestMiddleware {
 
     // Extract user ID from request if available (set by auth guard)
     const userId = (req as any).user?.uid || (req as any).firebaseUid || undefined;
-    const requestId = req.headers['x-request-id'] as string || undefined;
+    const requestId = (req.headers['x-request-id'] as string) || undefined;
 
     // Capture references for closure
     const appLogger = this.appLogger;
@@ -41,7 +41,7 @@ export class RequestLoggerMiddleware implements NestMiddleware {
         userAgent: headers['user-agent'],
         query: Object.keys(req.query).length > 0 ? req.query : undefined,
         body: sanitizeBody(req.body),
-      }
+      },
     );
 
     // Capture response
@@ -51,20 +51,14 @@ export class RequestLoggerMiddleware implements NestMiddleware {
       const statusCode = res.statusCode;
 
       // Log response
-      appLogger.logResponse(
-        method,
-        originalUrl,
-        statusCode,
-        duration,
-        {
-          context: 'HTTP',
-          userId,
-          requestId,
-          ip: ip || req.socket.remoteAddress,
-          userAgent: headers['user-agent'],
-          responseSize: Buffer.byteLength(body || '', 'utf8'),
-        }
-      );
+      appLogger.logResponse(method, originalUrl, statusCode, duration, {
+        context: 'HTTP',
+        userId,
+        requestId,
+        ip: ip || req.socket.remoteAddress,
+        userAgent: headers['user-agent'],
+        responseSize: Buffer.byteLength(body || '', 'utf8'),
+      });
 
       return originalSend.call(this, body);
     };
@@ -80,7 +74,14 @@ export class RequestLoggerMiddleware implements NestMiddleware {
       return body;
     }
 
-    const sensitiveFields = ['password', 'passwordHash', 'token', 'secret', 'apiKey', 'authorization'];
+    const sensitiveFields = [
+      'password',
+      'passwordHash',
+      'token',
+      'secret',
+      'apiKey',
+      'authorization',
+    ];
     const sanitized = { ...body };
 
     for (const field of sensitiveFields) {
@@ -92,4 +93,3 @@ export class RequestLoggerMiddleware implements NestMiddleware {
     return sanitized;
   }
 }
-

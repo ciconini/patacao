@@ -1,6 +1,6 @@
 /**
  * Store DTOs
- * 
+ *
  * Data Transfer Objects for Store API endpoints.
  */
 
@@ -23,7 +23,6 @@ export class DayOpeningHoursDto {
   @IsTimeFormat()
   close?: string;
 
-  
   @IsOptional()
   closed?: boolean;
 }
@@ -32,43 +31,36 @@ export class DayOpeningHoursDto {
  * Weekly Opening Hours DTO
  */
 export class WeeklyOpeningHoursDto {
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => DayOpeningHoursDto)
   monday?: DayOpeningHoursDto;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => DayOpeningHoursDto)
   tuesday?: DayOpeningHoursDto;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => DayOpeningHoursDto)
   wednesday?: DayOpeningHoursDto;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => DayOpeningHoursDto)
   thursday?: DayOpeningHoursDto;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => DayOpeningHoursDto)
   friday?: DayOpeningHoursDto;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => DayOpeningHoursDto)
   saturday?: DayOpeningHoursDto;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => DayOpeningHoursDto)
@@ -79,38 +71,31 @@ export class WeeklyOpeningHoursDto {
  * Create Store Request DTO
  */
 export class CreateStoreDto {
-  
   @IsUUID()
   companyId!: string;
 
-  
   @IsString()
   name!: string;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => AddressDto)
   @IsObject()
   address?: AddressDto;
 
-  
   @IsOptional()
   @IsEmail()
   email?: string;
 
-  
   @IsOptional()
   @IsPortuguesePhone()
   phone?: string;
 
-  
   @ValidateNested()
   @Type(() => WeeklyOpeningHoursDto)
   @IsObject()
   openingHours!: WeeklyOpeningHoursDto;
 
-  
   @IsOptional()
   @IsTimezone()
   timezone?: string;
@@ -120,36 +105,30 @@ export class CreateStoreDto {
  * Update Store Request DTO
  */
 export class UpdateStoreDto {
-  
   @IsOptional()
   @IsString()
   name?: string;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => AddressDto)
   @IsObject()
   address?: AddressDto;
 
-  
   @IsOptional()
   @IsEmail()
   email?: string;
 
-  
   @IsOptional()
   @IsPortuguesePhone()
   phone?: string;
 
-  
   @IsOptional()
   @ValidateNested()
   @Type(() => WeeklyOpeningHoursDto)
   @IsObject()
   openingHours?: WeeklyOpeningHoursDto;
 
-  
   @IsOptional()
   @IsTimezone()
   timezone?: string;
@@ -159,34 +138,23 @@ export class UpdateStoreDto {
  * Store Response DTO
  */
 export class StoreResponseDto {
-  
   id!: string;
 
-  
   companyId!: string;
 
-  
   name!: string;
 
-  
   address?: AddressDto;
 
-  
   email?: string;
 
-  
   phone?: string;
 
-  
   openingHours!: WeeklyOpeningHoursDto;
 
-  
   timezone!: string;
 
-  
   createdAt!: Date;
 
-  
   updatedAt!: Date;
 }
-

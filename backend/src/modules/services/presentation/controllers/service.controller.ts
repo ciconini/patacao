@@ -1,6 +1,6 @@
 /**
  * Service Controller
- * 
+ *
  * REST API controller for Service management endpoints.
  */
 
@@ -17,17 +17,33 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { FirebaseAuthGuard, AuthenticatedRequest } from '../../../../shared/auth/firebase-auth.guard';
-import { CreateServiceDto, UpdateServiceDto, ServiceResponseDto } from '../dto/service.dto';
-import { CreateServiceUseCase, CreateServiceInput } from '../../application/create-service.use-case';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiParam,
+  ApiExtraModels,
+} from '@nestjs/swagger';
+import {
+  FirebaseAuthGuard,
+  AuthenticatedRequest,
+} from '../../../../shared/auth/firebase-auth.guard';
+import { CreateServiceDto, UpdateServiceDto, ServiceResponseDto, ConsumedItemDto } from '../dto/service.dto';
+import {
+  CreateServiceUseCase,
+  CreateServiceInput,
+} from '../../application/create-service.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
+@ApiTags('Services')
+@ApiBearerAuth('JWT-auth')
+@ApiExtraModels(ConsumedItemDto)
 @Controller('api/v1/services')
 @UseGuards(FirebaseAuthGuard)
 export class ServiceController {
-  constructor(
-    private readonly createServiceUseCase: CreateServiceUseCase,
-  ) {}
+  constructor(private readonly createServiceUseCase: CreateServiceUseCase) {}
 
   /**
    * Create a new service
@@ -35,6 +51,16 @@ export class ServiceController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create service', description: 'Creates a new service offering' })
+  @ApiBody({ type: CreateServiceDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Service created successfully',
+    type: ServiceResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   async create(
     @Body() createDto: CreateServiceDto,
     @Request() req: AuthenticatedRequest,
@@ -70,6 +96,18 @@ export class ServiceController {
    * PUT /api/v1/services/:id
    */
   @Put(':id')
+  @ApiOperation({ summary: 'Update service', description: 'Updates an existing service' })
+  @ApiParam({ name: 'id', description: 'Service UUID', type: String })
+  @ApiBody({ type: UpdateServiceDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Service updated successfully',
+    type: ServiceResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Service not found' })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateServiceDto,
@@ -84,6 +122,16 @@ export class ServiceController {
    * GET /api/v1/services/:id
    */
   @Get(':id')
+  @ApiOperation({ summary: 'Get service by ID', description: 'Retrieves a service by its ID' })
+  @ApiParam({ name: 'id', description: 'Service UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Service retrieved successfully',
+    type: ServiceResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Service not found' })
   async findOne(@Param('id') id: string): Promise<ServiceResponseDto> {
     // TODO: Implement GetServiceUseCase
     throw new Error('Not implemented yet');
@@ -95,6 +143,12 @@ export class ServiceController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete service', description: 'Deletes a service' })
+  @ApiParam({ name: 'id', description: 'Service UUID', type: String })
+  @ApiResponse({ status: 204, description: 'Service deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Service not found' })
   async delete(@Param('id') id: string): Promise<void> {
     // TODO: Implement DeleteServiceUseCase
     throw new Error('Not implemented yet');
@@ -131,4 +185,3 @@ export class ServiceController {
     };
   }
 }
-

@@ -1,6 +1,6 @@
 /**
  * Supplier DTOs
- * 
+ *
  * Data Transfer Objects for Supplier API endpoints.
  */
 
@@ -61,4 +61,3 @@ export class SupplierResponseDto {
   createdAt!: Date;
   updatedAt!: Date;
 }
-

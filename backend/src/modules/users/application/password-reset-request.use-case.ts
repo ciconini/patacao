@@ -1,9 +1,9 @@
 /**
  * Password Reset Request Use Case (UC-AUTH-003)
- * 
+ *
  * Application use case for requesting a password reset.
  * This use case orchestrates domain entities and domain services to initiate password reset flow.
- * 
+ *
  * Responsibilities:
  * - Validate email format
  * - Check rate limiting
@@ -11,7 +11,7 @@
  * - Store reset token
  * - Queue/send password reset email
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -91,7 +91,7 @@ export interface PasswordResetRequestResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -129,16 +129,16 @@ export class PasswordResetRequestUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the password reset request use case
-   * 
+   *
    * @param input - Password reset request input
    * @returns Result containing success message or error
    */
@@ -217,7 +217,7 @@ export class PasswordResetRequestUseCase {
 
   /**
    * Validates email format
-   * 
+   *
    * @param email - Email string
    * @returns EmailAddress value object
    * @throws ValidationError if invalid
@@ -232,7 +232,7 @@ export class PasswordResetRequestUseCase {
 
   /**
    * Checks rate limiting for password reset requests
-   * 
+   *
    * @param email - User email
    * @param ipAddress - Client IP address
    * @throws RateLimitError if rate limit exceeded
@@ -257,7 +257,7 @@ export class PasswordResetRequestUseCase {
 
   /**
    * Creates audit log entry for password reset request
-   * 
+   *
    * @param userId - User ID (null if user not found)
    * @param email - Email address
    * @param ipAddress - Client IP address
@@ -267,7 +267,7 @@ export class PasswordResetRequestUseCase {
     userId: string | null,
     email: string,
     ipAddress?: string,
-    success: boolean = true
+    success: boolean = true,
   ): Promise<void> {
     try {
       const auditResult = this.auditLogDomainService.createAuditEntry(
@@ -284,7 +284,7 @@ export class PasswordResetRequestUseCase {
             ipAddress,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (auditResult.auditLog) {
@@ -297,7 +297,7 @@ export class PasswordResetRequestUseCase {
 
   /**
    * Handles errors and converts them to result format
-   * 
+   *
    * @param error - Error that occurred
    * @returns Error result
    */
@@ -321,4 +321,3 @@ export class PasswordResetRequestUseCase {
     };
   }
 }
-

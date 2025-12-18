@@ -1,9 +1,9 @@
 /**
  * Create Product Use Case (UC-INV-005)
- * 
+ *
  * Application use case for creating a new product in the catalog.
  * This use case orchestrates domain entities to create products with SKU, pricing, VAT, and stock tracking.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role)
  * - Validate SKU uniqueness
@@ -12,7 +12,7 @@
  * - Create Product domain entity
  * - Persist product via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -90,7 +90,7 @@ export interface CreateProductResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -149,16 +149,16 @@ export class CreateProductUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create product use case
-   * 
+   *
    * @param input - Input data for creating product
    * @returns Result containing created product or error
    */
@@ -205,12 +205,12 @@ export class CreateProductUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -234,7 +234,9 @@ export class CreateProductUseCase {
     }
 
     if (input.sku.length > CreateProductUseCase.MAX_SKU_LENGTH) {
-      throw new ValidationError(`SKU cannot exceed ${CreateProductUseCase.MAX_SKU_LENGTH} characters`);
+      throw new ValidationError(
+        `SKU cannot exceed ${CreateProductUseCase.MAX_SKU_LENGTH} characters`,
+      );
     }
 
     if (!input.name || input.name.trim().length === 0) {
@@ -269,7 +271,7 @@ export class CreateProductUseCase {
    */
   private async validateAndLoadSupplier(supplierId: string): Promise<Supplier> {
     const supplier = await this.supplierRepository.findById(supplierId);
-    
+
     if (!supplier) {
       throw new NotFoundError('Supplier not found');
     }
@@ -282,15 +284,24 @@ export class CreateProductUseCase {
    */
   private validateFieldConstraints(input: CreateProductInput): void {
     if (input.name.length > CreateProductUseCase.MAX_NAME_LENGTH) {
-      throw new ValidationError(`Name cannot exceed ${CreateProductUseCase.MAX_NAME_LENGTH} characters`);
+      throw new ValidationError(
+        `Name cannot exceed ${CreateProductUseCase.MAX_NAME_LENGTH} characters`,
+      );
     }
 
-    if (input.description && input.description.length > CreateProductUseCase.MAX_DESCRIPTION_LENGTH) {
-      throw new ValidationError(`Description cannot exceed ${CreateProductUseCase.MAX_DESCRIPTION_LENGTH} characters`);
+    if (
+      input.description &&
+      input.description.length > CreateProductUseCase.MAX_DESCRIPTION_LENGTH
+    ) {
+      throw new ValidationError(
+        `Description cannot exceed ${CreateProductUseCase.MAX_DESCRIPTION_LENGTH} characters`,
+      );
     }
 
     if (input.category && input.category.length > CreateProductUseCase.MAX_CATEGORY_LENGTH) {
-      throw new ValidationError(`Category cannot exceed ${CreateProductUseCase.MAX_CATEGORY_LENGTH} characters`);
+      throw new ValidationError(
+        `Category cannot exceed ${CreateProductUseCase.MAX_CATEGORY_LENGTH} characters`,
+      );
     }
 
     if (input.unitPrice < 0) {
@@ -329,7 +340,7 @@ export class CreateProductUseCase {
       input.category,
       input.reorderThreshold,
       now,
-      now
+      now,
     );
   }
 
@@ -355,7 +366,7 @@ export class CreateProductUseCase {
             reorderThreshold: product.reorderThreshold,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -409,4 +420,3 @@ export class CreateProductUseCase {
     };
   }
 }
-

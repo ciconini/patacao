@@ -1,6 +1,6 @@
 /**
  * Users Presentation Module
- * 
+ *
  * NestJS module that registers all controllers for the Users module.
  */
 
@@ -11,10 +11,6 @@ import { UserController } from './controllers/user.controller';
 
 @Module({
   imports: [UsersApplicationModule],
-  controllers: [
-    AuthController,
-    UserController,
-  ],
+  controllers: [AuthController, UserController],
 })
 export class UsersPresentationModule {}
-

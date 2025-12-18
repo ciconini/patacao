@@ -1,20 +1,20 @@
 /**
  * StockMovementDomainService
- * 
+ *
  * Domain service responsible for validating stock movement legality and managing
  * compensating movements. This service enforces the non-deletable movement rule
  * and provides validation for stock movement operations.
- * 
+ *
  * Responsibilities:
  * - Validate stock movement legality
  * - Enforce non-deletable movement rule
  * - Create compensating movements conceptually
  * - Validate movement constraints
- * 
+ *
  * Collaborating Entities:
  * - StockMovement: The stock movement entity being validated or corrected
  * - Product: The product entity that the movement affects
- * 
+ *
  * Business Rules Enforced:
  * - BR: All stock changes must be recorded as StockMovement with `performed_by` and cannot be deleted (only corrected with compensating movement)
  * - BR: Transactions creating multiple StockMovements must be atomic to preserve consistency
@@ -23,14 +23,14 @@
  * - BR: Decrement movements cannot exceed available stock (conceptual validation)
  * - BR: Movements are immutable once created
  * - BR: Corrections are made with compensating movements, not deletions
- * 
+ *
  * Invariants:
  * - Product must have stock tracking enabled for movements
  * - Quantity change must be non-zero integer
  * - Performed by user ID is required
  * - Location ID is required
  * - Movements cannot be deleted (only corrected with compensating movements)
- * 
+ *
  * Edge Cases:
  * - Product with stock_tracked = false (cannot have movements)
  * - Movement with zero quantity change (invalid)
@@ -60,16 +60,16 @@ export interface CompensatingMovementCreationResult {
 export class StockMovementDomainService {
   /**
    * Validates if a stock movement is legal.
-   * 
+   *
    * This method validates:
    * - Product stock tracking status
    * - Quantity change validity
    * - Movement reason appropriateness
    * - Available stock constraints (conceptual)
-   * 
+   *
    * Business Rule: Only stock-tracked products can have stock movements
    * Business Rule: Quantity change must be non-zero
-   * 
+   *
    * @param movement - The stock movement to validate
    * @param product - The product the movement affects
    * @param availableStock - Current available stock (for decrement validation)
@@ -79,7 +79,7 @@ export class StockMovementDomainService {
   validateMovementLegality(
     movement: StockMovement,
     product: Product,
-    availableStock?: number
+    availableStock?: number,
   ): MovementValidationResult {
     if (!movement) {
       throw new Error('StockMovement entity is required');
@@ -96,14 +96,14 @@ export class StockMovementDomainService {
     if (!product.stockTracked) {
       errors.push(
         `Product ${product.name} (${product.sku}) is not stock-tracked. ` +
-        `Stock movements can only be created for stock-tracked products.`
+          `Stock movements can only be created for stock-tracked products.`,
       );
     }
 
     // Validate product ID matches
     if (movement.productId !== product.id) {
       errors.push(
-        `Movement product ID (${movement.productId}) does not match provided product ID (${product.id})`
+        `Movement product ID (${movement.productId}) does not match provided product ID (${product.id})`,
       );
     }
 
@@ -123,12 +123,10 @@ export class StockMovementDomainService {
       if (absoluteQuantity > availableStock) {
         errors.push(
           `Cannot decrement ${absoluteQuantity} units. Available stock: ${availableStock}. ` +
-          `Decrement would result in negative stock.`
+            `Decrement would result in negative stock.`,
         );
       } else if (absoluteQuantity === availableStock) {
-        warnings.push(
-          `Decrement of ${absoluteQuantity} units will reduce stock to zero.`
-        );
+        warnings.push(`Decrement of ${absoluteQuantity} units will reduce stock to zero.`);
       }
     }
 
@@ -136,26 +134,26 @@ export class StockMovementDomainService {
     if (movement.isReceipt() && movement.reason !== StockMovementReason.RECEIPT) {
       warnings.push(
         `Movement has positive quantity but reason is ${movement.reason}. ` +
-        `Expected reason: RECEIPT`
+          `Expected reason: RECEIPT`,
       );
     }
 
-    if (movement.isDecrement() && 
-        movement.reason !== StockMovementReason.SALE &&
-        movement.reason !== StockMovementReason.ADJUSTMENT &&
-        movement.reason !== StockMovementReason.TRANSFER &&
-        movement.reason !== StockMovementReason.RESERVATION_RELEASE) {
+    if (
+      movement.isDecrement() &&
+      movement.reason !== StockMovementReason.SALE &&
+      movement.reason !== StockMovementReason.ADJUSTMENT &&
+      movement.reason !== StockMovementReason.TRANSFER &&
+      movement.reason !== StockMovementReason.RESERVATION_RELEASE
+    ) {
       warnings.push(
         `Movement has negative quantity but reason is ${movement.reason}. ` +
-        `Expected reason: SALE, ADJUSTMENT, TRANSFER, or RESERVATION_RELEASE`
+          `Expected reason: SALE, ADJUSTMENT, TRANSFER, or RESERVATION_RELEASE`,
       );
     }
 
     // Validate batch-specific movements
     if (movement.isBatchSpecific() && !product.stockTracked) {
-      errors.push(
-        'Batch-specific movements can only be created for stock-tracked products'
-      );
+      errors.push('Batch-specific movements can only be created for stock-tracked products');
     }
 
     return {
@@ -167,11 +165,11 @@ export class StockMovementDomainService {
 
   /**
    * Validates that a movement cannot be deleted.
-   * 
+   *
    * Business Rule: All stock changes must be recorded and cannot be deleted (only corrected with compensating movement)
-   * 
+   *
    * This method enforces the immutability rule conceptually.
-   * 
+   *
    * @param movement - The movement that cannot be deleted
    * @returns Validation result indicating deletion is not allowed
    */
@@ -184,8 +182,8 @@ export class StockMovementDomainService {
       isValid: false,
       errors: [
         `Stock movement ${movement.id} cannot be deleted. ` +
-        `All stock changes must be recorded and cannot be deleted. ` +
-        `To correct an error, create a compensating movement instead.`
+          `All stock changes must be recorded and cannot be deleted. ` +
+          `To correct an error, create a compensating movement instead.`,
       ],
       warnings: [],
     };
@@ -193,11 +191,11 @@ export class StockMovementDomainService {
 
   /**
    * Creates a compensating movement to correct an error in an original movement.
-   * 
+   *
    * Business Rule: Corrections are made with compensating movements, not deletions
-   * 
+   *
    * This method creates a new movement that reverses the effect of the original movement.
-   * 
+   *
    * @param originalMovement - The movement to compensate for
    * @param compensatingId - ID for the compensating movement
    * @param performedBy - User ID performing the correction
@@ -213,7 +211,7 @@ export class StockMovementDomainService {
     performedBy: string,
     reason: StockMovementReason = StockMovementReason.ADJUSTMENT,
     referenceId?: string,
-    createdAt?: Date
+    createdAt?: Date,
   ): CompensatingMovementCreationResult {
     if (!originalMovement) {
       throw new Error('Original StockMovement entity is required');
@@ -232,7 +230,7 @@ export class StockMovementDomainService {
       compensatingId,
       performedBy,
       referenceId,
-      createdAt
+      createdAt,
     );
 
     // Override reason if provided
@@ -248,11 +246,12 @@ export class StockMovementDomainService {
         originalMovement.locationId,
         originalMovement.batchId,
         referenceId,
-        createdAt
+        createdAt,
       );
-      
-      const netQuantityChange = originalMovement.quantityChange + newCompensatingMovement.quantityChange;
-      
+
+      const netQuantityChange =
+        originalMovement.quantityChange + newCompensatingMovement.quantityChange;
+
       return {
         compensatingMovement: newCompensatingMovement,
         originalMovement,
@@ -272,16 +271,16 @@ export class StockMovementDomainService {
 
   /**
    * Validates if a compensating movement correctly compensates for an original movement.
-   * 
+   *
    * A perfect compensation should result in net quantity change of 0.
-   * 
+   *
    * @param originalMovement - The original movement
    * @param compensatingMovement - The compensating movement
    * @returns True if compensation is correct (net change = 0)
    */
   validateCompensatingMovement(
     originalMovement: StockMovement,
-    compensatingMovement: StockMovement
+    compensatingMovement: StockMovement,
   ): boolean {
     if (!originalMovement) {
       throw new Error('Original StockMovement entity is required');
@@ -313,9 +312,9 @@ export class StockMovementDomainService {
 
   /**
    * Calculates the net quantity change from multiple movements.
-   * 
+   *
    * Useful for validating that a set of compensating movements correctly balances.
-   * 
+   *
    * @param movements - List of movements to calculate net change for
    * @returns Net quantity change
    */
@@ -334,29 +333,26 @@ export class StockMovementDomainService {
 
   /**
    * Validates that a set of movements for a product are balanced (net change = 0).
-   * 
+   *
    * This is useful for validating compensating movements.
-   * 
+   *
    * @param movements - List of movements to validate
    * @param productId - Product ID to filter by
    * @returns True if movements are balanced
    */
-  validateMovementsAreBalanced(
-    movements: StockMovement[],
-    productId: string
-  ): boolean {
+  validateMovementsAreBalanced(movements: StockMovement[], productId: string): boolean {
     if (!productId || productId.trim().length === 0) {
       throw new Error('Product ID is required');
     }
 
-    const productMovements = movements.filter(m => m.productId === productId);
+    const productMovements = movements.filter((m) => m.productId === productId);
     const netChange = this.calculateNetQuantityChange(productMovements);
     return netChange === 0;
   }
 
   /**
    * Validates that a movement can be created for a product.
-   * 
+   *
    * @param product - The product to check
    * @returns True if product can have movements
    */
@@ -370,7 +366,7 @@ export class StockMovementDomainService {
 
   /**
    * Validates multiple movements for legality.
-   * 
+   *
    * @param movements - List of movements to validate
    * @param products - Map of product ID to Product entity
    * @param availableStockMap - Map of product ID to available stock
@@ -379,7 +375,7 @@ export class StockMovementDomainService {
   validateMultipleMovements(
     movements: StockMovement[],
     products: Map<string, Product>,
-    availableStockMap?: Map<string, number>
+    availableStockMap?: Map<string, number>,
   ): Map<string, MovementValidationResult> {
     const results = new Map<string, MovementValidationResult>();
 
@@ -404,9 +400,9 @@ export class StockMovementDomainService {
 
   /**
    * Checks if a movement is a correction (compensating movement).
-   * 
+   *
    * This is a heuristic check based on the movement reason and reference ID.
-   * 
+   *
    * @param movement - The movement to check
    * @returns True if movement appears to be a correction
    */
@@ -430,18 +426,18 @@ export class StockMovementDomainService {
 
   /**
    * Validates that movements in a transaction are consistent.
-   * 
+   *
    * Business Rule: Transactions creating multiple StockMovements must be atomic to preserve consistency
-   * 
+   *
    * This validates that all movements in a set are for valid products and locations.
-   * 
+   *
    * @param movements - List of movements in the transaction
    * @param products - Map of product ID to Product entity
    * @returns Validation result
    */
   validateTransactionMovements(
     movements: StockMovement[],
-    products: Map<string, Product>
+    products: Map<string, Product>,
   ): MovementValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -460,16 +456,16 @@ export class StockMovementDomainService {
       const product = products.get(movement.productId);
       if (!product) {
         errors.push(
-          `Movement ${movement.id} references product ${movement.productId} that does not exist`
+          `Movement ${movement.id} references product ${movement.productId} that does not exist`,
         );
         continue;
       }
 
       const movementValidation = this.validateMovementLegality(movement, product);
       if (!movementValidation.isValid) {
-        errors.push(...movementValidation.errors.map(e => `Movement ${movement.id}: ${e}`));
+        errors.push(...movementValidation.errors.map((e) => `Movement ${movement.id}: ${e}`));
       }
-      warnings.push(...movementValidation.warnings.map(w => `Movement ${movement.id}: ${w}`));
+      warnings.push(...movementValidation.warnings.map((w) => `Movement ${movement.id}: ${w}`));
     }
 
     return {
@@ -479,4 +475,3 @@ export class StockMovementDomainService {
     };
   }
 }
-

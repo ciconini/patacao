@@ -1,6 +1,6 @@
 /**
  * StockMovementRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for StockMovementRepository port.
  */
 
@@ -33,7 +33,7 @@ export class FirestoreStockMovementRepository implements StockMovementRepository
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   async save(movement: StockMovement): Promise<StockMovement> {
@@ -46,7 +46,7 @@ export class FirestoreStockMovementRepository implements StockMovementRepository
   async search(
     criteria: StockMovementSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<StockMovement>> {
     let query: FirebaseFirestore.Query = this.firestore.collection(this.collectionName);
 
@@ -88,8 +88,8 @@ export class FirestoreStockMovementRepository implements StockMovementRepository
     const snapshot = await query.get();
 
     // Convert to entities
-    const items = snapshot.docs.map(doc => 
-      this.toEntity(doc.id, doc.data() as StockMovementDocument)
+    const items = snapshot.docs.map((doc) =>
+      this.toEntity(doc.id, doc.data() as StockMovementDocument),
     );
 
     // Calculate pagination metadata
@@ -134,7 +134,7 @@ export class FirestoreStockMovementRepository implements StockMovementRepository
       doc.locationId,
       doc.batchId,
       doc.referenceId,
-      this.toDate(doc.createdAt)
+      this.toDate(doc.createdAt),
     );
   }
 
@@ -146,4 +146,3 @@ export class FirestoreStockMovementRepository implements StockMovementRepository
     return timestamp.toDate();
   }
 }
-

@@ -1,12 +1,12 @@
 /**
  * Create User Use Case (UC-AUTH-005)
- * 
+ *
  * Application use case for creating a new user account.
  * This use case orchestrates domain entities and domain services to create a user.
- * 
+ *
  * Note: This is similar to UC-ADMIN-009 (Create User Staff) but is part of the Authentication module.
  * The main difference is the module context and potential slight variations in business rules.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role required)
  * - Validate role assignment restrictions (only Owner can create Owner users)
@@ -16,7 +16,7 @@
  * - Persist user via repository
  * - Assign roles and stores
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -24,6 +24,7 @@
  * - Persistence implementation details
  */
 
+import { Inject } from '@nestjs/common';
 import { User, WeeklySchedule } from '../domain/user.entity';
 import { EmailAddress } from '../../shared/domain/email-address.value-object';
 import { PhoneNumber } from '../../shared/domain/phone-number.value-object';
@@ -31,30 +32,18 @@ import { WorkingHours } from '../../shared/domain/working-hours.value-object';
 import { RoleId } from '../../shared/domain/role-id.value-object';
 import { AuditLogDomainService } from '../../shared/domain/audit-log.domain-service';
 import { AuditLog, AuditAction } from '../../shared/domain/audit-log.entity';
+import { UserRepository } from '../ports/user.repository.port';
+import { RoleRepository } from '../ports/role.repository.port';
+import { Role } from '../domain/role.entity';
+import { CurrentUserRepository } from '../infrastructure/current-user.repository.adapter';
 
-// Repository interfaces (ports)
-export interface UserRepository {
-  save(user: User): Promise<User>;
-  findByEmail(email: string): Promise<User | null>;
-  findByUsername(username: string): Promise<User | null>;
-  assignRoles(userId: string, roleIds: string[]): Promise<void>;
-  assignStores(userId: string, storeIds: string[]): Promise<void>;
-}
-
+// Repository interfaces (ports) - kept for backward compatibility with other repositories
 export interface StoreRepository {
-  findById(id: string): Promise<{ id: string } | null>;
-}
-
-export interface RoleRepository {
   findById(id: string): Promise<{ id: string } | null>;
 }
 
 export interface AuditLogRepository {
   save(auditLog: AuditLog): Promise<AuditLog>;
-}
-
-export interface CurrentUserRepository {
-  findById(id: string): Promise<{ id: string; roleIds: string[] } | null>;
 }
 
 // Input model
@@ -106,7 +95,7 @@ export interface CreateUserResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -159,27 +148,41 @@ export class NotFoundError extends ApplicationError {
  * Create User Use Case
  */
 export class CreateUserUseCase {
-  private static readonly REQUIRED_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+  private static readonly REQUIRED_DAYS = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ] as const;
+
+  private readonly generateId: () => string = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  };
 
   constructor(
+    @Inject('UserRepository')
     private readonly userRepository: UserRepository,
+    @Inject('StoreRepository')
     private readonly storeRepository: StoreRepository,
+    @Inject('RoleRepository')
     private readonly roleRepository: RoleRepository,
+    @Inject('AuditLogRepository')
     private readonly auditLogRepository: AuditLogRepository,
+    @Inject('CurrentUserRepository')
     private readonly currentUserRepository: CurrentUserRepository,
     private readonly auditLogDomainService: AuditLogDomainService,
-    private readonly generateId: () => string = () => {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    }
   ) {}
 
   /**
    * Executes the create user use case
-   * 
+   *
    * @param input - Input data for creating user
    * @returns Result containing created user or error
    */
@@ -229,17 +232,19 @@ export class CreateUserUseCase {
   /**
    * Validates user authorization (must have Manager or Owner role)
    */
-  private async validateUserAuthorization(userId: string): Promise<{ id: string; roleIds: string[] }> {
+  private async validateUserAuthorization(
+    userId: string,
+  ): Promise<{ id: string; roleIds: string[] }> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasManagerOrOwnerRole = user.roleIds.some(roleId => {
+    const hasManagerOrOwnerRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
-        return role ? (role.isManager() || role.isOwner()) : false;
+        return role ? role.isManager() || role.isOwner() : false;
       } catch {
         return false;
       }
@@ -257,7 +262,7 @@ export class CreateUserUseCase {
    */
   private async validateAndNormalizeInput(
     input: CreateUserInput,
-    currentUser: { id: string; roleIds: string[] }
+    currentUser: { id: string; roleIds: string[] },
   ): Promise<{
     email: EmailAddress;
     fullName: string;
@@ -299,8 +304,8 @@ export class CreateUserUseCase {
         }
 
         // Verify role exists
-        const roleExists = await this.roleRepository.findById(role.value);
-        if (!roleExists) {
+        const roleEntity = await this.roleRepository.findById(role.value);
+        if (!roleEntity) {
           throw new NotFoundError(`Role ${roleId} not found`);
         }
       } catch (error: any) {
@@ -312,7 +317,7 @@ export class CreateUserUseCase {
     }
 
     if (hasOwnerRole) {
-      const isCurrentUserOwner = currentUser.roleIds.some(roleId => {
+      const isCurrentUserOwner = currentUser.roleIds.some((roleId) => {
         try {
           const role = RoleId.fromString(roleId);
           return role ? role.isOwner() : false;
@@ -375,7 +380,7 @@ export class CreateUserUseCase {
 
     for (const day of CreateUserUseCase.REQUIRED_DAYS) {
       const dayHours = workingHours[day];
-      
+
       if (!dayHours) {
         throw new ValidationError(`Working hours must contain all 7 days of week. Missing: ${day}`);
       }
@@ -390,7 +395,7 @@ export class CreateUserUseCase {
         const workingHoursVO = isAvailable
           ? WorkingHours.available(dayHours.start, dayHours.end)
           : WorkingHours.unavailable(dayHours.start, dayHours.end);
-        
+
         validated[day] = {
           startTime: workingHoursVO.startTime,
           endTime: workingHoursVO.endTime,
@@ -465,7 +470,7 @@ export class CreateUserUseCase {
       [], // serviceSkills - not in this use case
       validatedInput.active,
       now,
-      now
+      now,
     );
   }
 
@@ -484,7 +489,7 @@ export class CreateUserUseCase {
     validatedInput: {
       roles: string[];
       storeIds: string[];
-    }
+    },
   ): Promise<void> {
     if (validatedInput.roles.length > 0) {
       await this.userRepository.assignRoles(userId, validatedInput.roles);
@@ -514,7 +519,7 @@ export class CreateUserUseCase {
             roles: user.roleIds,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -532,7 +537,7 @@ export class CreateUserUseCase {
     user: User,
     validatedInput: {
       storeIds: string[];
-    }
+    },
   ): CreateUserOutput {
     return {
       id: user.id,
@@ -572,4 +577,3 @@ export class CreateUserUseCase {
     };
   }
 }
-

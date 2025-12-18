@@ -1,11 +1,11 @@
 /**
  * Employee Domain Entity
- * 
+ *
  * Represents an employee (staff member) in the petshop management system.
  * This entity represents employment/HR information, distinct from User which handles system access.
  * An Employee may be linked to a User for system access, but employment information is separate.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - An Employee must be linked to a Company (invariant)
  * - Employee number must be unique within the Company
@@ -63,7 +63,7 @@ export class Employee {
 
   /**
    * Creates a new Employee entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param companyId - Company ID that employs this person (required)
    * @param employeeNumber - Unique employee number within company (required)
@@ -88,7 +88,7 @@ export class Employee {
    * @param notes - Additional notes
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if companyId is empty
    * @throws Error if employeeNumber is empty
    * @throws Error if fullName is empty
@@ -120,14 +120,14 @@ export class Employee {
     emergencyContactPhone?: string,
     notes?: string,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateCompanyId(companyId);
     this.validateEmployeeNumber(employeeNumber);
     this.validateFullName(fullName);
     this.validateEmploymentStartDate(employmentStartDate);
-    
+
     if (employmentEndDate) {
       this.validateEmploymentEndDate(employmentStartDate, employmentEndDate);
     }
@@ -277,7 +277,7 @@ export class Employee {
 
   /**
    * Updates the employee number
-   * 
+   *
    * @param employeeNumber - New employee number
    * @throws Error if employeeNumber is empty
    */
@@ -289,7 +289,7 @@ export class Employee {
 
   /**
    * Links the employee to a User entity for system access
-   * 
+   *
    * @param userId - User ID to link
    */
   linkToUser(userId: string): void {
@@ -310,7 +310,7 @@ export class Employee {
 
   /**
    * Updates the employee's full name
-   * 
+   *
    * @param fullName - New full name
    * @throws Error if name is empty
    */
@@ -322,7 +322,7 @@ export class Employee {
 
   /**
    * Updates the employee's email
-   * 
+   *
    * @param email - New email address
    * @throws Error if email format is invalid
    */
@@ -336,7 +336,7 @@ export class Employee {
 
   /**
    * Updates the employee's phone number
-   * 
+   *
    * @param phone - New phone number
    */
   updatePhone(phone: string | undefined): void {
@@ -346,7 +346,7 @@ export class Employee {
 
   /**
    * Updates the employee's address
-   * 
+   *
    * @param address - New address
    */
   updateAddress(address: Address | undefined): void {
@@ -361,7 +361,7 @@ export class Employee {
 
   /**
    * Updates the NIF (Portuguese tax ID)
-   * 
+   *
    * @param nif - NIF number
    * @throws Error if NIF format is invalid
    */
@@ -375,7 +375,7 @@ export class Employee {
 
   /**
    * Updates the date of birth
-   * 
+   *
    * @param dateOfBirth - Date of birth
    * @throws Error if date is in the future
    */
@@ -383,7 +383,7 @@ export class Employee {
     if (dateOfBirth) {
       const birthDate = new Date(dateOfBirth);
       const today = new Date();
-      
+
       if (birthDate > today) {
         throw new Error('Date of birth cannot be in the future');
       }
@@ -395,13 +395,13 @@ export class Employee {
 
   /**
    * Updates the employment start date
-   * 
+   *
    * @param startDate - Employment start date
    * @throws Error if date is in the future or after end date
    */
   updateEmploymentStartDate(startDate: Date): void {
     this.validateEmploymentStartDate(startDate);
-    
+
     if (this._employmentEndDate && new Date(startDate) > this._employmentEndDate) {
       throw new Error('Employment start date cannot be after end date');
     }
@@ -412,7 +412,7 @@ export class Employee {
 
   /**
    * Updates the employment end date
-   * 
+   *
    * @param endDate - Employment end date
    * @throws Error if date is before start date
    */
@@ -428,7 +428,7 @@ export class Employee {
 
   /**
    * Updates the employment status
-   * 
+   *
    * @param status - New employment status
    */
   updateEmploymentStatus(status: EmploymentStatus): void {
@@ -438,7 +438,7 @@ export class Employee {
 
   /**
    * Updates the employment type
-   * 
+   *
    * @param type - New employment type
    */
   updateEmploymentType(type: EmploymentType): void {
@@ -448,7 +448,7 @@ export class Employee {
 
   /**
    * Updates the position/job title
-   * 
+   *
    * @param position - New position
    */
   updatePosition(position: string | undefined): void {
@@ -458,7 +458,7 @@ export class Employee {
 
   /**
    * Updates the department
-   * 
+   *
    * @param department - New department
    */
   updateDepartment(department: string | undefined): void {
@@ -468,7 +468,7 @@ export class Employee {
 
   /**
    * Assigns the employee to a store
-   * 
+   *
    * @param storeId - Store ID to assign
    * @throws Error if storeId is empty
    */
@@ -485,7 +485,7 @@ export class Employee {
 
   /**
    * Removes the employee from a store
-   * 
+   *
    * @param storeId - Store ID to remove
    */
   removeFromStore(storeId: string): void {
@@ -498,7 +498,7 @@ export class Employee {
 
   /**
    * Updates the monthly salary
-   * 
+   *
    * @param salary - New monthly salary
    * @throws Error if salary is negative
    */
@@ -512,7 +512,7 @@ export class Employee {
 
   /**
    * Updates the hourly rate
-   * 
+   *
    * @param hourlyRate - New hourly rate
    * @throws Error if hourly rate is negative
    */
@@ -526,7 +526,7 @@ export class Employee {
 
   /**
    * Updates emergency contact information
-   * 
+   *
    * @param name - Emergency contact name
    * @param phone - Emergency contact phone
    */
@@ -538,7 +538,7 @@ export class Employee {
 
   /**
    * Updates additional notes
-   * 
+   *
    * @param notes - Notes
    */
   updateNotes(notes: string | undefined): void {
@@ -548,7 +548,7 @@ export class Employee {
 
   /**
    * Terminates the employee
-   * 
+   *
    * @param endDate - Termination date (defaults to today)
    */
   terminate(endDate: Date = new Date()): void {
@@ -584,7 +584,7 @@ export class Employee {
   calculateYearsOfService(): number {
     const today = new Date();
     const startDate = new Date(this._employmentStartDate);
-    
+
     if (startDate > today) {
       return 0;
     }
@@ -616,7 +616,7 @@ export class Employee {
 
   /**
    * Checks if the employee is assigned to a specific store
-   * 
+   *
    * @param storeId - Store ID to check
    * @returns True if employee is assigned to the store
    */
@@ -668,7 +668,7 @@ export class Employee {
   private validateEmploymentStartDate(startDate: Date): void {
     const today = new Date();
     today.setHours(23, 59, 59, 999); // Allow today as valid
-    
+
     if (new Date(startDate) > today) {
       throw new Error('Employment start date cannot be in the future');
     }
@@ -706,7 +706,7 @@ export class Employee {
 
     const digits = nif.split('').map(Number);
     const weights = [9, 8, 7, 6, 5, 4, 3, 2];
-    
+
     let sum = 0;
     for (let i = 0; i < 8; i++) {
       sum += digits[i] * weights[i];
@@ -714,7 +714,7 @@ export class Employee {
 
     const remainder = sum % 11;
     let checkDigit = 11 - remainder;
-    
+
     if (checkDigit >= 10) {
       checkDigit = 0;
     }
@@ -756,4 +756,3 @@ export class Employee {
     }
   }
 }
-

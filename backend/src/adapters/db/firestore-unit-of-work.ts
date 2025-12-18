@@ -1,16 +1,16 @@
 /**
  * Firestore UnitOfWork Implementation
- * 
+ *
  * Firestore adapter for UnitOfWork port.
  * This implementation uses Firestore transactions to ensure atomicity
  * of multiple repository operations.
- * 
+ *
  * Responsibilities:
  * - Manage Firestore transaction lifecycle
  * - Provide transaction context to repositories
  * - Handle commit and rollback operations
  * - Support nested transaction execution
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -21,7 +21,7 @@ import { UnitOfWork } from '../../shared/ports/unit-of-work.port';
 /**
  * Firestore transaction context
  * Contains the Firestore transaction object that repositories can use
- * 
+ *
  * Repositories can accept this context as an optional parameter to ensure
  * their operations participate in the same transaction.
  */
@@ -38,7 +38,7 @@ export class FirestoreUnitOfWork implements UnitOfWork {
 
   constructor(
     @Inject('FIRESTORE')
-    firestore: Firestore
+    firestore: Firestore,
   ) {
     this.firestore = firestore;
   }
@@ -49,7 +49,9 @@ export class FirestoreUnitOfWork implements UnitOfWork {
    */
   async start(): Promise<void> {
     if (this.isTransactionActive) {
-      throw new Error('Transaction is already active. Firestore does not support nested transactions.');
+      throw new Error(
+        'Transaction is already active. Firestore does not support nested transactions.',
+      );
     }
 
     // Firestore transactions are created lazily when first used
@@ -96,13 +98,15 @@ export class FirestoreUnitOfWork implements UnitOfWork {
   /**
    * Executes a function within a Firestore transaction
    * Uses Firestore's runTransaction for atomicity
-   * 
+   *
    * @param fn - Function to execute within the transaction
    * @returns Promise that resolves with the function's return value
    */
   async execute<T>(fn: (context: FirestoreTransactionContext) => Promise<T>): Promise<T> {
     if (this.isTransactionActive) {
-      throw new Error('Nested transactions are not supported. Use execute() for the entire operation.');
+      throw new Error(
+        'Nested transactions are not supported. Use execute() for the entire operation.',
+      );
     }
 
     return await this.firestore.runTransaction(async (transaction) => {
@@ -116,11 +120,11 @@ export class FirestoreUnitOfWork implements UnitOfWork {
         };
 
         const result = await fn(context);
-        
+
         // Transaction commits automatically on successful completion
         this.isTransactionActive = false;
         this.transaction = null;
-        
+
         return result;
       } catch (error) {
         // Transaction rolls back automatically on error
@@ -141,7 +145,7 @@ export class FirestoreUnitOfWork implements UnitOfWork {
   /**
    * Gets the transaction context
    * Returns null if no transaction is active
-   * 
+   *
    * @returns Transaction context or null
    */
   getTransaction(): FirestoreTransactionContext | null {
@@ -155,4 +159,3 @@ export class FirestoreUnitOfWork implements UnitOfWork {
     };
   }
 }
-

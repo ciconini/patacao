@@ -1,10 +1,10 @@
 /**
  * Create Inventory Reservation Use Case (UC-INV-003)
- * 
+ *
  * Application use case for creating inventory reservations.
  * This use case orchestrates domain entities and domain services to reserve stock
  * for appointments or transactions.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, or Owner role)
  * - Validate product exists and is stock-tracked
@@ -13,7 +13,7 @@
  * - Create inventory reservation using InventoryReservationDomainService
  * - Persist reservation via repository
  * - Create audit log entry
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -93,7 +93,7 @@ export interface CreateInventoryReservationResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -151,16 +151,16 @@ export class CreateInventoryReservationUseCase {
     private readonly auditLogDomainService: AuditLogDomainService,
     private readonly generateId: () => string = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       });
-    }
+    },
   ) {}
 
   /**
    * Executes the create inventory reservation use case
-   * 
+   *
    * @param input - Input data for creating reservation
    * @returns Result containing reservation details or error
    */
@@ -177,7 +177,9 @@ export class CreateInventoryReservationUseCase {
 
       // 4. Validate product is stock-tracked
       if (!product.stockTracked) {
-        throw new ValidationError(`Product ${product.name} (${product.sku}) is not stock-tracked. Reservations can only be created for stock-tracked products.`);
+        throw new ValidationError(
+          `Product ${product.name} (${product.sku}) is not stock-tracked. Reservations can only be created for stock-tracked products.`,
+        );
       }
 
       // 5. Validate target (appointment or transaction) exists
@@ -200,7 +202,7 @@ export class CreateInventoryReservationUseCase {
         product,
         currentStock,
         activeReservations,
-        new Date()
+        new Date(),
       );
 
       // 9. Check if user can override (Manager or Owner)
@@ -208,7 +210,7 @@ export class CreateInventoryReservationUseCase {
 
       // 10. Create reservation using domain service
       let reservation: InventoryReservation;
-      
+
       if (input.reservedForType === 'appointment') {
         const appointment = target as Appointment;
         const result = this.inventoryReservationDomainService.createReservationForAppointment(
@@ -219,18 +221,16 @@ export class CreateInventoryReservationUseCase {
           availableStock,
           input.expiresAt,
           canOverride,
-          new Date()
+          new Date(),
         );
 
         if (!result.canCreate) {
           if (result.requiresOverride) {
             throw new ConflictError(
-              `Insufficient stock. Available: ${availableStock}, Required: ${input.quantity}. Manager override required.`
+              `Insufficient stock. Available: ${availableStock}, Required: ${input.quantity}. Manager override required.`,
             );
           }
-          throw new ValidationError(
-            `Cannot create reservation: ${result.errors.join(', ')}`
-          );
+          throw new ValidationError(`Cannot create reservation: ${result.errors.join(', ')}`);
         }
 
         if (!result.reservation) {
@@ -243,7 +243,7 @@ export class CreateInventoryReservationUseCase {
         // (domain service is appointment-focused, but we can extend or create directly)
         if (availableStock < input.quantity && !canOverride) {
           throw new ConflictError(
-            `Insufficient stock. Available: ${availableStock}, Required: ${input.quantity}. Manager override required.`
+            `Insufficient stock. Available: ${availableStock}, Required: ${input.quantity}. Manager override required.`,
           );
         }
 
@@ -253,7 +253,7 @@ export class CreateInventoryReservationUseCase {
           input.quantity,
           input.reservedForId,
           input.expiresAt,
-          new Date()
+          new Date(),
         );
       }
 
@@ -278,12 +278,12 @@ export class CreateInventoryReservationUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -294,7 +294,9 @@ export class CreateInventoryReservationUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Manager, or Owner role can create inventory reservations');
+      throw new ForbiddenError(
+        'Only Staff, Manager, or Owner role can create inventory reservations',
+      );
     }
   }
 
@@ -324,7 +326,7 @@ export class CreateInventoryReservationUseCase {
    */
   private async validateAndLoadProduct(productId: string): Promise<Product> {
     const product = await this.productRepository.findById(productId);
-    
+
     if (!product) {
       throw new NotFoundError('Product not found');
     }
@@ -337,7 +339,7 @@ export class CreateInventoryReservationUseCase {
    */
   private async validateAndLoadTarget(
     targetId: string,
-    targetType: 'appointment' | 'transaction'
+    targetType: 'appointment' | 'transaction',
   ): Promise<Appointment | Transaction> {
     if (targetType === 'appointment') {
       const appointment = await this.appointmentRepository.findById(targetId);
@@ -370,7 +372,7 @@ export class CreateInventoryReservationUseCase {
   private async getActiveReservations(productId: string): Promise<InventoryReservation[]> {
     const allReservations = await this.inventoryReservationRepository.findByProduct(productId);
     const now = new Date();
-    return allReservations.filter(reservation => reservation.isActive(now));
+    return allReservations.filter((reservation) => reservation.isActive(now));
   }
 
   /**
@@ -382,7 +384,7 @@ export class CreateInventoryReservationUseCase {
       return false;
     }
 
-    return user.roleIds.some(roleId => {
+    return user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -398,7 +400,7 @@ export class CreateInventoryReservationUseCase {
    */
   private async createAuditLog(
     reservation: InventoryReservation,
-    performedBy: string
+    performedBy: string,
   ): Promise<void> {
     try {
       const result = this.auditLogDomainService.createAuditEntry(
@@ -416,7 +418,7 @@ export class CreateInventoryReservationUseCase {
             expiresAt: reservation.expiresAt,
           },
         },
-        new Date()
+        new Date(),
       );
 
       if (result.auditLog) {
@@ -432,7 +434,7 @@ export class CreateInventoryReservationUseCase {
    */
   private mapToOutput(
     reservation: InventoryReservation,
-    reservedForType: 'appointment' | 'transaction'
+    reservedForType: 'appointment' | 'transaction',
   ): CreateInventoryReservationOutput {
     return {
       id: reservation.id,
@@ -468,4 +470,3 @@ export class CreateInventoryReservationUseCase {
     };
   }
 }
-

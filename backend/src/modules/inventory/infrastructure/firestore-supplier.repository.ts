@@ -1,6 +1,6 @@
 /**
  * SupplierRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for SupplierRepository port.
  */
 
@@ -25,7 +25,7 @@ export class FirestoreSupplierRepository implements SupplierRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   async save(supplier: Supplier): Promise<Supplier> {
@@ -64,7 +64,7 @@ export class FirestoreSupplierRepository implements SupplierRepository {
       doc.phone,
       doc.defaultLeadTimeDays,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
@@ -76,4 +76,3 @@ export class FirestoreSupplierRepository implements SupplierRepository {
     return timestamp.toDate();
   }
 }
-

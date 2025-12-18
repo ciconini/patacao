@@ -1,10 +1,10 @@
 /**
  * Customer Domain Entity
- * 
+ *
  * Represents a client/owner of pets in the petshop management system.
  * Customers are the people who bring their pets to the petshop for services.
  * This is a pure domain entity with no framework dependencies.
- * 
+ *
  * Business Rules:
  * - Customer full name is required
  * - Email format must be validated when provided
@@ -32,7 +32,7 @@ export class Customer {
 
   /**
    * Creates a new Customer entity
-   * 
+   *
    * @param id - Unique identifier (UUID)
    * @param fullName - Customer's full name (required)
    * @param email - Contact email
@@ -42,7 +42,7 @@ export class Customer {
    * @param consentReminders - Consent for appointment reminders (default false)
    * @param createdAt - Creation timestamp
    * @param updatedAt - Last update timestamp
-   * 
+   *
    * @throws Error if id is empty
    * @throws Error if fullName is empty
    * @throws Error if email format is invalid (when provided)
@@ -56,7 +56,7 @@ export class Customer {
     consentMarketing: boolean = false,
     consentReminders: boolean = false,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     this.validateId(id);
     this.validateFullName(fullName);
@@ -119,7 +119,7 @@ export class Customer {
 
   /**
    * Updates the customer's full name
-   * 
+   *
    * @param fullName - New full name
    * @throws Error if fullName is empty
    */
@@ -131,7 +131,7 @@ export class Customer {
 
   /**
    * Updates the customer's email
-   * 
+   *
    * @param email - New email address
    * @throws Error if email format is invalid
    */
@@ -145,7 +145,7 @@ export class Customer {
 
   /**
    * Updates the customer's phone number
-   * 
+   *
    * @param phone - New phone number
    */
   updatePhone(phone: string | undefined): void {
@@ -155,7 +155,7 @@ export class Customer {
 
   /**
    * Updates the customer's address
-   * 
+   *
    * @param address - New address
    * @throws Error if address structure is invalid
    */
@@ -171,7 +171,7 @@ export class Customer {
 
   /**
    * Updates marketing consent
-   * 
+   *
    * @param consent - New marketing consent value
    */
   updateConsentMarketing(consent: boolean): void {
@@ -181,7 +181,7 @@ export class Customer {
 
   /**
    * Updates appointment reminders consent
-   * 
+   *
    * @param consent - New reminders consent value
    */
   updateConsentReminders(consent: boolean): void {
@@ -192,7 +192,7 @@ export class Customer {
   /**
    * Checks if the customer can receive appointment reminders
    * consentReminders must be true to send appointment reminders by email
-   * 
+   *
    * @returns True if customer has consented to reminders
    */
   canReceiveReminders(): boolean {
@@ -201,7 +201,7 @@ export class Customer {
 
   /**
    * Checks if the customer can receive marketing communications
-   * 
+   *
    * @returns True if customer has consented to marketing
    */
   canReceiveMarketing(): boolean {
@@ -210,7 +210,7 @@ export class Customer {
 
   /**
    * Checks if the customer has a valid email address
-   * 
+   *
    * @returns True if email is set and valid
    */
   hasEmail(): boolean {
@@ -219,7 +219,7 @@ export class Customer {
 
   /**
    * Checks if the customer has a valid phone number
-   * 
+   *
    * @returns True if phone is set and valid
    */
   hasPhone(): boolean {
@@ -228,14 +228,16 @@ export class Customer {
 
   /**
    * Checks if the customer has a complete address
-   * 
+   *
    * @returns True if address is set and valid
    */
   hasAddress(): boolean {
-    return !!this._address && 
-           !!this._address.street && 
-           !!this._address.city && 
-           !!this._address.postalCode;
+    return (
+      !!this._address &&
+      !!this._address.street &&
+      !!this._address.city &&
+      !!this._address.postalCode
+    );
   }
 
   // Private validation methods
@@ -259,7 +261,7 @@ export class Customer {
   /**
    * Validates email format
    * Uses a basic email validation pattern
-   * 
+   *
    * @param email - Email address to validate
    * @throws Error if email format is invalid
    */
@@ -305,4 +307,3 @@ export class Customer {
     }
   }
 }
-

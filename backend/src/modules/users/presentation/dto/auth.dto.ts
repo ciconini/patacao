@@ -1,6 +1,6 @@
 /**
  * Authentication DTOs
- * 
+ *
  * Data Transfer Objects for Authentication API endpoints.
  */
 
@@ -102,4 +102,3 @@ export class PasswordResetConfirmResponseDto {
   success!: boolean;
   message!: string;
 }
-

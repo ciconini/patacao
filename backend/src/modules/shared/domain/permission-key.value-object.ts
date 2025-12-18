@@ -1,33 +1,33 @@
 /**
  * PermissionKey Value Object
- * 
+ *
  * Represents a permission key identifier in the petshop management system.
  * This is a pure domain value object that encapsulates permission key validation and business rules.
- * 
+ *
  * Value Object Characteristics:
  * - Immutable: All properties are readonly and cannot be changed after creation
  * - No Identity: Equality is determined by value, not by reference
  * - Encapsulates Validation: All validation logic is contained within the value object
  * - Self-Validating: Constructor validates permission key format
- * 
+ *
  * Business Rules:
  * - Permission key follows format: `{resource}:{action}` (e.g., `user:create`, `invoice:issue`)
  * - Wildcard permissions are allowed: `{resource}:*` or `*:*`
  * - Permission key is case-sensitive for equality comparison
  * - Permission key is trimmed of leading/trailing whitespace
  * - Resource and action parts cannot be empty (unless wildcard)
- * 
+ *
  * Invariants:
  * - Permission key value must match the format `{resource}:{action}` or wildcard format
  * - Resource and action parts must be non-empty (unless wildcard)
  * - Value object is immutable after creation
- * 
+ *
  * Equality Definition:
  * - Two PermissionKey instances are equal if their values are equal (case-sensitive)
  * - Equality is based on permission key values, not object reference
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. In Role entity:
  *    constructor(
  *      // ... other params
@@ -35,45 +35,45 @@
  *    ) {
  *      this._permissions = permissions.map(key => new PermissionKey(key));
  *    }
- * 
+ *
  *    hasPermission(permissionKey: string | PermissionKey): boolean {
- *      const keyObj = permissionKey instanceof PermissionKey 
- *        ? permissionKey 
+ *      const keyObj = permissionKey instanceof PermissionKey
+ *        ? permissionKey
  *        : new PermissionKey(permissionKey);
  *      return this._permissions.some(key => key.equals(keyObj));
  *    }
- * 
+ *
  * 2. Creating PermissionKey:
  *    const userCreate = new PermissionKey("user:create");
  *    const invoiceIssue = new PermissionKey("invoice:issue");
  *    const wildcard = new PermissionKey("user:*");
  *    const allPermissions = new PermissionKey("*:*");
  *    const fromStringSafe = PermissionKey.fromString("appointment:complete"); // PermissionKey or null if invalid
- * 
+ *
  * 3. Equality comparison:
  *    const key1 = new PermissionKey("user:create");
  *    const key2 = new PermissionKey("user:create");
  *    key1.equals(key2); // true
- * 
+ *
  *    const key3 = new PermissionKey("User:Create");
  *    key1.equals(key3); // false (case-sensitive)
- * 
+ *
  * 4. String representation:
  *    const key = new PermissionKey("user:create");
  *    key.toString(); // "user:create"
  *    key.value; // "user:create"
  *    key.resource; // "user"
  *    key.action; // "create"
- * 
+ *
  * 5. Checking permission types:
  *    const key = new PermissionKey("user:create");
  *    key.isWildcard(); // false
  *    key.isResourceWildcard(); // false
  *    key.isAllWildcard(); // false
- * 
+ *
  *    const wildcard = new PermissionKey("user:*");
  *    wildcard.isResourceWildcard(); // true
- * 
+ *
  *    const allWildcard = new PermissionKey("*:*");
  *    allWildcard.isAllWildcard(); // true
  */
@@ -87,7 +87,7 @@ export class PermissionKey {
 
   /**
    * Creates a new PermissionKey value object
-   * 
+   *
    * @param value - Permission key string in format `{resource}:{action}`
    * @throws Error if value does not match permission key format
    */
@@ -102,7 +102,7 @@ export class PermissionKey {
 
   /**
    * Gets the permission key value
-   * 
+   *
    * @returns Permission key string (e.g., "user:create")
    */
   get value(): string {
@@ -111,7 +111,7 @@ export class PermissionKey {
 
   /**
    * Gets the resource part of the permission key
-   * 
+   *
    * @returns Resource string (e.g., "user")
    */
   get resource(): string {
@@ -120,7 +120,7 @@ export class PermissionKey {
 
   /**
    * Gets the action part of the permission key
-   * 
+   *
    * @returns Action string (e.g., "create")
    */
   get action(): string {
@@ -129,9 +129,9 @@ export class PermissionKey {
 
   /**
    * Checks if this PermissionKey equals another PermissionKey
-   * 
+   *
    * Equality is determined by comparing values (case-sensitive).
-   * 
+   *
    * @param other - Other PermissionKey to compare
    * @returns True if values are equal
    */
@@ -149,7 +149,7 @@ export class PermissionKey {
 
   /**
    * Checks if this PermissionKey is equal to another PermissionKey (alias for equals)
-   * 
+   *
    * @param other - Other PermissionKey to compare
    * @returns True if values are equal
    */
@@ -159,7 +159,7 @@ export class PermissionKey {
 
   /**
    * Checks if this permission key is a wildcard (resource or all wildcard)
-   * 
+   *
    * @returns True if permission key contains wildcard
    */
   isWildcard(): boolean {
@@ -168,7 +168,7 @@ export class PermissionKey {
 
   /**
    * Checks if this permission key is a resource wildcard (e.g., "user:*")
-   * 
+   *
    * @returns True if action is wildcard
    */
   isResourceWildcard(): boolean {
@@ -177,7 +177,7 @@ export class PermissionKey {
 
   /**
    * Checks if this permission key is an all wildcard (e.g., "*:*")
-   * 
+   *
    * @returns True if both resource and action are wildcards
    */
   isAllWildcard(): boolean {
@@ -186,12 +186,12 @@ export class PermissionKey {
 
   /**
    * Checks if this permission key matches another permission key
-   * 
+   *
    * A permission key matches if:
    * - They are equal, OR
    * - This key is a resource wildcard and resources match, OR
    * - This key is an all wildcard
-   * 
+   *
    * @param other - Other PermissionKey to check against
    * @returns True if this permission key matches the other
    */
@@ -215,7 +215,7 @@ export class PermissionKey {
 
   /**
    * Converts the PermissionKey to string representation
-   * 
+   *
    * @returns Permission key string representation
    */
   toString(): string {
@@ -224,9 +224,9 @@ export class PermissionKey {
 
   /**
    * Creates a PermissionKey instance from a string, returning null if invalid
-   * 
+   *
    * This is a factory method that allows safe creation without throwing exceptions.
-   * 
+   *
    * @param value - Permission key string
    * @returns PermissionKey instance or null if invalid
    */
@@ -240,7 +240,7 @@ export class PermissionKey {
 
   /**
    * Creates a PermissionKey from resource and action parts
-   * 
+   *
    * @param resource - Resource part (e.g., "user")
    * @param action - Action part (e.g., "create")
    * @returns New PermissionKey instance
@@ -252,7 +252,7 @@ export class PermissionKey {
 
   /**
    * Validates if a string can be used to create a PermissionKey instance
-   * 
+   *
    * @param value - String to validate
    * @returns True if string is valid for PermissionKey creation
    */
@@ -264,7 +264,7 @@ export class PermissionKey {
 
   /**
    * Validates the permission key value
-   * 
+   *
    * @param value - Value to validate
    * @throws Error if value is invalid
    */
@@ -283,15 +283,17 @@ export class PermissionKey {
     if (!PermissionKey.PERMISSION_REGEX.test(trimmed)) {
       throw new Error(
         `Invalid permission key format: "${trimmed}". ` +
-        `Expected format: {resource}:{action} (e.g., "user:create", "invoice:issue"). ` +
-        `Wildcards allowed: {resource}:* or *:*`
+          `Expected format: {resource}:{action} (e.g., "user:create", "invoice:issue"). ` +
+          `Wildcards allowed: {resource}:* or *:*`,
       );
     }
 
     // Additional validation: ensure resource and action are not empty (unless wildcard)
     const parts = trimmed.split(':');
     if (parts.length !== 2) {
-      throw new Error(`Permission key must have exactly one colon separator. Format: {resource}:{action}`);
+      throw new Error(
+        `Permission key must have exactly one colon separator. Format: {resource}:{action}`,
+      );
     }
 
     const [resource, action] = parts;
@@ -306,4 +308,3 @@ export class PermissionKey {
     }
   }
 }
-

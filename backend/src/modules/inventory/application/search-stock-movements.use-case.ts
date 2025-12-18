@@ -1,16 +1,16 @@
 /**
  * Search Stock Movements Use Case (UC-INV-009)
- * 
+ *
  * Application use case for searching and filtering stock movement records.
  * This use case orchestrates domain entities and repository ports to search stock movements.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Staff, Manager, Accountant, or Owner role)
  * - Validate search criteria and pagination parameters
  * - Execute search via repository
  * - Enrich results with denormalized data (product name, user name, location name)
  * - Return paginated results with metadata
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -24,7 +24,11 @@ import { RoleId } from '../../shared/domain/role-id.value-object';
 
 // Repository interfaces (ports)
 export interface StockMovementRepository {
-  search(criteria: SearchCriteria, pagination: Pagination, sort: Sort): Promise<PaginatedResult<StockMovement>>;
+  search(
+    criteria: SearchCriteria,
+    pagination: Pagination,
+    sort: Sort,
+  ): Promise<PaginatedResult<StockMovement>>;
 }
 
 export interface ProductRepository {
@@ -137,7 +141,7 @@ export interface SearchStockMovementsResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -188,12 +192,12 @@ export class SearchStockMovementsUseCase {
     private readonly productRepository: ProductRepository,
     private readonly userRepository: UserRepository,
     private readonly storeRepository: StoreRepository,
-    private readonly currentUserRepository: CurrentUserRepository
+    private readonly currentUserRepository: CurrentUserRepository,
   ) {}
 
   /**
    * Executes the search stock movements use case
-   * 
+   *
    * @param input - Input data for searching stock movements
    * @returns Result containing paginated stock movement list or error
    */
@@ -241,12 +245,12 @@ export class SearchStockMovementsUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -257,7 +261,9 @@ export class SearchStockMovementsUseCase {
     });
 
     if (!hasRequiredRole) {
-      throw new ForbiddenError('Only Staff, Manager, Accountant, or Owner role can search stock movements');
+      throw new ForbiddenError(
+        'Only Staff, Manager, Accountant, or Owner role can search stock movements',
+      );
     }
   }
 
@@ -265,15 +271,17 @@ export class SearchStockMovementsUseCase {
    * Validates and normalizes pagination parameters
    */
   private validateAndNormalizePagination(page?: number, perPage?: number): Pagination {
-    const normalizedPage = page !== undefined && page >= SearchStockMovementsUseCase.MIN_PAGE
-      ? page
-      : SearchStockMovementsUseCase.MIN_PAGE;
+    const normalizedPage =
+      page !== undefined && page >= SearchStockMovementsUseCase.MIN_PAGE
+        ? page
+        : SearchStockMovementsUseCase.MIN_PAGE;
 
-    const normalizedPerPage = perPage !== undefined &&
+    const normalizedPerPage =
+      perPage !== undefined &&
       perPage >= SearchStockMovementsUseCase.MIN_PER_PAGE &&
       perPage <= SearchStockMovementsUseCase.MAX_PER_PAGE
-      ? perPage
-      : SearchStockMovementsUseCase.DEFAULT_PER_PAGE;
+        ? perPage
+        : SearchStockMovementsUseCase.DEFAULT_PER_PAGE;
 
     return {
       page: normalizedPage,
@@ -297,7 +305,7 @@ export class SearchStockMovementsUseCase {
 
     if (!SearchStockMovementsUseCase.VALID_SORT_FIELDS.includes(field)) {
       throw new ValidationError(
-        `Invalid sort field. Valid fields: ${SearchStockMovementsUseCase.VALID_SORT_FIELDS.join(', ')}`
+        `Invalid sort field. Valid fields: ${SearchStockMovementsUseCase.VALID_SORT_FIELDS.join(', ')}`,
       );
     }
 
@@ -324,13 +332,11 @@ export class SearchStockMovementsUseCase {
       return undefined;
     }
 
-    const validReason = SearchStockMovementsUseCase.VALID_REASONS.find(
-      r => r === reason
-    );
+    const validReason = SearchStockMovementsUseCase.VALID_REASONS.find((r) => r === reason);
 
     if (!validReason) {
       throw new ValidationError(
-        `Invalid reason. Valid values: ${SearchStockMovementsUseCase.VALID_REASONS.join(', ')}`
+        `Invalid reason. Valid values: ${SearchStockMovementsUseCase.VALID_REASONS.join(', ')}`,
       );
     }
 
@@ -342,7 +348,7 @@ export class SearchStockMovementsUseCase {
    */
   private buildSearchCriteria(
     input: SearchStockMovementsInput,
-    reason?: StockMovementReason
+    reason?: StockMovementReason,
   ): SearchCriteria {
     const criteria: SearchCriteria = {};
 
@@ -381,7 +387,7 @@ export class SearchStockMovementsUseCase {
    * Enriches stock movements with denormalized data
    */
   private async enrichWithDenormalizedData(
-    movements: StockMovement[]
+    movements: StockMovement[],
   ): Promise<SearchStockMovementsOutput['items']> {
     const enrichedItems: SearchStockMovementsOutput['items'] = [];
 
@@ -446,7 +452,7 @@ export class SearchStockMovementsUseCase {
         if (product) {
           products.set(id, product);
         }
-      })
+      }),
     );
 
     return products;
@@ -455,7 +461,9 @@ export class SearchStockMovementsUseCase {
   /**
    * Loads users by IDs
    */
-  private async loadUsers(userIds: string[]): Promise<Map<string, { id: string; fullName: string }>> {
+  private async loadUsers(
+    userIds: string[],
+  ): Promise<Map<string, { id: string; fullName: string }>> {
     const users = new Map<string, { id: string; fullName: string }>();
 
     await Promise.all(
@@ -464,7 +472,7 @@ export class SearchStockMovementsUseCase {
         if (user) {
           users.set(id, user);
         }
-      })
+      }),
     );
 
     return users;
@@ -473,7 +481,9 @@ export class SearchStockMovementsUseCase {
   /**
    * Loads stores by IDs
    */
-  private async loadStores(locationIds: string[]): Promise<Map<string, { id: string; name: string }>> {
+  private async loadStores(
+    locationIds: string[],
+  ): Promise<Map<string, { id: string; name: string }>> {
     const stores = new Map<string, { id: string; name: string }>();
 
     await Promise.all(
@@ -482,7 +492,7 @@ export class SearchStockMovementsUseCase {
         if (store) {
           stores.set(id, store);
         }
-      })
+      }),
     );
 
     return stores;
@@ -526,4 +536,3 @@ export class SearchStockMovementsUseCase {
     };
   }
 }
-

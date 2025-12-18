@@ -1,9 +1,9 @@
 /**
  * CustomerRepository Port (Interface)
- * 
+ *
  * Repository interface for Customer domain entity persistence.
  * This is a port in the Hexagonal Architecture pattern.
- * 
+ *
  * Implementations should be provided in the Infrastructure layer.
  */
 
@@ -48,7 +48,7 @@ export interface PaginatedResult<T> {
 export interface CustomerRepository {
   /**
    * Saves a Customer entity (creates or updates)
-   * 
+   *
    * @param customer - Customer domain entity to save
    * @returns Saved Customer entity
    */
@@ -56,7 +56,7 @@ export interface CustomerRepository {
 
   /**
    * Updates an existing Customer entity
-   * 
+   *
    * @param customer - Customer domain entity to update
    * @returns Updated Customer entity
    */
@@ -64,7 +64,7 @@ export interface CustomerRepository {
 
   /**
    * Finds a Customer by ID
-   * 
+   *
    * @param id - Customer ID
    * @returns Customer entity or null if not found
    */
@@ -72,7 +72,7 @@ export interface CustomerRepository {
 
   /**
    * Finds a Customer by email
-   * 
+   *
    * @param email - Email address to search for
    * @returns Customer entity or null if not found
    */
@@ -80,14 +80,14 @@ export interface CustomerRepository {
 
   /**
    * Deletes a Customer (hard delete)
-   * 
+   *
    * @param id - Customer ID to delete
    */
   delete(id: string): Promise<void>;
 
   /**
    * Checks if a Customer is archived
-   * 
+   *
    * @param id - Customer ID
    * @returns True if customer is archived
    */
@@ -95,7 +95,7 @@ export interface CustomerRepository {
 
   /**
    * Searches for customers with pagination
-   * 
+   *
    * @param criteria - Search criteria
    * @param pagination - Pagination parameters
    * @param sort - Sort parameters
@@ -104,7 +104,6 @@ export interface CustomerRepository {
   search(
     criteria: CustomerSearchCriteria,
     pagination: Pagination,
-    sort: Sort
+    sort: Sort,
   ): Promise<PaginatedResult<Customer>>;
 }
-

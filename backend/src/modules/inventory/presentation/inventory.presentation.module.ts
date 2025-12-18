@@ -1,6 +1,6 @@
 /**
  * Inventory Presentation Module
- * 
+ *
  * NestJS module that registers all controllers for the Inventory module.
  */
 
@@ -25,4 +25,3 @@ import { StockController } from './controllers/stock.controller';
   ],
 })
 export class InventoryPresentationModule {}
-

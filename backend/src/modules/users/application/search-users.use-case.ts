@@ -1,15 +1,15 @@
 /**
  * Search Users Use Case (UC-AUTH-006)
- * 
+ *
  * Application use case for searching and filtering user accounts.
  * This use case orchestrates domain entities and repository ports to search users.
- * 
+ *
  * Responsibilities:
  * - Validate user authorization (Manager or Owner role required)
  * - Validate search criteria and pagination parameters
  * - Execute search via repository
  * - Return paginated results with metadata
- * 
+ *
  * This use case belongs to the Application layer and does not contain:
  * - Framework dependencies
  * - Infrastructure code
@@ -22,7 +22,11 @@ import { RoleId } from '../../shared/domain/role-id.value-object';
 
 // Repository interfaces (ports)
 export interface UserRepository {
-  search(criteria: SearchCriteria, pagination: Pagination, sort: Sort): Promise<PaginatedResult<User>>;
+  search(
+    criteria: SearchCriteria,
+    pagination: Pagination,
+    sort: Sort,
+  ): Promise<PaginatedResult<User>>;
 }
 
 export interface CurrentUserRepository {
@@ -114,7 +118,7 @@ export interface SearchUsersResult {
 export class ApplicationError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApplicationError';
@@ -157,12 +161,12 @@ export class SearchUsersUseCase {
 
   constructor(
     private readonly userRepository: UserRepository,
-    private readonly currentUserRepository: CurrentUserRepository
+    private readonly currentUserRepository: CurrentUserRepository,
   ) {}
 
   /**
    * Executes the search users use case
-   * 
+   *
    * @param input - Search input data
    * @returns Result containing paginated user list or error
    */
@@ -201,12 +205,12 @@ export class SearchUsersUseCase {
    */
   private async validateUserAuthorization(userId: string): Promise<void> {
     const user = await this.currentUserRepository.findById(userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
 
-    const hasRequiredRole = user.roleIds.some(roleId => {
+    const hasRequiredRole = user.roleIds.some((roleId) => {
       try {
         const role = RoleId.fromString(roleId);
         if (!role) return false;
@@ -229,7 +233,9 @@ export class SearchUsersUseCase {
 
     if (input.q !== undefined) {
       if (input.q.length > SearchUsersUseCase.MAX_QUERY_LENGTH) {
-        throw new ValidationError(`Search query cannot exceed ${SearchUsersUseCase.MAX_QUERY_LENGTH} characters`);
+        throw new ValidationError(
+          `Search query cannot exceed ${SearchUsersUseCase.MAX_QUERY_LENGTH} characters`,
+        );
       }
       criteria.q = input.q.trim();
     }
@@ -280,7 +286,9 @@ export class SearchUsersUseCase {
     }
 
     if (perPage < SearchUsersUseCase.MIN_PER_PAGE || perPage > SearchUsersUseCase.MAX_PER_PAGE) {
-      throw new ValidationError(`Per page must be between ${SearchUsersUseCase.MIN_PER_PAGE} and ${SearchUsersUseCase.MAX_PER_PAGE}`);
+      throw new ValidationError(
+        `Per page must be between ${SearchUsersUseCase.MIN_PER_PAGE} and ${SearchUsersUseCase.MAX_PER_PAGE}`,
+      );
     }
 
     return { page, perPage };
@@ -301,7 +309,9 @@ export class SearchUsersUseCase {
     const field = isDescending ? sortString.substring(1) : sortString;
 
     if (!SearchUsersUseCase.VALID_SORT_FIELDS.includes(field)) {
-      throw new ValidationError(`Invalid sort field: ${field}. Valid fields are: ${SearchUsersUseCase.VALID_SORT_FIELDS.join(', ')}`);
+      throw new ValidationError(
+        `Invalid sort field: ${field}. Valid fields are: ${SearchUsersUseCase.VALID_SORT_FIELDS.join(', ')}`,
+      );
     }
 
     return {
@@ -315,7 +325,7 @@ export class SearchUsersUseCase {
    */
   private mapToOutput(result: PaginatedResult<User>): SearchUsersOutput {
     return {
-      items: result.items.map(user => ({
+      items: result.items.map((user) => ({
         id: user.id,
         email: user.email,
         fullName: user.fullName,
@@ -354,4 +364,3 @@ export class SearchUsersUseCase {
     };
   }
 }
-

@@ -1,22 +1,22 @@
 /**
  * InventoryReservationDomainService
- * 
+ *
  * Domain service responsible for creating and releasing inventory reservations.
  * This service manages the lifecycle of inventory reservations for appointments,
  * validates expiration rules, and enforces override permissions conceptually.
- * 
+ *
  * Responsibilities:
  * - Create inventory reservations for appointments
  * - Release inventory reservations
  * - Validate expiration rules
  * - Enforce override permissions conceptually (no auth logic)
  * - Validate reservation creation constraints
- * 
+ *
  * Collaborating Entities:
  * - InventoryReservation: The reservation entity being created or released
  * - Product: Provides product information and stock tracking status
  * - Appointment: The appointment that requires inventory reservation
- * 
+ *
  * Business Rules Enforced:
  * - BR: Reservation reduces available stock for other operations but final decrement happens at sale completion
  * - BR: Manager can override reservation failures (conceptually enforced via override flag)
@@ -25,14 +25,14 @@
  * - BR: Expired reservations should be released
  * - BR: Reservation quantity must be positive
  * - BR: Reservation must be linked to a Product and Appointment/Order
- * 
+ *
  * Invariants:
  * - Product must have stock tracking enabled for reservations
  * - Reservation quantity must be positive
  * - Available stock must be sufficient (unless override is allowed)
  * - Expiration date must be in the future (if provided)
  * - Appointment must exist and be valid
- * 
+ *
  * Edge Cases:
  * - Product with stock_tracked = false (cannot create reservation)
  * - Insufficient available stock (requires override)
@@ -64,16 +64,16 @@ export interface ReservationReleaseResult {
 export class InventoryReservationDomainService {
   /**
    * Creates an inventory reservation for an appointment.
-   * 
+   *
    * This method validates that the reservation can be created, considering:
    * - Product stock tracking status
    * - Available stock levels
    * - Expiration rules
    * - Override permissions
-   * 
+   *
    * Business Rule: Only stock-tracked products can have reservations
    * Business Rule: Reservation reduces available stock for other operations
-   * 
+   *
    * @param id - Unique identifier for the reservation
    * @param product - Product to reserve
    * @param quantity - Quantity to reserve
@@ -92,7 +92,7 @@ export class InventoryReservationDomainService {
     availableStock: number,
     expiresAt?: Date,
     allowOverride: boolean = false,
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): ReservationCreationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -102,7 +102,7 @@ export class InventoryReservationDomainService {
     if (!product.stockTracked) {
       errors.push(
         `Product ${product.name} (${product.sku}) is not stock-tracked. ` +
-        `Reservations can only be created for stock-tracked products.`
+          `Reservations can only be created for stock-tracked products.`,
       );
       return {
         canCreate: false,
@@ -130,12 +130,12 @@ export class InventoryReservationDomainService {
         requiresOverride = true;
         warnings.push(
           `Insufficient available stock. Requested: ${quantity}, Available: ${availableStock}, ` +
-          `Shortfall: ${shortfall}. Override is allowed.`
+            `Shortfall: ${shortfall}. Override is allowed.`,
         );
       } else {
         errors.push(
           `Insufficient available stock. Requested: ${quantity}, Available: ${availableStock}, ` +
-          `Shortfall: ${shortfall}. Manager override required.`
+            `Shortfall: ${shortfall}. Manager override required.`,
         );
         return {
           canCreate: false,
@@ -151,7 +151,7 @@ export class InventoryReservationDomainService {
       const expirationValidation = this.validateExpirationDate(
         expiresAt,
         appointment,
-        referenceDate
+        referenceDate,
       );
       errors.push(...expirationValidation.errors);
       warnings.push(...expirationValidation.warnings);
@@ -174,7 +174,7 @@ export class InventoryReservationDomainService {
       quantity,
       appointment.id,
       expiresAt,
-      referenceDate
+      referenceDate,
     );
 
     return {
@@ -188,7 +188,7 @@ export class InventoryReservationDomainService {
 
   /**
    * Creates multiple reservations for an appointment (for services with multiple consumed items).
-   * 
+   *
    * @param reservations - Array of reservation creation parameters
    * @param appointment - Appointment these reservations are for
    * @param availableStockMap - Map of product ID to available stock
@@ -203,7 +203,7 @@ export class InventoryReservationDomainService {
     availableStockMap: Map<string, number>,
     products: Map<string, Product>,
     allowOverride: boolean = false,
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): Map<string, ReservationCreationResult> {
     const results = new Map<string, ReservationCreationResult>();
 
@@ -228,7 +228,7 @@ export class InventoryReservationDomainService {
         availableStock,
         reservationData.expiresAt,
         allowOverride,
-        referenceDate
+        referenceDate,
       );
 
       results.set(reservationData.productId, result);
@@ -239,9 +239,9 @@ export class InventoryReservationDomainService {
 
   /**
    * Releases an inventory reservation.
-   * 
+   *
    * Business Rule: Expired reservations should be released
-   * 
+   *
    * @param reservation - Reservation to release
    * @param appointment - Appointment the reservation is for
    * @param referenceDate - Date to check against (defaults to now)
@@ -250,16 +250,14 @@ export class InventoryReservationDomainService {
   releaseReservation(
     reservation: InventoryReservation,
     appointment: Appointment | undefined,
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): ReservationReleaseResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
     // Validate reservation is for the appointment
     if (appointment && reservation.reservedFor !== appointment.id) {
-      errors.push(
-        `Reservation ${reservation.id} is not for appointment ${appointment.id}`
-      );
+      errors.push(`Reservation ${reservation.id} is not for appointment ${appointment.id}`);
       return {
         released: false,
         errors,
@@ -270,7 +268,7 @@ export class InventoryReservationDomainService {
     // Check if already expired
     if (reservation.isExpired(referenceDate)) {
       warnings.push(
-        `Reservation ${reservation.id} is already expired and should have been released earlier`
+        `Reservation ${reservation.id} is already expired and should have been released earlier`,
       );
     }
 
@@ -278,11 +276,11 @@ export class InventoryReservationDomainService {
     if (appointment) {
       if (appointment.status === AppointmentStatus.CANCELLED) {
         warnings.push(
-          `Appointment ${appointment.id} is cancelled. Reservation should be released.`
+          `Appointment ${appointment.id} is cancelled. Reservation should be released.`,
         );
       } else if (appointment.status === AppointmentStatus.COMPLETED) {
         warnings.push(
-          `Appointment ${appointment.id} is completed. Reservation should be converted to stock decrement.`
+          `Appointment ${appointment.id} is completed. Reservation should be converted to stock decrement.`,
         );
       }
     }
@@ -296,7 +294,7 @@ export class InventoryReservationDomainService {
 
   /**
    * Releases multiple reservations.
-   * 
+   *
    * @param reservations - List of reservations to release
    * @param appointment - Appointment these reservations are for
    * @param referenceDate - Date to check against
@@ -305,7 +303,7 @@ export class InventoryReservationDomainService {
   releaseMultipleReservations(
     reservations: InventoryReservation[],
     appointment: Appointment | undefined,
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): Map<string, ReservationReleaseResult> {
     const results = new Map<string, ReservationReleaseResult>();
 
@@ -319,9 +317,9 @@ export class InventoryReservationDomainService {
 
   /**
    * Validates expiration date rules for a reservation.
-   * 
+   *
    * Business Rule: Expired reservations should be released
-   * 
+   *
    * @param expiresAt - Expiration date to validate
    * @param appointment - Appointment the reservation is for
    * @param referenceDate - Date to validate against
@@ -330,7 +328,7 @@ export class InventoryReservationDomainService {
   validateExpirationDate(
     expiresAt: Date,
     appointment: Appointment,
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): { errors: string[]; warnings: string[] } {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -339,7 +337,7 @@ export class InventoryReservationDomainService {
     if (expiresAt <= referenceDate) {
       errors.push(
         `Expiration date ${expiresAt.toISOString()} must be in the future. ` +
-        `Reference date: ${referenceDate.toISOString()}`
+          `Reference date: ${referenceDate.toISOString()}`,
       );
     }
 
@@ -347,7 +345,7 @@ export class InventoryReservationDomainService {
     if (expiresAt < appointment.startAt) {
       warnings.push(
         `Expiration date ${expiresAt.toISOString()} is before appointment start time ` +
-        `${appointment.startAt.toISOString()}. Reservation may expire before appointment.`
+          `${appointment.startAt.toISOString()}. Reservation may expire before appointment.`,
       );
     }
 
@@ -355,7 +353,7 @@ export class InventoryReservationDomainService {
     if (expiresAt < appointment.endAt) {
       warnings.push(
         `Expiration date ${expiresAt.toISOString()} is before appointment end time ` +
-        `${appointment.endAt.toISOString()}. Reservation may expire during appointment.`
+          `${appointment.endAt.toISOString()}. Reservation may expire during appointment.`,
       );
     }
 
@@ -364,17 +362,14 @@ export class InventoryReservationDomainService {
 
   /**
    * Calculates a suggested expiration date for a reservation based on appointment.
-   * 
+   *
    * Common pattern: Reservation expires after appointment end time plus a buffer.
-   * 
+   *
    * @param appointment - Appointment the reservation is for
    * @param bufferHours - Hours to add after appointment end (default 24)
    * @returns Suggested expiration date
    */
-  calculateSuggestedExpirationDate(
-    appointment: Appointment,
-    bufferHours: number = 24
-  ): Date {
+  calculateSuggestedExpirationDate(appointment: Appointment, bufferHours: number = 24): Date {
     const expirationDate = new Date(appointment.endAt);
     expirationDate.setHours(expirationDate.getHours() + bufferHours);
     return expirationDate;
@@ -382,9 +377,9 @@ export class InventoryReservationDomainService {
 
   /**
    * Checks if a reservation should be released based on expiration or appointment status.
-   * 
+   *
    * Business Rule: Expired reservations should be released
-   * 
+   *
    * @param reservation - Reservation to check
    * @param appointment - Appointment the reservation is for
    * @param referenceDate - Date to check against
@@ -393,7 +388,7 @@ export class InventoryReservationDomainService {
   shouldReleaseReservation(
     reservation: InventoryReservation,
     appointment: Appointment | undefined,
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): boolean {
     // Release if expired
     if (reservation.isExpired(referenceDate)) {
@@ -413,9 +408,9 @@ export class InventoryReservationDomainService {
 
   /**
    * Validates that a reservation can be created considering all constraints.
-   * 
+   *
    * This is a convenience method that performs all validations without creating the reservation.
-   * 
+   *
    * @param product - Product to reserve
    * @param quantity - Quantity to reserve
    * @param appointment - Appointment this reservation is for
@@ -430,7 +425,7 @@ export class InventoryReservationDomainService {
     appointment: Appointment,
     availableStock: number,
     expiresAt?: Date,
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): ReservationCreationResult {
     return this.createReservationForAppointment(
       'temp-id', // Temporary ID for validation
@@ -440,15 +435,15 @@ export class InventoryReservationDomainService {
       availableStock,
       expiresAt,
       false, // No override for validation
-      referenceDate
+      referenceDate,
     );
   }
 
   /**
    * Checks if a product can have reservations created.
-   * 
+   *
    * Business Rule: Only stock-tracked products can have reservations
-   * 
+   *
    * @param product - Product to check
    * @returns True if product can have reservations
    */
@@ -458,7 +453,7 @@ export class InventoryReservationDomainService {
 
   /**
    * Gets all reservations that should be released (expired or for cancelled appointments).
-   * 
+   *
    * @param reservations - List of reservations to check
    * @param appointmentMap - Map of appointment ID to Appointment entity
    * @param referenceDate - Date to check against
@@ -467,7 +462,7 @@ export class InventoryReservationDomainService {
   getReservationsToRelease(
     reservations: InventoryReservation[],
     appointmentMap: Map<string, Appointment>,
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): InventoryReservation[] {
     const toRelease: InventoryReservation[] = [];
 
@@ -483,7 +478,7 @@ export class InventoryReservationDomainService {
 
   /**
    * Validates that override is required for a reservation creation.
-   * 
+   *
    * @param product - Product to reserve
    * @param quantity - Quantity to reserve
    * @param availableStock - Current available stock
@@ -492,7 +487,7 @@ export class InventoryReservationDomainService {
   requiresOverrideForReservation(
     product: Product,
     quantity: number,
-    availableStock: number
+    availableStock: number,
   ): boolean {
     if (!product.stockTracked) {
       return false; // Cannot create reservation, override not applicable
@@ -505,4 +500,3 @@ export class InventoryReservationDomainService {
     return availableStock < quantity;
   }
 }
-

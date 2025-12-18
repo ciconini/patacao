@@ -1,15 +1,15 @@
 /**
  * CompanyRepository Firestore Implementation
- * 
+ *
  * Firestore adapter for CompanyRepository port.
  * This implementation handles persistence of Company domain entities to Firestore.
- * 
+ *
  * Responsibilities:
  * - Map Company domain entities to Firestore documents
  * - Map Firestore documents to Company domain entities
  * - Implement repository interface methods
  * - Handle Firestore-specific operations (queries, transactions)
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -46,13 +46,13 @@ export class FirestoreCompanyRepository implements CompanyRepository {
 
   constructor(
     @Inject('FIRESTORE')
-    private readonly firestore: Firestore
+    private readonly firestore: Firestore,
   ) {}
 
   /**
    * Saves a Company entity to Firestore
    * Creates a new document if it doesn't exist, updates if it does.
-   * 
+   *
    * @param company - Company domain entity to save
    * @returns Saved Company entity
    */
@@ -67,7 +67,7 @@ export class FirestoreCompanyRepository implements CompanyRepository {
 
   /**
    * Updates a Company entity in Firestore
-   * 
+   *
    * @param company - Company domain entity to update
    * @returns Updated Company entity
    */
@@ -77,7 +77,7 @@ export class FirestoreCompanyRepository implements CompanyRepository {
 
   /**
    * Finds a Company by NIF
-   * 
+   *
    * @param nif - NIF to search for
    * @returns Company entity or null if not found
    */
@@ -98,7 +98,7 @@ export class FirestoreCompanyRepository implements CompanyRepository {
 
   /**
    * Finds a Company by ID
-   * 
+   *
    * @param id - Company ID
    * @returns Company entity or null if not found
    */
@@ -115,7 +115,7 @@ export class FirestoreCompanyRepository implements CompanyRepository {
 
   /**
    * Converts Company domain entity to Firestore document
-   * 
+   *
    * @param company - Company domain entity
    * @returns Firestore document
    */
@@ -142,7 +142,7 @@ export class FirestoreCompanyRepository implements CompanyRepository {
 
   /**
    * Converts Firestore document to Company domain entity
-   * 
+   *
    * @param id - Document ID
    * @param doc - Firestore document data
    * @returns Company domain entity
@@ -166,13 +166,13 @@ export class FirestoreCompanyRepository implements CompanyRepository {
       doc.email,
       doc.website,
       this.toDate(doc.createdAt),
-      this.toDate(doc.updatedAt)
+      this.toDate(doc.updatedAt),
     );
   }
 
   /**
    * Converts JavaScript Date to Firestore Timestamp
-   * 
+   *
    * @param date - JavaScript Date
    * @returns Firestore Timestamp
    */
@@ -182,7 +182,7 @@ export class FirestoreCompanyRepository implements CompanyRepository {
 
   /**
    * Converts Firestore Timestamp to JavaScript Date
-   * 
+   *
    * @param timestamp - Firestore Timestamp
    * @returns JavaScript Date
    */
@@ -190,4 +190,3 @@ export class FirestoreCompanyRepository implements CompanyRepository {
     return timestamp.toDate();
   }
 }
-

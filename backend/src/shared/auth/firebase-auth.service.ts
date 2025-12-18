@@ -1,14 +1,14 @@
 /**
  * Firebase Authentication Service
- * 
+ *
  * Service for verifying Firebase Authentication ID tokens on the backend.
  * This service uses Firebase Admin SDK to verify tokens issued by Firebase Auth.
- * 
+ *
  * Responsibilities:
  * - Verify Firebase ID tokens
  * - Extract user information from verified tokens
  * - Handle token expiration and revocation
- * 
+ *
  * This belongs to the Infrastructure/Adapters layer.
  */
 
@@ -50,19 +50,19 @@ export interface TokenVerificationResult {
 export class FirebaseAuthService {
   constructor(
     @Inject('FIREBASE_ADMIN')
-    private readonly firebaseAdmin: typeof admin
+    private readonly firebaseAdmin: typeof admin,
   ) {}
 
   /**
    * Verifies a Firebase ID token
-   * 
+   *
    * @param idToken - Firebase ID token string
    * @returns Verification result with decoded token payload
    */
   async verifyIdToken(idToken: string): Promise<TokenVerificationResult> {
     try {
       const decodedToken = await this.firebaseAdmin.auth().verifyIdToken(idToken);
-      
+
       return {
         valid: true,
         payload: decodedToken as FirebaseTokenPayload,
@@ -77,7 +77,7 @@ export class FirebaseAuthService {
 
   /**
    * Gets user information from Firebase Auth by UID
-   * 
+   *
    * @param uid - Firebase user UID
    * @returns User record from Firebase Auth
    */
@@ -95,7 +95,7 @@ export class FirebaseAuthService {
   /**
    * Creates a custom token for a user
    * This can be used to create tokens for existing users in your system
-   * 
+   *
    * @param uid - User UID
    * @param additionalClaims - Additional custom claims to include
    * @returns Custom token string
@@ -107,7 +107,7 @@ export class FirebaseAuthService {
   /**
    * Sets custom claims on a Firebase user
    * Useful for adding roles or permissions to Firebase Auth users
-   * 
+   *
    * @param uid - User UID
    * @param customClaims - Custom claims to set (e.g., { role: 'admin' })
    */
@@ -117,7 +117,7 @@ export class FirebaseAuthService {
 
   /**
    * Revokes all refresh tokens for a user
-   * 
+   *
    * @param uid - User UID
    */
   async revokeRefreshTokens(uid: string): Promise<void> {
@@ -126,11 +126,10 @@ export class FirebaseAuthService {
 
   /**
    * Deletes a user from Firebase Auth
-   * 
+   *
    * @param uid - User UID
    */
   async deleteUser(uid: string): Promise<void> {
     await this.firebaseAdmin.auth().deleteUser(uid);
   }
 }
-
