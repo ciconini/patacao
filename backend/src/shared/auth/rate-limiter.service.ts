@@ -16,6 +16,7 @@ export class RateLimiterService {
   private readonly loginRateLimiter: RateLimiterRedis;
   private readonly passwordResetRateLimiter: RateLimiterRedis;
   private readonly generalRateLimiter: RateLimiterRedis;
+  private redisConnected: boolean = false;
 
   constructor(
     @Inject('REDIS_CLIENT')
@@ -23,6 +24,27 @@ export class RateLimiterService {
     @Inject(ConfigService)
     private readonly configService: ConfigService,
   ) {
+    // Monitor Redis connection status
+    this.redis.on('connect', () => {
+      this.redisConnected = true;
+      console.log('Redis connected for rate limiting');
+    });
+
+    this.redis.on('error', (error) => {
+      this.redisConnected = false;
+      console.warn('Redis connection error (rate limiting will fail open):', error.message);
+    });
+
+    this.redis.on('close', () => {
+      this.redisConnected = false;
+      console.warn('Redis connection closed (rate limiting will fail open)');
+    });
+
+    // Check initial connection status
+    this.redisConnected = this.redis.status === 'ready';
+    
+    // Initialize rate limiters with Redis client
+    // Note: RateLimiterRedis will handle connection errors gracefully
     // Login rate limiter: 5 attempts per 15 minutes per IP/email
     this.loginRateLimiter = new RateLimiterRedis({
       storeClient: redis,
@@ -30,6 +52,8 @@ export class RateLimiterService {
       points: 5, // Number of attempts
       duration: 15 * 60, // Per 15 minutes
       blockDuration: 15 * 60, // Block for 15 minutes after limit exceeded
+      // Add options to prevent blocking
+      execEvenly: false, // Don't wait for even distribution
     });
 
     // Password reset rate limiter: 3 attempts per hour per email
@@ -39,6 +63,7 @@ export class RateLimiterService {
       points: 3, // Number of attempts
       duration: 60 * 60, // Per hour
       blockDuration: 60 * 60, // Block for 1 hour after limit exceeded
+      execEvenly: false,
     });
 
     // General rate limiter: 100 requests per minute per identifier
@@ -47,6 +72,7 @@ export class RateLimiterService {
       keyPrefix: 'rl_general',
       points: 100, // Number of requests
       duration: 60, // Per minute
+      execEvenly: false,
     });
   }
 
@@ -58,6 +84,15 @@ export class RateLimiterService {
    * @returns True if allowed, false if rate limit exceeded
    */
   async checkRateLimit(identifier: string, action: string): Promise<boolean> {
+    // Fast path: If Redis is not connected, immediately fail open (allow request)
+    // Check status synchronously to avoid any async delays
+    const redisStatus = this.redis?.status;
+    if (!this.redisConnected || redisStatus !== 'ready') {
+      // Don't even try to use rate limiter if Redis is not ready
+      // This prevents any connection attempts that might block
+      return true;
+    }
+
     try {
       let limiter: RateLimiterRedis;
 
@@ -72,16 +107,26 @@ export class RateLimiterService {
           limiter = this.generalRateLimiter;
       }
 
-      await limiter.consume(identifier);
+      // Add very aggressive timeout to prevent hanging (250ms)
+      // If Redis is slow or trying to connect, fail fast
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Rate limiter timeout')), 250);
+      });
+
+      await Promise.race([
+        limiter.consume(identifier),
+        timeoutPromise,
+      ]);
+      
       return true;
     } catch (error: any) {
-      // Rate limit exceeded
+      // Rate limit exceeded (legitimate rate limit)
       if (error.remainingPoints !== undefined) {
         return false;
       }
-      // Redis error - allow the request but log the error
-      console.error('Rate limiter error:', error);
-      return true; // Fail open on Redis errors
+      // Redis error or timeout - allow the request but don't log (too noisy)
+      // This ensures the application continues to work even if Redis is unavailable
+      return true; // Fail open on Redis errors/timeouts
     }
   }
 

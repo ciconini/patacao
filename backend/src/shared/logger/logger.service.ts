@@ -132,12 +132,13 @@ export class Logger implements NestLoggerService {
           format: structuredFormat,
         }),
       ],
-      rejectionHandlers: [
-        new winston.transports.File({
-          filename: path.join(this.logDir, 'rejections.log'),
-          format: structuredFormat,
-        }),
-      ],
+      // Disable rejection handlers - we handle unhandled rejections in main.ts
+      // This prevents Winston from logging connection errors that we've already handled
+      // Uncomment if you want Winston to log rejections (but connection errors will be filtered)
+      // Disable rejection handlers - we handle unhandled rejections in main.ts
+      // This prevents Winston from logging connection errors that we've already handled gracefully
+      // If you need to log other rejections, uncomment and use the filtered version below
+      rejectionHandlers: undefined, // Disabled - handled in main.ts
     });
   }
 

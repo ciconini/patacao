@@ -19,7 +19,13 @@ import { AppConfigService } from '../../shared/config/config.service';
 
           if (useEmulator) {
             // Use Firebase Emulator for local development
-            process.env.FIRESTORE_EMULATOR_HOST = config.firebaseEmulatorHost || 'localhost:8080';
+            const emulatorHost = config.firebaseEmulatorHost || 'localhost:8888';
+            process.env.FIRESTORE_EMULATOR_HOST = emulatorHost;
+            process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
+            console.log('🔥 Firebase: Using EMULATOR mode');
+            console.log(`   Firestore: ${emulatorHost}`);
+            console.log(`   Auth: localhost:9099`);
+            console.log(`   Project ID: ${projectId || 'patacao-dev'}`);
             admin.initializeApp({
               projectId: projectId || 'patacao-dev',
             });
@@ -35,6 +41,9 @@ import { AppConfigService } from '../../shared/config/config.service';
                 ? serviceAccountPath
                 : path.join(process.cwd(), serviceAccountPath);
               const serviceAccount = require(resolvedPath);
+              console.log('🔥 Firebase: Using PRODUCTION mode');
+              console.log(`   Service Account: ${resolvedPath}`);
+              console.log(`   Project ID: ${projectId}`);
               admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
                 projectId: projectId,
@@ -42,6 +51,9 @@ import { AppConfigService } from '../../shared/config/config.service';
             } else if (serviceAccountKey) {
               // Load from JSON string (environment variable)
               const serviceAccount = JSON.parse(serviceAccountKey);
+              console.log('🔥 Firebase: Using PRODUCTION mode');
+              console.log(`   Service Account: From environment variable`);
+              console.log(`   Project ID: ${projectId}`);
               admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
                 projectId: projectId,
@@ -57,12 +69,17 @@ import { AppConfigService } from '../../shared/config/config.service';
                   'firebase-service-account.json',
                 );
                 const serviceAccount = require(defaultPath);
+                console.log('🔥 Firebase: Using PRODUCTION mode');
+                console.log(`   Service Account: ${defaultPath}`);
+                console.log(`   Project ID: ${projectId}`);
                 admin.initializeApp({
                   credential: admin.credential.cert(serviceAccount),
                   projectId: projectId,
                 });
               } catch (defaultPathError) {
                 // Use default credentials (for Google Cloud environments)
+                console.log('🔥 Firebase: Using PRODUCTION mode (Default Credentials)');
+                console.log(`   Project ID: ${projectId}`);
                 admin.initializeApp({
                   projectId: projectId,
                 });

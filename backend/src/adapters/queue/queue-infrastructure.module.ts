@@ -3,9 +3,10 @@
  *
  * NestJS module that provides queue infrastructure for domain events.
  * Registers Bull queues, processors, and the queue-based event bus.
+ * Handles Redis connection failures gracefully.
  */
 
-import { Module } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { QueueModule } from './queue.module';
 import { BullEventBus, DOMAIN_EVENTS_QUEUE } from './bull-event-bus';
@@ -15,6 +16,7 @@ import { QueueController } from './queue.controller';
 @Module({
   imports: [
     QueueModule,
+    // Register queue - connection errors will be handled by global error handlers
     BullModule.registerQueue({
       name: DOMAIN_EVENTS_QUEUE,
     }),
@@ -30,4 +32,11 @@ import { QueueController } from './queue.controller';
   ],
   exports: [BullEventBus, DomainEventsProcessor, 'QueueEventBus', BullModule],
 })
-export class QueueInfrastructureModule {}
+export class QueueInfrastructureModule {
+  private readonly logger = new Logger(QueueInfrastructureModule.name);
+
+  constructor() {
+    // Log that queue module is initialized (connection errors will be handled elsewhere)
+    this.logger.log('Queue infrastructure module initialized (Redis connection errors handled gracefully)');
+  }
+}

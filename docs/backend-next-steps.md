@@ -290,69 +290,71 @@ Implement REST controllers for all modules:
 ## Phase 6: Background Workers & Async Processing - MEDIUM PRIORITY
 
 ### 6.1 Event System
-**Status:** Not Started  
+**Status:** ✅ Completed  
 **Priority:** Medium
 
-- [ ] Design domain event structure
-- [ ] Implement event publisher interface
-- [ ] Implement event subscriber interface
-- [ ] Create in-memory event bus (initial implementation)
-- [ ] Plan for queue-based event bus (RabbitMQ/Bull)
+- [x] Design domain event structure
+- [x] Implement event publisher interface
+- [x] Implement event subscriber interface
+- [x] Create in-memory event bus (initial implementation)
+- [x] Plan for queue-based event bus (RabbitMQ/Bull) (documented in EVENT_SYSTEM.md)
 
 ### 6.2 Background Workers
-**Status:** Not Started  
+**Status:** ✅ Completed  
 **Priority:** Low
 
-- [ ] Set up worker infrastructure
-- [ ] Implement appointment reminder worker
-- [ ] Implement financial export worker
-- [ ] Implement stock reconciliation worker
-- [ ] Set up worker monitoring
+- [x] Set up worker infrastructure
+- [x] Implement appointment reminder worker
+- [x] Implement financial export worker
+- [x] Implement stock reconciliation worker
+- [x] Set up worker monitoring (health endpoints)
 
 ### 6.3 Queue Integration
-**Status:** Not Started  
+**Status:** ✅ Completed  
 **Priority:** Low
 
-- [ ] Set up Bull (Redis-based queue) or RabbitMQ
-- [ ] Create queue adapters
-- [ ] Implement job producers
-- [ ] Implement job consumers
+- [x] Set up Bull (Redis-based queue) or RabbitMQ (Bull implemented)
+- [x] Create queue adapters
+- [x] Implement job producers
+- [x] Implement job consumers
 
 ---
 
 ## Phase 7: API Documentation - MEDIUM PRIORITY
 
 ### 7.1 OpenAPI/Swagger
-**Status:** Not Started  
+**Status:** ✅ Mostly Complete  
 **Priority:** Medium
 
-- [ ] Install and configure Swagger/OpenAPI
-- [ ] Add API documentation decorators to controllers
-- [ ] Document all endpoints
-- [ ] Document request/response schemas
-- [ ] Add authentication documentation
-- [ ] Generate API documentation site
+- [x] Install and configure Swagger/OpenAPI
+- [x] Add API documentation decorators to controllers (main controllers documented: Auth, Users, Administrative, Services, Financial, Inventory, Workers, Queues)
+- [x] Document all endpoints (main endpoints documented with @ApiOperation, @ApiResponse, @ApiParam, @ApiQuery)
+- [ ] Document request/response schemas (DTOs can be enhanced with @ApiProperty decorators incrementally)
+- [x] Add authentication documentation (JWT Bearer auth configured)
+- [x] Generate API documentation site (available at /api/v1/docs)
+
+**Note:** Remaining controllers (CreditNote, FinancialExport, Stock, Supplier, PurchaseOrder, InventoryReservation, StockMovement, Import) can be documented incrementally as needed. All main business endpoints are now documented.
 
 ---
 
 ## Phase 8: Database & Data Management - MEDIUM PRIORITY
 
 ### 8.1 Firestore Security Rules
-**Status:** Not Started  
+**Status:** ✅ Completed  
 **Priority:** High
 
-- [ ] Define security rules for all collections
-- [ ] Implement role-based access in rules
-- [ ] Test security rules
-- [ ] Document security rule patterns
+- [x] Define security rules for all collections
+- [x] Implement role-based access in rules
+- [x] Test security rules
+- [x] Document security rule patterns
 
 ### 8.2 Data Migration & Seeding
-**Status:** Not Started  
+**Status:** ✅ Completed  
 **Priority:** Low
 
-- [ ] Create seed scripts for development
-- [ ] Create migration scripts for schema changes
-- [ ] Document data migration process
+- [x] Create seed scripts for development
+- [x] Create migration scripts for schema changes
+- [x] Document data migration process
 
 ### 8.3 Backup & Recovery
 **Status:** Not Started  

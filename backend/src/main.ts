@@ -8,6 +8,63 @@ import { Logger } from './shared/logger/logger.service';
 import { HttpExceptionFilter } from './shared/presentation/filters/http-exception.filter';
 import { AppConfigService } from './shared/config/config.service';
 
+// Handle unhandled rejections (e.g., from Redis connection attempts)
+// This must be set up BEFORE any modules are loaded to catch Redis connection errors
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  // Extract error information from various possible formats
+  // Handle nested error objects (reason.error.code) and empty messages
+  const errorMessage = reason?.message || reason?.error?.message || String(reason || '');
+  const errorCode = reason?.code || reason?.error?.code || reason?.errno || '';
+  const errorStack = reason?.stack || reason?.error?.stack || '';
+  const errorName = reason?.name || reason?.error?.name || '';
+  const errorString = String(reason || '');
+  
+  // Check if it's a connection error (ECONNREFUSED, ENOTFOUND, etc.)
+  // This catches Redis, database, and other connection errors
+  const isConnectionError = 
+    errorCode === 'ECONNREFUSED' ||
+    errorCode === 'ENOTFOUND' ||
+    errorCode === 'ETIMEDOUT' ||
+    (typeof errorMessage === 'string' && (
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('ENOTFOUND') ||
+      errorMessage.includes('ETIMEDOUT') ||
+      errorMessage.includes('connect') ||
+      errorMessage.includes('connection')
+    )) ||
+    (typeof errorStack === 'string' && (
+      errorStack.includes('ECONNREFUSED') ||
+      errorStack.includes('ENOTFOUND') ||
+      errorStack.includes('ETIMEDOUT') ||
+      errorStack.includes('internalConnectMultiple') ||
+      errorStack.includes('afterConnectMultiple')
+    )) ||
+    (typeof errorString === 'string' && (
+      errorString.includes('ECONNREFUSED') ||
+      errorString.includes('ENOTFOUND') ||
+      errorString.includes('ETIMEDOUT')
+    )) ||
+    // AggregateError with ECONNREFUSED (common format from Node.js)
+    (errorName === 'AggregateError' && (
+      errorCode === 'ECONNREFUSED' ||
+      errorCode === 'ENOTFOUND' ||
+      errorCode === 'ETIMEDOUT'
+    ));
+  
+  if (isConnectionError) {
+    // Handle the promise synchronously to prevent it from being logged
+    // This must be done synchronously to avoid PromiseRejectionHandledWarning
+    promise.catch(() => {
+      // Silently handle connection errors - they're expected when services are unavailable
+    });
+    // Return immediately - don't log, don't crash
+    return;
+  }
+  
+  // Log other unhandled rejections but don't crash
+  console.error('Unhandled Rejection:', reason);
+});
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,

@@ -83,11 +83,20 @@ export class BullEventBus implements EventBus {
       );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      // Check if it's a Redis connection error
+      if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('connect')) {
+        this.logger.warn(
+          `Redis unavailable - event ${event.eventType} (${event.eventId}) not queued (non-blocking)`,
+        );
+        // Don't throw - fail gracefully when Redis is unavailable
+        return;
+      }
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
         `Failed to publish event ${event.eventType} (${event.eventId}): ${errorMessage}`,
         errorStack,
       );
+      // Only throw for non-connection errors
       throw error;
     }
   }
@@ -128,8 +137,17 @@ export class BullEventBus implements EventBus {
       this.logger.debug(`Published ${events.length} event(s) to queue`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      // Check if it's a Redis connection error
+      if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('connect')) {
+        this.logger.warn(
+          `Redis unavailable - ${events.length} event(s) not queued (non-blocking)`,
+        );
+        // Don't throw - fail gracefully when Redis is unavailable
+        return;
+      }
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(`Failed to publish ${events.length} event(s): ${errorMessage}`, errorStack);
+      // Only throw for non-connection errors
       throw error;
     }
   }
