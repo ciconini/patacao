@@ -1,0 +1,109 @@
+<form [formGroup]="customerForm" (ngSubmit)="onSubmit()" class="customer-form">
+  <div class="form-section">
+    <h3 class="section-title">Informações Básicas</h3>
+    
+    <app-form-field
+      formControlName="fullName"
+      label="Nome Completo"
+      type="text"
+      placeholder="João Silva"
+      [required]="true"
+      [error]="fullNameError"
+    />
+
+    <app-form-field
+      formControlName="email"
+      label="Email"
+      type="email"
+      placeholder="joao.silva@example.com"
+      [error]="emailError"
+    />
+
+    <app-form-field
+      formControlName="phone"
+      label="Telefone"
+      type="tel"
+      placeholder="+351 912 345 678"
+      [error]="phoneError"
+    />
+  </div>
+
+  <div class="form-section">
+    <h3 class="section-title">Endereço</h3>
+    
+    <div formGroupName="address" class="address-group">
+      <app-form-field
+        formControlName="street"
+        label="Rua"
+        type="text"
+        placeholder="Rua das Flores, 45"
+      />
+
+      <app-form-field
+        formControlName="city"
+        label="Cidade"
+        type="text"
+        placeholder="Porto"
+      />
+
+      <app-form-field
+        formControlName="postalCode"
+        label="Código Postal"
+        type="text"
+        placeholder="4000-123"
+        [error]="postalCodeError"
+      />
+
+      <app-form-field
+        formControlName="country"
+        label="País"
+        type="text"
+        placeholder="Portugal"
+      />
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h3 class="section-title">Consentimentos</h3>
+    
+    <div class="checkbox-group">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          formControlName="consentMarketing"
+          class="checkbox-input"
+        />
+        <span class="checkbox-text">Consentimento para marketing</span>
+      </label>
+
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          formControlName="consentReminders"
+          class="checkbox-input"
+        />
+        <span class="checkbox-text">Consentimento para lembretes de agendamento</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <app-button
+      type="button"
+      variant="outline"
+      (click)="onCancel()"
+      [disabled]="loading"
+    >
+      Cancelar
+    </app-button>
+    
+    <app-button
+      type="submit"
+      variant="primary"
+      [loading]="loading"
+      [disabled]="customerForm.invalid || loading"
+    >
+      {{ isEditMode ? 'Atualizar' : 'Criar' }} Cliente
+    </app-button>
+  </div>
+</form>

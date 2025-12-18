@@ -1,0 +1,79 @@
+<div class="stores-list">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Lojas</h1>
+      <app-button
+        variant="primary"
+        (click)="onCreate()"
+        icon="fas fa-plus"
+      >
+        Nova Loja
+      </app-button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    @if (loading()) {
+      <div class="loading-state">
+        <p>Carregando lojas...</p>
+      </div>
+    } @else if (stores().length === 0) {
+      <div class="empty-state">
+        <p>Nenhuma loja encontrada</p>
+      </div>
+    } @else {
+      <table class="stores-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Cidade</th>
+            <th>Telefone</th>
+            <th>Email</th>
+            <th>Horário</th>
+            <th>Data de Criação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (store of stores(); track store.id) {
+            <tr>
+              <td>{{ store.name }}</td>
+              <td>{{ store.address?.city || '-' }}</td>
+              <td>{{ store.phone || '-' }}</td>
+              <td>{{ store.email || '-' }}</td>
+              <td class="hours-cell">
+                <span class="hours-text" [title]="formatOpeningHours(store.openingHours)">
+                  {{ formatOpeningHours(store.openingHours) }}
+                </span>
+              </td>
+              <td>{{ formatDate(store.createdAt) }}</td>
+              <td class="actions-cell">
+                <button
+                  class="action-btn view-btn"
+                  (click)="onView(store.id)"
+                  title="Ver detalhes"
+                >
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button
+                  class="action-btn edit-btn"
+                  (click)="onEdit(store.id)"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="action-btn delete-btn"
+                  (click)="onDelete(store.id)"
+                  title="Excluir"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

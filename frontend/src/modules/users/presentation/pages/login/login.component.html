@@ -1,0 +1,52 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Patacão Petshop</h1>
+      <p>Faça login para continuar</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      @if (errorMessage()) {
+        <div class="error-message">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <app-form-field
+        formControlName="email"
+        label="Email"
+        type="email"
+        placeholder="seu@email.com"
+        [required]="true"
+        [error]="emailError()"
+      />
+
+      <app-form-field
+        formControlName="password"
+        label="Senha"
+        type="password"
+        placeholder="••••••••"
+        [required]="true"
+        [error]="passwordError()"
+      />
+
+      <app-button
+        type="submit"
+        variant="primary"
+        size="large"
+        [loading]="isLoading()"
+        [disabled]="loginForm.invalid || isLoading()"
+        class="login-button"
+      >
+        Entrar
+      </app-button>
+    </form>
+
+    <div class="login-footer">
+      <a href="/auth/password-reset" class="forgot-password-link">
+        Esqueceu sua senha?
+      </a>
+    </div>
+  </div>
+</div>
+

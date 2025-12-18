@@ -1,0 +1,169 @@
+<form [formGroup]="petForm" (ngSubmit)="onSubmit()" class="pet-form">
+  <div class="form-section">
+    <h3 class="section-title">Informações Básicas</h3>
+    
+    <div class="form-field">
+      <label class="form-label" for="customerId">
+        Cliente <span class="required">*</span>
+      </label>
+      <select
+        id="customerId"
+        formControlName="customerId"
+        class="form-select"
+        [class.error]="customerIdError"
+        [disabled]="loadingCustomers || !!customerId"
+      >
+        <option value="">Selecione um cliente</option>
+        @for (customer of customers; track customer.id) {
+          <option [value]="customer.id">{{ customer.fullName }}</option>
+        }
+      </select>
+      @if (customerIdError) {
+        <span class="error-message">{{ customerIdError }}</span>
+      }
+    </div>
+
+    <app-form-field
+      formControlName="name"
+      label="Nome do Pet"
+      type="text"
+      placeholder="Max"
+      [required]="true"
+      [error]="nameError"
+    />
+
+    <div class="form-field">
+      <label class="form-label" for="species">Espécie</label>
+      <select
+        id="species"
+        formControlName="species"
+        class="form-select"
+      >
+        <option value="">Selecione uma espécie</option>
+        @for (species of speciesOptions; track species.value) {
+          <option [value]="species.value">{{ species.label }}</option>
+        }
+      </select>
+    </div>
+
+    <app-form-field
+      formControlName="breed"
+      label="Raça"
+      type="text"
+      placeholder="Golden Retriever"
+    />
+
+    <app-form-field
+      formControlName="dateOfBirth"
+      label="Data de Nascimento"
+      type="date"
+    />
+
+    <app-form-field
+      formControlName="microchipId"
+      label="Chip/Microchip"
+      type="text"
+      placeholder="PT123456789012"
+    />
+  </div>
+
+  <div class="form-section">
+    <h3 class="section-title">Notas Médicas</h3>
+    
+    <div class="form-field">
+      <label class="form-label" for="medicalNotes">Notas Médicas</label>
+      <textarea
+        id="medicalNotes"
+        formControlName="medicalNotes"
+        class="form-textarea"
+        rows="4"
+        placeholder="Alergias, condições médicas, observações importantes..."
+      ></textarea>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-header">
+      <h3 class="section-title">Vacinações</h3>
+      <app-button
+        type="button"
+        variant="outline"
+        size="small"
+        (click)="addVaccination()"
+      >
+        <i class="fas fa-plus"></i> Adicionar Vacinação
+      </app-button>
+    </div>
+
+    <div formArrayName="vaccination" class="vaccination-list">
+      @for (vaccination of vaccinationFormArray.controls; track $index; let i = $index) {
+        <div [formGroupName]="i" class="vaccination-item">
+          <div class="vaccination-header">
+            <h4>Vacinação {{ i + 1 }}</h4>
+            <button
+              type="button"
+              class="remove-btn"
+              (click)="removeVaccination(i)"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <div class="vaccination-fields">
+            <app-form-field
+              formControlName="vaccine"
+              label="Vacina"
+              type="text"
+              placeholder="Raiva"
+              [required]="true"
+            />
+            
+            <app-form-field
+              formControlName="date"
+              label="Data"
+              type="date"
+              [required]="true"
+            />
+            
+            <app-form-field
+              formControlName="expires"
+              label="Data de Expiração"
+              type="date"
+            />
+            
+            <app-form-field
+              formControlName="administeredBy"
+              label="Aplicado por"
+              type="text"
+              placeholder="Dr. Silva"
+            />
+          </div>
+        </div>
+      }
+      
+      @if (vaccinationFormArray.length === 0) {
+        <p class="empty-message">Nenhuma vacinação registrada</p>
+      }
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <app-button
+      type="button"
+      variant="outline"
+      (click)="onCancel()"
+      [disabled]="loading"
+    >
+      Cancelar
+    </app-button>
+    
+    <app-button
+      type="submit"
+      variant="primary"
+      [loading]="loading"
+      [disabled]="petForm.invalid || loading"
+    >
+      {{ isEditMode ? 'Atualizar' : 'Criar' }} Pet
+    </app-button>
+  </div>
+</form>

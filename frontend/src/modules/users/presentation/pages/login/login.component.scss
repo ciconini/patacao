@@ -1,0 +1,91 @@
+@use '../../../../../shared/styles/design-system' as *;
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: $spacing-md;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 50%, $color-primary-darker 100%);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.login-card {
+  background: $color-white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-xl;
+  padding: $spacing-2xl;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: $spacing-xl;
+
+  h1 {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    margin: 0 0 $spacing-sm 0;
+  }
+
+  p {
+    color: $color-text-secondary;
+    font-size: $font-size-base;
+    margin: 0;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.error-message {
+  background-color: rgba($color-error, 0.1);
+  border: 1px solid rgba($color-error, 0.3);
+  border-radius: $radius-sm;
+  color: $color-error-dark;
+  padding: $spacing-md;
+  font-size: $font-size-sm;
+  text-align: center;
+}
+
+.login-button {
+  width: 100%;
+  margin-top: $spacing-sm;
+}
+
+.login-footer {
+  margin-top: $spacing-lg;
+  text-align: center;
+}
+
+.forgot-password-link {
+  color: $color-primary;
+  text-decoration: none;
+  font-size: $font-size-sm;
+  transition: color $transition-base;
+
+  &:hover {
+    color: $color-primary-dark;
+    text-decoration: underline;
+  }
+}
+
+// Responsive
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.5rem;
+  }
+
+  .login-header h1 {
+    font-size: 1.5rem;
+  }
+}
+

@@ -1,0 +1,192 @@
+<div class="company-settings">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Configurações da Empresa</h1>
+      @if (company()) {
+        <app-button
+          [variant]="editMode() ? 'outline' : 'primary'"
+          (click)="toggleEditMode()"
+          [disabled]="saving()"
+        >
+          {{ editMode() ? 'Cancelar' : 'Editar' }}
+        </app-button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Carregando informações da empresa...</p>
+    </div>
+  } @else if (!company()) {
+    <div class="empty-state">
+      <p>Empresa não encontrada. Entre em contato com o administrador.</p>
+    </div>
+  } @else {
+    <form [formGroup]="companyForm" (ngSubmit)="onSubmit()" class="settings-form">
+      <div class="form-section">
+        <h3 class="section-title">Informações Básicas</h3>
+        
+        <app-form-field
+          formControlName="name"
+          label="Nome da Empresa"
+          type="text"
+          placeholder="Patacão Petshop"
+          [required]="true"
+          [error]="nameError"
+          [disabled]="!editMode()"
+        />
+
+        <app-form-field
+          formControlName="nif"
+          label="NIF"
+          type="text"
+          placeholder="123456789"
+          [required]="true"
+          [error]="nifError"
+          [disabled]="!editMode()"
+        />
+      </div>
+
+      <div class="form-section">
+        <h3 class="section-title">Endereço</h3>
+        
+        <div formGroupName="address" class="address-group">
+          <app-form-field
+            formControlName="street"
+            label="Rua"
+            type="text"
+            placeholder="Rua Example, 123"
+            [required]="true"
+            [disabled]="!editMode()"
+          />
+
+          <app-form-field
+            formControlName="city"
+            label="Cidade"
+            type="text"
+            placeholder="Lisboa"
+            [required]="true"
+            [disabled]="!editMode()"
+          />
+
+          <app-form-field
+            formControlName="postalCode"
+            label="Código Postal"
+            type="text"
+            placeholder="1000-001"
+            [required]="true"
+            [error]="postalCodeError"
+            [disabled]="!editMode()"
+          />
+
+          <app-form-field
+            formControlName="country"
+            label="País"
+            type="text"
+            placeholder="Portugal"
+            [disabled]="!editMode()"
+          />
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="section-title">Informações Fiscais</h3>
+        
+        <div class="form-field">
+          <label class="form-label" for="taxRegime">
+            Regime Fiscal <span class="required">*</span>
+          </label>
+          <select
+            id="taxRegime"
+            formControlName="taxRegime"
+            class="form-select"
+            [disabled]="!editMode()"
+          >
+            <option value="">Selecione um regime</option>
+            @for (regime of taxRegimeOptions; track regime.value) {
+              <option [value]="regime.value">{{ regime.label }}</option>
+            }
+          </select>
+        </div>
+
+        <app-form-field
+          formControlName="defaultVatRate"
+          label="Taxa de IVA Padrão (%)"
+          type="number"
+          placeholder="23.00"
+          [error]="vatRateError"
+          [disabled]="!editMode()"
+        />
+      </div>
+
+      <div class="form-section">
+        <h3 class="section-title">Contato</h3>
+        
+        <app-form-field
+          formControlName="phone"
+          label="Telefone"
+          type="tel"
+          placeholder="+351 21 123 4567"
+          [disabled]="!editMode()"
+        />
+
+        <app-form-field
+          formControlName="email"
+          label="Email"
+          type="email"
+          placeholder="contact@patacao.pt"
+          [disabled]="!editMode()"
+        />
+
+        <app-form-field
+          formControlName="website"
+          label="Website"
+          type="url"
+          placeholder="https://www.patacao.pt"
+          [disabled]="!editMode()"
+        />
+      </div>
+
+      @if (company()) {
+        <div class="info-section">
+          <h3 class="section-title">Informações do Sistema</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Criado em:</span>
+              <span class="info-value">{{ formatDate(company()!.createdAt) }}</span>
+            </div>
+            @if (company()!.updatedAt) {
+              <div class="info-item">
+                <span class="info-label">Atualizado em:</span>
+                <span class="info-value">{{ formatDate(company()!.updatedAt) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (editMode()) {
+        <div class="form-actions">
+          <app-button
+            type="button"
+            variant="outline"
+            (click)="toggleEditMode()"
+            [disabled]="saving()"
+          >
+            Cancelar
+          </app-button>
+          
+          <app-button
+            type="submit"
+            variant="primary"
+            [loading]="saving()"
+            [disabled]="companyForm.invalid || saving()"
+          >
+            Salvar Alterações
+          </app-button>
+        </div>
+      }
+    </form>
+  }
+</div>

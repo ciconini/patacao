@@ -1,0 +1,150 @@
+<div class="pets-list">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Pets</h1>
+      <app-button
+        variant="primary"
+        (click)="onCreate()"
+        icon="fas fa-plus"
+      >
+        Novo Pet
+      </app-button>
+    </div>
+  </div>
+
+  <div class="filters-section">
+    <div class="search-bar">
+      <app-input
+        [(ngModel)]="searchQuery"
+        placeholder="Buscar por nome, chip..."
+        (keyup.enter)="onSearch()"
+      />
+      <select
+        [(ngModel)]="selectedCustomerId"
+        (ngModelChange)="onFilterChange()"
+        class="filter-select"
+      >
+        <option value="">Todos os clientes</option>
+        @for (customer of customers(); track customer.id) {
+          <option [value]="customer.id">{{ customer.fullName }}</option>
+        }
+      </select>
+      <select
+        [(ngModel)]="selectedSpecies"
+        (ngModelChange)="onFilterChange()"
+        class="filter-select"
+      >
+        <option value="">Todas as espécies</option>
+        @for (species of speciesOptions; track species.value) {
+          <option [value]="species.value">{{ species.label }}</option>
+        }
+      </select>
+      <app-button
+        variant="primary"
+        (click)="onSearch()"
+        [loading]="loading()"
+      >
+        Buscar
+      </app-button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    @if (loading()) {
+      <div class="loading-state">
+        <p>Carregando pets...</p>
+      </div>
+    } @else if (pets().length === 0) {
+      <div class="empty-state">
+        <p>Nenhum pet encontrado</p>
+      </div>
+    } @else {
+      <table class="pets-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Cliente</th>
+            <th>Espécie</th>
+            <th>Raça</th>
+            <th>Idade</th>
+            <th>Chip</th>
+            <th>Data de Criação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (pet of pets(); track pet.id) {
+            <tr>
+              <td>{{ pet.name }}</td>
+              <td>{{ getCustomerName(pet.customerId) }}</td>
+              <td>{{ getSpeciesLabel(pet.species) }}</td>
+              <td>{{ pet.breed || '-' }}</td>
+              <td>
+                @if (pet.age !== undefined && pet.age !== null) {
+                  {{ pet.age }} {{ pet.age === 1 ? 'ano' : 'anos' }}
+                } @else {
+                  -
+                }
+              </td>
+              <td>{{ pet.microchipId || '-' }}</td>
+              <td>{{ formatDate(pet.createdAt) }}</td>
+              <td class="actions-cell">
+                <button
+                  class="action-btn view-btn"
+                  (click)="onView(pet.id)"
+                  title="Ver detalhes"
+                >
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button
+                  class="action-btn edit-btn"
+                  (click)="onEdit(pet.id)"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="action-btn delete-btn"
+                  (click)="onDelete(pet.id)"
+                  title="Excluir"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  @if (totalPages() > 1) {
+    <div class="pagination">
+      <button
+        class="page-btn"
+        [disabled]="currentPage() === 1"
+        (click)="onPageChange(currentPage() - 1)"
+      >
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      
+      @for (page of pages; track page) {
+        <button
+          class="page-btn"
+          [class.active]="page === currentPage()"
+          (click)="onPageChange(page)"
+        >
+          {{ page }}
+        </button>
+      }
+      
+      <button
+        class="page-btn"
+        [disabled]="currentPage() === totalPages()"
+        (click)="onPageChange(currentPage() + 1)"
+      >
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  }
+</div>

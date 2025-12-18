@@ -1,0 +1,42 @@
+<header class="header">
+  <div class="header-content">
+    <div class="header-left">
+      <h1 class="header-title">Patacão Petshop</h1>
+    </div>
+
+    <div class="header-right">
+      @if (isAuthenticated()) {
+        <div class="user-menu-container">
+          <button 
+            class="user-menu-button"
+            (click)="toggleUserMenu()"
+            [attr.aria-expanded]="showUserMenu()"
+            aria-label="User menu"
+          >
+            <div class="user-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            @if (currentUser()) {
+              <span class="user-name">{{ currentUser()!.fullName }}</span>
+            }
+            <i class="fas fa-chevron-down" [class.open]="showUserMenu()"></i>
+          </button>
+
+          @if (showUserMenu()) {
+            <div class="user-menu-dropdown">
+              <button class="menu-item" (click)="goToProfile()">
+                <i class="fas fa-user"></i>
+                <span>Meu Perfil</span>
+              </button>
+              <button class="menu-item" (click)="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Sair</span>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</header>
+

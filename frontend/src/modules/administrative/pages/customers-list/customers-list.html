@@ -1,0 +1,120 @@
+<div class="customers-list">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Clientes</h1>
+      <app-button
+        variant="primary"
+        (click)="onCreate()"
+        icon="fas fa-plus"
+      >
+        Novo Cliente
+      </app-button>
+    </div>
+  </div>
+
+  <div class="filters-section">
+    <div class="search-bar">
+      <app-input
+        [(ngModel)]="searchQuery"
+        placeholder="Buscar por nome, email ou telefone..."
+        (keyup.enter)="onSearch()"
+      />
+      <app-button
+        variant="primary"
+        (click)="onSearch()"
+        [loading]="loading()"
+      >
+        Buscar
+      </app-button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    @if (loading()) {
+      <div class="loading-state">
+        <p>Carregando clientes...</p>
+      </div>
+    } @else if (customers().length === 0) {
+      <div class="empty-state">
+        <p>Nenhum cliente encontrado</p>
+      </div>
+    } @else {
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Telefone</th>
+            <th>Cidade</th>
+            <th>Data de Criação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (customer of customers(); track customer.id) {
+            <tr>
+              <td>{{ customer.fullName }}</td>
+              <td>{{ customer.email || '-' }}</td>
+              <td>{{ customer.phone || '-' }}</td>
+              <td>{{ customer.address?.city || '-' }}</td>
+              <td>{{ formatDate(customer.createdAt) }}</td>
+              <td class="actions-cell">
+                <button
+                  class="action-btn view-btn"
+                  (click)="onView(customer.id)"
+                  title="Ver detalhes"
+                >
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button
+                  class="action-btn edit-btn"
+                  (click)="onEdit(customer.id)"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="action-btn archive-btn"
+                  (click)="onArchive(customer.id)"
+                  title="Arquivar"
+                >
+                  <i class="fas fa-archive"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  @if (totalPages() > 1) {
+    <div class="pagination">
+      <button
+        class="page-btn"
+        [disabled]="currentPage() === 1"
+        (click)="onPageChange(currentPage() - 1)"
+      >
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      
+      @for (page of pages; track page) {
+        <button
+          class="page-btn"
+          [class.active]="page === currentPage()"
+          (click)="onPageChange(page)"
+        >
+          {{ page }}
+        </button>
+      }
+      
+      <button
+        class="page-btn"
+        [disabled]="currentPage() === totalPages()"
+        (click)="onPageChange(currentPage() + 1)"
+      >
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  }
+</div>

@@ -1,0 +1,39 @@
+.main-layout {
+  display: flex;
+  min-height: 100vh;
+  height: 100vh;
+  background-color: #f5f5f5;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 250px; // Sidebar width
+  transition: margin-left 0.3s ease;
+}
+
+// When sidebar is collapsed
+:host-context(.sidebar-collapsed) .main-content {
+  margin-left: 60px;
+}
+
+.content-area {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+  }
+
+  .content-area {
+    padding: 1rem;
+  }
+}
+

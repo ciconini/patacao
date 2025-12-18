@@ -1,0 +1,169 @@
+@use '../../../../shared/styles/design-system' as *;
+
+.customers-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  padding: $spacing-lg;
+
+  .page-header {
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h1 {
+        font-size: $font-size-3xl;
+        font-weight: $font-weight-semibold;
+        color: $color-text-primary;
+        margin: 0;
+      }
+    }
+  }
+
+  .filters-section {
+    .search-bar {
+      display: flex;
+      gap: $spacing-md;
+      align-items: center;
+
+      app-input {
+        flex: 1;
+        max-width: 500px;
+      }
+    }
+  }
+
+  .table-container {
+    background: $color-white;
+    border-radius: $radius-md;
+    box-shadow: $shadow-sm;
+    overflow: hidden;
+
+    .loading-state,
+    .empty-state {
+      padding: $spacing-3xl;
+      text-align: center;
+      color: $color-text-secondary;
+
+      p {
+        font-size: $font-size-lg;
+      }
+    }
+
+    .customers-table {
+      width: 100%;
+      border-collapse: collapse;
+
+      thead {
+        background-color: $color-gray-50;
+
+        th {
+          padding: $spacing-md;
+          text-align: left;
+          font-weight: $font-weight-semibold;
+          font-size: $font-size-sm;
+          color: $color-text-secondary;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border-bottom: 2px solid $color-border-default;
+        }
+      }
+
+      tbody {
+        tr {
+          border-bottom: 1px solid $color-border-default;
+          transition: background-color $transition-fast;
+
+          &:hover {
+            background-color: $color-gray-50;
+          }
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          td {
+            padding: $spacing-md;
+            font-size: $font-size-base;
+            color: $color-text-primary;
+
+            &.actions-cell {
+              display: flex;
+              gap: $spacing-sm;
+              justify-content: flex-end;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: $spacing-sm;
+
+    .page-btn {
+      min-width: 40px;
+      height: 40px;
+      padding: $spacing-sm $spacing-md;
+      border: 1px solid $color-border-default;
+      background: $color-white;
+      border-radius: $radius-sm;
+      cursor: pointer;
+      font-size: $font-size-base;
+      color: $color-text-primary;
+      transition: all $transition-fast;
+
+      &:hover:not(:disabled) {
+        background: $color-gray-100;
+        border-color: $color-primary;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &.active {
+        background: $color-primary;
+        color: $color-white;
+        border-color: $color-primary;
+      }
+    }
+  }
+
+  .action-btn {
+    padding: $spacing-sm;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: $radius-sm;
+    transition: all $transition-fast;
+    color: $color-text-secondary;
+
+    &:hover {
+      background: $color-gray-100;
+      color: $color-primary;
+    }
+
+    &.view-btn:hover {
+      color: $color-info;
+    }
+
+    &.edit-btn:hover {
+      color: $color-warning;
+    }
+
+    &.archive-btn:hover {
+      color: $color-error;
+    }
+
+    i {
+      font-size: $font-size-base;
+    }
+  }
+}
+

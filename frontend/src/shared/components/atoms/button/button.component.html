@@ -1,0 +1,18 @@
+<button
+  [type]="type"
+  [class]="buttonClasses"
+  [disabled]="disabled || loading"
+  (click)="onClick()"
+>
+  @if (loading) {
+    <span class="btn-spinner"></span>
+  }
+  @if (icon && iconPos === 'left' && !loading) {
+    <i [class]="icon" class="btn-icon-left"></i>
+  }
+  <ng-content></ng-content>
+  @if (icon && iconPos === 'right' && !loading) {
+    <i [class]="icon" class="btn-icon-right"></i>
+  }
+</button>
+

@@ -1,0 +1,110 @@
+@use '../../../../shared/styles/design-system' as *;
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  border: none;
+  border-radius: $radius-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+  font-family: inherit;
+
+  &:disabled,
+  &.btn-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &.btn-loading {
+    cursor: wait;
+  }
+}
+
+// Variants
+.btn-primary {
+  @include button-variant($color-primary, $color-white, $color-primary-dark);
+}
+
+.btn-secondary {
+  @include button-variant($color-gray-600, $color-white, $color-gray-700);
+}
+
+.btn-danger {
+  @include button-variant($color-error, $color-white, $color-error-dark);
+}
+
+.btn-success {
+  @include button-variant($color-success, $color-white, $color-success-dark);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid $color-primary;
+  color: $color-primary;
+
+  &:hover:not(:disabled) {
+    background-color: $color-primary;
+    color: $color-white;
+  }
+
+  &:focus {
+    @include focus-ring($color-primary);
+  }
+}
+
+.btn-text {
+  background-color: transparent;
+  color: $color-primary;
+  padding: $spacing-xs $spacing-sm;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($color-primary, 0.1);
+  }
+
+  &:focus {
+    @include focus-ring($color-primary);
+  }
+}
+
+// Sizes
+.btn-small {
+  padding: 0.375rem 0.75rem;
+  font-size: $font-size-sm;
+}
+
+.btn-medium {
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-base;
+}
+
+.btn-large {
+  padding: 0.75rem 1.5rem;
+  font-size: $font-size-lg;
+}
+
+// Icons
+.btn-icon-left,
+.btn-icon-right {
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

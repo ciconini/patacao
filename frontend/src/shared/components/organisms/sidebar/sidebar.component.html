@@ -1,0 +1,71 @@
+<nav class="sidebar" [class.collapsed]="isCollapsed()">
+  <div class="sidebar-header">
+    @if (!isCollapsed()) {
+      <h2 class="sidebar-title">Patacão</h2>
+    }
+    <button 
+      class="sidebar-toggle"
+      (click)="toggleCollapse()"
+      [attr.aria-label]="isCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+    >
+      <i class="fas" [class.fa-chevron-left]="!isCollapsed()" [class.fa-chevron-right]="isCollapsed()"></i>
+    </button>
+  </div>
+
+  <ul class="sidebar-menu">
+    @for (item of menuItems(); track item.label) {
+      <li [class.has-children]="item.children && item.children.length > 0">
+        @if (item.children && item.children.length > 0) {
+          <div class="menu-item parent-item" [class.active]="hasActiveChild(item)">
+            <button
+              class="menu-toggle"
+              (click)="toggleMenu(item)"
+              [title]="isCollapsed() ? item.label : ''"
+            >
+              <i [class]="item.icon" class="menu-icon"></i>
+              @if (!isCollapsed()) {
+                <span class="menu-label">{{ item.label }}</span>
+                <i 
+                  class="fas fa-chevron-down menu-chevron"
+                  [class.expanded]="isMenuExpanded(item)"
+                ></i>
+              }
+            </button>
+          </div>
+          @if (isMenuExpanded(item) && !isCollapsed()) {
+            <ul class="submenu">
+              @for (child of item.children; track child.route) {
+                <li>
+                  <a
+                    [routerLink]="child.route"
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: false }"
+                    class="menu-item submenu-item"
+                    [title]="child.label"
+                  >
+                    <i [class]="child.icon" class="menu-icon"></i>
+                    <span class="menu-label">{{ child.label }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        } @else {
+          <a
+            [routerLink]="item.route!"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="menu-item"
+            [title]="isCollapsed() ? item.label : ''"
+          >
+            <i [class]="item.icon" class="menu-icon"></i>
+            @if (!isCollapsed()) {
+              <span class="menu-label">{{ item.label }}</span>
+            }
+          </a>
+        }
+      </li>
+    }
+  </ul>
+</nav>
+

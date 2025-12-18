@@ -6,7 +6,7 @@ import { FirebaseOptions } from '@angular/fire/app';
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000/api',
+  apiUrl: 'http://localhost:3000/api/v1',
   firebase: {
     apiKey: 'AIzaSyBUwtyFNqKwgST9U9K8BXfEZFDVQ1b5QP4',
     authDomain: 'patacao.firebaseapp.com',
