@@ -9,6 +9,36 @@
 
 import { Store } from '../domain/store.entity';
 
+// Search criteria for store search
+export interface StoreSearchCriteria {
+  companyId?: string;
+}
+
+// Pagination model
+export interface Pagination {
+  page: number;
+  perPage: number;
+}
+
+// Sort model
+export interface Sort {
+  field: string;
+  direction: 'asc' | 'desc';
+}
+
+// Paginated result model
+export interface PaginatedResult<T> {
+  items: T[];
+  meta: {
+    total: number;
+    page: number;
+    perPage: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+}
+
 export interface StoreRepository {
   /**
    * Saves a Store entity (creates or updates)
@@ -33,4 +63,25 @@ export interface StoreRepository {
    * @returns Store entity or null if not found
    */
   findById(id: string): Promise<Store | null>;
+
+  /**
+   * Searches for stores with pagination
+   *
+   * @param criteria - Search criteria
+   * @param pagination - Pagination parameters
+   * @param sort - Sort parameters
+   * @returns Paginated result of stores
+   */
+  search(
+    criteria: StoreSearchCriteria,
+    pagination: Pagination,
+    sort: Sort,
+  ): Promise<PaginatedResult<Store>>;
+
+  /**
+   * Deletes a Store entity
+   *
+   * @param id - Store ID
+   */
+  delete(id: string): Promise<void>;
 }

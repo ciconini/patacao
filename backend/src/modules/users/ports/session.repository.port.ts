@@ -63,4 +63,12 @@ export interface SessionRepository {
    * @param userId - User ID
    */
   revokeAllByUserId(userId: string): Promise<void>;
+
+  /**
+   * Finds all sessions for a user
+   *
+   * @param userId - User ID
+   * @returns Array of Session entities
+   */
+  findByUserId(userId: string): Promise<Session[]>;
 }

@@ -16,7 +16,13 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Firestore } from 'firebase-admin/firestore';
 import { Store, Address, WeeklyOpeningHours, DayOpeningHours } from '../domain/store.entity';
-import { StoreRepository } from '../ports/store.repository.port';
+import {
+  StoreRepository,
+  StoreSearchCriteria,
+  Pagination,
+  Sort,
+  PaginatedResult,
+} from '../ports/store.repository.port';
 
 /**
  * Firestore document structure for Store
@@ -97,6 +103,72 @@ export class FirestoreStoreRepository implements StoreRepository {
     }
 
     return this.toEntity(doc.id, doc.data() as StoreDocument);
+  }
+
+  /**
+   * Searches for stores with pagination
+   *
+   * @param criteria - Search criteria
+   * @param pagination - Pagination parameters
+   * @param sort - Sort parameters
+   * @returns Paginated result of stores
+   */
+  async search(
+    criteria: StoreSearchCriteria,
+    pagination: Pagination,
+    sort: Sort,
+  ): Promise<PaginatedResult<Store>> {
+    let query: FirebaseFirestore.Query = this.firestore.collection(this.collectionName);
+
+    // Apply filters
+    if (criteria.companyId) {
+      query = query.where('companyId', '==', criteria.companyId);
+    }
+
+    // Get total count (before pagination and sorting for efficiency)
+    const countSnapshot = await query.get();
+    const total = countSnapshot.size;
+
+    // Apply sorting
+    const sortField = sort.field || 'createdAt';
+    const sortDirection = sort.direction === 'desc' ? 'desc' : 'asc';
+    query = query.orderBy(sortField, sortDirection);
+
+    // Apply pagination
+    const page = pagination.page || 1;
+    const perPage = pagination.perPage || 20;
+    const offset = (page - 1) * perPage;
+
+    query = query.limit(perPage).offset(offset);
+
+    // Execute query
+    const snapshot = await query.get();
+
+    const items = snapshot.docs.map((doc) => this.toEntity(doc.id, doc.data() as StoreDocument));
+
+    const totalPages = Math.ceil(total / perPage);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        perPage,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1,
+      },
+    };
+  }
+
+  /**
+   * Deletes a Store entity
+   *
+   * @param id - Store ID
+   */
+  async delete(id: string): Promise<void> {
+    const docRef = this.firestore.collection(this.collectionName).doc(id);
+    await docRef.delete();
   }
 
   /**

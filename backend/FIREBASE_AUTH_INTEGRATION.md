@@ -98,44 +98,53 @@ NestJS module that provides authentication services and guards globally.
 
 ### What Needs to Be Done
 
-#### 1. Link Firebase UID to User Entity
+#### 1. Link Firebase UID to User Entity ✅ **IMPLEMENTED**
 
-Update the `User` entity or create a mapping to link Firebase UID:
+The `User` entity in Firestore includes a `firebaseUid` field that links to Firebase Auth users. The `FirebaseUserLookupService` handles linking Firebase UIDs to internal user entities.
 
+**Implementation**:
+- User documents in Firestore have an optional `firebaseUid` field
+- `FirebaseUserLookupService.linkFirebaseUid()` updates the user document with the Firebase UID
+- `FirebaseUserLookupService.findByFirebaseUid()` finds internal users by Firebase UID
+
+#### 2. User Creation Flow ✅ **IMPLEMENTED**
+
+When creating a user via `POST /users`, if a `password` is provided in the request body, the system will:
+
+1. Create the user in Firestore (internal user entity)
+2. Create a Firebase Auth user with the provided email and password
+3. Link the Firebase UID to the internal user entity
+4. Set custom claims (roles and store IDs) on the Firebase Auth user
+
+**Implementation Details**:
+- The `CreateUserUseCase` accepts an optional `password` field
+- If password is provided, `FirebaseAuthIntegrationService` creates the Firebase Auth user
+- The `FirebaseUserLookupService` links the Firebase UID to the internal user
+- Custom claims are set automatically with the user's roles and store assignments
+
+**Usage**:
 ```typescript
-// Option A: Add firebaseUid field to User entity
-interface User {
-  id: string;
-  firebaseUid?: string; // Link to Firebase Auth user
-  // ... other fields
+// Create user with password (creates Firebase Auth user)
+POST /api/v1/users
+{
+  "email": "user@example.com",
+  "fullName": "John Doe",
+  "password": "securePassword123", // Optional: creates Firebase Auth user
+  "roles": ["Staff"],
+  "storeIds": ["store-1"]
 }
 
-// Option B: Create a mapping collection in Firestore
-// Collection: user_firebase_mapping
-// Document: { userId: string, firebaseUid: string }
+// Create user without password (user must set password via reset flow)
+POST /api/v1/users
+{
+  "email": "user@example.com",
+  "fullName": "John Doe",
+  "roles": ["Staff"]
+  // No password - user will need to use password reset to set password
+}
 ```
 
-#### 2. Update User Creation Flow
-
-When creating a user, also create a Firebase Auth user:
-
-```typescript
-// In CreateUserUseCase or similar
-const firebaseUser = await firebaseAuthService.createUser({
-  email: userData.email,
-  password: userData.password,
-  displayName: userData.fullName,
-});
-
-// Link Firebase UID to User entity
-user.firebaseUid = firebaseUser.uid;
-await userRepository.save(user);
-
-// Set custom claims (roles)
-await firebaseAuthService.setCustomClaims(firebaseUser.uid, {
-  roles: userData.roleIds,
-});
-```
+**Note**: If Firebase Auth integration services are unavailable, the user is still created in Firestore, but no Firebase Auth user is created. The system logs a warning but does not fail the user creation.
 
 #### 3. Create User Lookup Service
 
@@ -258,13 +267,13 @@ console.log('Payload:', result.payload);
 
 ## Next Steps
 
-1. **Decide on integration approach** (Hybrid vs Full Migration)
-2. **Link Firebase UID to User entities** (add field or mapping)
-3. **Update user creation flow** to create Firebase Auth users
-4. **Create user lookup service** to find User by Firebase UID
-5. **Update guards** to attach User entity to requests
+1. ✅ **Decide on integration approach** (Hybrid vs Full Migration) - **Hybrid approach implemented**
+2. ✅ **Link Firebase UID to User entities** (add field or mapping) - **Implemented**
+3. ✅ **Update user creation flow** to create Firebase Auth users - **Implemented**
+4. ✅ **Create user lookup service** to find User by Firebase UID - **Implemented**
+5. **Update guards** to attach User entity to requests (if needed for authorization)
 6. **Test token verification** with real Firebase tokens
-7. **Update API documentation** to reflect authentication method
+7. ✅ **Update API documentation** to reflect authentication method - **Updated**
 
 ## Notes
 

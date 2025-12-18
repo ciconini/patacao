@@ -112,6 +112,10 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  password?: string; // Optional: if provided, creates Firebase Auth user
 }
 
 /**

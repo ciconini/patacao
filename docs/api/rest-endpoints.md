@@ -51,9 +51,10 @@ Format: For each module a table of endpoints with: Method | Route | Params | Bod
 
 - POST /users
   - Params: none
-  - Body: { email, full_name, phone(opt), username(opt), roles: [role_ids], store_ids: [store_id], working_hours(opt) }
+  - Body: { email, full_name, phone(opt), username(opt), roles: [role_ids], store_ids: [store_id], working_hours(opt), password(opt) }
   - Responses: 201 { user } | 400 | 401 | 403
   - Auth: Owner, Manager
+  - Notes: If `password` is provided, a Firebase Auth user is automatically created and linked to the internal user. If omitted, user must go through password reset flow to set password.
 
 - GET /users/{id}
   - Params: path id

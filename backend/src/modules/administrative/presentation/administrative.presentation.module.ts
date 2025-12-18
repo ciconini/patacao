@@ -11,6 +11,7 @@ import { StoreController } from './controllers/store.controller';
 import { CustomerController } from './controllers/customer.controller';
 import { PetController } from './controllers/pet.controller';
 import { ImportController } from './controllers/import.controller';
+import { ExportController } from './controllers/export.controller';
 
 @Module({
   imports: [AdministrativeApplicationModule],
@@ -20,6 +21,7 @@ import { ImportController } from './controllers/import.controller';
     CustomerController,
     PetController,
     ImportController,
+    ExportController,
   ],
 })
 export class AdministrativePresentationModule {}

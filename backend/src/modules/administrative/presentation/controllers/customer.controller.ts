@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Get,
+  Delete,
   Body,
   Param,
   Query,
@@ -50,6 +51,14 @@ import {
   SearchCustomersUseCase,
   SearchCustomersInput,
 } from '../../application/search-customers.use-case';
+import {
+  GetCustomerUseCase,
+  GetCustomerInput,
+} from '../../application/get-customer.use-case';
+import {
+  DeleteCustomerUseCase,
+  DeleteCustomerInput,
+} from '../../application/delete-customer.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
 @ApiTags('Administrative')
@@ -63,6 +72,8 @@ export class CustomerController {
     private readonly updateCustomerUseCase: UpdateCustomerUseCase,
     private readonly archiveCustomerUseCase: ArchiveCustomerUseCase,
     private readonly searchCustomersUseCase: SearchCustomersUseCase,
+    private readonly getCustomerUseCase: GetCustomerUseCase,
+    private readonly deleteCustomerUseCase: DeleteCustomerUseCase,
   ) {}
 
   /**
@@ -158,33 +169,10 @@ export class CustomerController {
   }
 
   /**
-   * Get a customer by ID
-   * GET /api/v1/customers/:id
-   */
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get customer by ID',
-    description: 'Retrieves a customer profile by its ID',
-  })
-  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Customer retrieved successfully',
-    type: CustomerResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
-  @ApiResponse({ status: 404, description: 'Customer not found' })
-  async findOne(@Param('id') id: string): Promise<CustomerResponseDto> {
-    // TODO: Implement GetCustomerUseCase
-    throw new Error('Not implemented yet');
-  }
-
-  /**
    * Search customers
-   * GET /api/v1/customers/search
+   * GET /api/v1/customers
    */
-  @Get('search')
+  @Get()
   @ApiOperation({
     summary: 'Search customers',
     description: 'Searches and filters customers with pagination support',
@@ -283,6 +271,47 @@ export class CustomerController {
   }
 
   /**
+   * Get a customer by ID
+   * GET /api/v1/customers/:id
+   */
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get customer by ID',
+    description: 'Retrieves a customer profile by its ID',
+  })
+  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer retrieved successfully',
+    type: CustomerResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  async findOne(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<CustomerResponseDto> {
+    const userId = req.firebaseUid || req.user?.uid;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: GetCustomerInput = {
+      id,
+      performedBy: userId,
+    };
+
+    const result = await this.getCustomerUseCase.execute(input);
+
+    if (!result.success || !result.customer) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
+
+    return this.mapToResponseDto(result.customer);
+  }
+
+  /**
    * Archive a customer
    * POST /api/v1/customers/:id/archive
    */
@@ -307,6 +336,42 @@ export class CustomerController {
     };
 
     const result = await this.archiveCustomerUseCase.execute(input);
+
+    if (!result.success) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
+  }
+
+  /**
+   * Delete a customer
+   * DELETE /api/v1/customers/:id
+   */
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Delete customer',
+    description: 'Deletes a customer permanently (hard delete). For soft delete, use archive endpoint.',
+  })
+  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
+  @ApiResponse({ status: 204, description: 'Customer deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  async delete(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<void> {
+    const userId = req.firebaseUid || req.user?.uid;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: DeleteCustomerInput = {
+      id,
+      performedBy: userId,
+    };
+
+    const result = await this.deleteCustomerUseCase.execute(input);
 
     if (!result.success) {
       throw mapApplicationErrorToHttpException(result.error!);

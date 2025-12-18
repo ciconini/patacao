@@ -16,6 +16,12 @@ import { PasswordResetRequestUseCase } from './password-reset-request.use-case';
 import { PasswordResetConfirmUseCase } from './password-reset-confirm.use-case';
 import { CreateUserUseCase } from './create-user.use-case';
 import { SearchUsersUseCase } from './search-users.use-case';
+import { GetUserUseCase } from './get-user.use-case';
+import { UpdateUserUseCase } from './update-user.use-case';
+import { DeleteUserUseCase } from './delete-user.use-case';
+import { GetRolesUseCase } from './get-roles.use-case';
+import { GetSessionsUseCase } from './get-sessions.use-case';
+import { RevokeSessionUseCase } from './revoke-session.use-case';
 
 @Module({
   imports: [
@@ -32,6 +38,12 @@ import { SearchUsersUseCase } from './search-users.use-case';
     PasswordResetConfirmUseCase,
     CreateUserUseCase,
     SearchUsersUseCase,
+    GetUserUseCase,
+    UpdateUserUseCase,
+    DeleteUserUseCase,
+    GetRolesUseCase,
+    GetSessionsUseCase,
+    RevokeSessionUseCase,
   ],
   exports: [
     UserLoginUseCase,
@@ -41,6 +53,12 @@ import { SearchUsersUseCase } from './search-users.use-case';
     PasswordResetConfirmUseCase,
     CreateUserUseCase,
     SearchUsersUseCase,
+    GetUserUseCase,
+    UpdateUserUseCase,
+    DeleteUserUseCase,
+    GetRolesUseCase,
+    GetSessionsUseCase,
+    RevokeSessionUseCase,
   ],
 })
 export class UsersApplicationModule {}

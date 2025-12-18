@@ -12,6 +12,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -24,24 +25,35 @@ import {
   ApiBody,
   ApiBearerAuth,
   ApiParam,
+  ApiQuery,
+  ApiExtraModels,
 } from '@nestjs/swagger';
 import {
   FirebaseAuthGuard,
   AuthenticatedRequest,
 } from '../../../../shared/auth/firebase-auth.guard';
 import { CreateStoreDto, UpdateStoreDto, StoreResponseDto } from '../dto/store.dto';
+import { PaginatedResponseDto, PaginationMetaDto } from '../../../../shared/presentation/dto/pagination.dto';
+import { SearchStoresQueryDto } from '../dto/search-stores-query.dto';
 import { CreateStoreUseCase, CreateStoreInput } from '../../application/create-store.use-case';
 import { UpdateStoreUseCase, UpdateStoreInput } from '../../application/update-store.use-case';
+import { GetStoreUseCase, GetStoreInput } from '../../application/get-store.use-case';
+import { DeleteStoreUseCase, DeleteStoreInput } from '../../application/delete-store.use-case';
+import { SearchStoresUseCase, SearchStoresInput } from '../../application/search-stores.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
 @ApiTags('Administrative')
 @ApiBearerAuth('JWT-auth')
+@ApiExtraModels(PaginatedResponseDto, PaginationMetaDto)
 @Controller('api/v1/stores')
 @UseGuards(FirebaseAuthGuard)
 export class StoreController {
   constructor(
     private readonly createStoreUseCase: CreateStoreUseCase,
     private readonly updateStoreUseCase: UpdateStoreUseCase,
+    private readonly getStoreUseCase: GetStoreUseCase,
+    private readonly deleteStoreUseCase: DeleteStoreUseCase,
+    private readonly searchStoresUseCase: SearchStoresUseCase,
   ) {}
 
   /**
@@ -130,6 +142,62 @@ export class StoreController {
   }
 
   /**
+   * Search stores
+   * GET /api/v1/stores
+   */
+  @Get()
+  @ApiOperation({ summary: 'Search stores', description: 'Searches and filters stores with pagination' })
+  @ApiQuery({ name: 'companyId', required: false, type: String, description: 'Filter by company ID' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1, description: 'Page number' })
+  @ApiQuery({ name: 'perPage', required: false, type: Number, example: 20, description: 'Items per page' })
+  @ApiQuery({ name: 'sort', required: false, type: String, description: 'Sort field and direction' })
+  @ApiResponse({
+    status: 200,
+    description: 'Stores retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/StoreResponseDto' },
+        },
+        meta: { $ref: '#/components/schemas/PaginationMetaDto' },
+      },
+      required: ['items', 'meta'],
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  async search(
+    @Query() query: SearchStoresQueryDto,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<PaginatedResponseDto<StoreResponseDto>> {
+    const userId = req.firebaseUid || req.user?.uid;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: SearchStoresInput = {
+      companyId: query.companyId,
+      page: query.page || 1,
+      perPage: query.perPage || 20,
+      sort: query.sort,
+      performedBy: userId,
+    };
+
+    const result = await this.searchStoresUseCase.execute(input);
+
+    if (!result.success || !result.data) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
+
+    return {
+      items: result.data.items.map((item: any) => this.mapToResponseDto(item)),
+      meta: result.data.meta,
+    };
+  }
+
+  /**
    * Get a store by ID
    * GET /api/v1/stores/:id
    */
@@ -140,9 +208,27 @@ export class StoreController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Store not found' })
-  async findOne(@Param('id') id: string): Promise<StoreResponseDto> {
-    // TODO: Implement GetStoreUseCase
-    throw new Error('Not implemented yet');
+  async findOne(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<StoreResponseDto> {
+    const userId = req.firebaseUid || req.user?.uid;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: GetStoreInput = {
+      id,
+      performedBy: userId,
+    };
+
+    const result = await this.getStoreUseCase.execute(input);
+
+    if (!result.success || !result.store) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
+
+    return this.mapToResponseDto(result.store);
   }
 
   /**
@@ -151,15 +237,31 @@ export class StoreController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete store', description: 'Deletes a store (soft delete)' })
+  @ApiOperation({ summary: 'Delete store', description: 'Deletes a store' })
   @ApiParam({ name: 'id', description: 'Store UUID', type: String })
   @ApiResponse({ status: 204, description: 'Store deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Store not found' })
-  async delete(@Param('id') id: string): Promise<void> {
-    // TODO: Implement DeleteStoreUseCase
-    throw new Error('Not implemented yet');
+  async delete(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<void> {
+    const userId = req.firebaseUid || req.user?.uid;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: DeleteStoreInput = {
+      id,
+      performedBy: userId,
+    };
+
+    const result = await this.deleteStoreUseCase.execute(input);
+
+    if (!result.success) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
   }
 
   /**

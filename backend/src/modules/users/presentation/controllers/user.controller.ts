@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Get,
+  Delete,
   Body,
   Param,
   Query,
@@ -35,6 +36,9 @@ import { CreateUserDto, UpdateUserDto, UserResponseDto } from '../dto/user.dto';
 import { PaginatedResponseDto, PaginationMetaDto } from '../../../../shared/presentation/dto/pagination.dto';
 import { CreateUserUseCase, CreateUserInput } from '../../application/create-user.use-case';
 import { SearchUsersUseCase, SearchUsersInput } from '../../application/search-users.use-case';
+import { GetUserUseCase, GetUserInput } from '../../application/get-user.use-case';
+import { UpdateUserUseCase, UpdateUserInput } from '../../application/update-user.use-case';
+import { DeleteUserUseCase, DeleteUserInput } from '../../application/delete-user.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
 @ApiTags('Users')
@@ -46,6 +50,9 @@ export class UserController {
   constructor(
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly searchUsersUseCase: SearchUsersUseCase,
+    private readonly getUserUseCase: GetUserUseCase,
+    private readonly updateUserUseCase: UpdateUserUseCase,
+    private readonly deleteUserUseCase: DeleteUserUseCase,
   ) {}
 
   /**
@@ -97,6 +104,7 @@ export class UserController {
       roles: createDto.roles,
       storeIds: createDto.storeIds || [],
       workingHours: createDto.workingHours,
+      password: createDto.password, // Optional: if provided, creates Firebase Auth user
       performedBy: userId,
     };
 
@@ -146,8 +154,30 @@ export class UserController {
     @Body() updateDto: UpdateUserDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<UserResponseDto> {
-    // TODO: Implement UpdateUserUseCase
-    throw new Error('Not implemented yet');
+    const userId = req.firebaseUid || req.user?.uid;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: UpdateUserInput = {
+      id,
+      fullName: updateDto.fullName,
+      phone: updateDto.phone,
+      username: updateDto.username,
+      roles: updateDto.roles,
+      active: updateDto.active,
+      storeIds: updateDto.storeIds,
+      workingHours: updateDto.workingHours,
+      performedBy: userId,
+    };
+
+    const result = await this.updateUserUseCase.execute(input);
+
+    if (!result.success || !result.user) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
+
+    return this.mapToResponseDto(result.user);
   }
 
   /**
@@ -177,9 +207,27 @@ export class UserController {
     status: 404,
     description: 'User not found',
   })
-  async findOne(@Param('id') id: string): Promise<UserResponseDto> {
-    // TODO: Implement GetUserUseCase
-    throw new Error('Not implemented yet');
+  async findOne(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<UserResponseDto> {
+    const userId = req.firebaseUid || req.user?.uid;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: GetUserInput = {
+      id,
+      performedBy: userId,
+    };
+
+    const result = await this.getUserUseCase.execute(input);
+
+    if (!result.success || !result.user) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
+
+    return this.mapToResponseDto(result.user);
   }
 
   /**
@@ -313,5 +361,41 @@ export class UserController {
       createdAt: output.createdAt,
       updatedAt: output.updatedAt,
     };
+  }
+
+  /**
+   * Delete a user
+   * DELETE /api/v1/users/:id
+   */
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Delete user',
+    description: 'Deletes (deactivates) a user account. Only Owner can delete users.',
+  })
+  @ApiParam({ name: 'id', description: 'User UUID', type: String })
+  @ApiResponse({ status: 204, description: 'User deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async delete(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<void> {
+    const userId = req.firebaseUid || req.user?.uid;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: DeleteUserInput = {
+      id,
+      performedBy: userId,
+    };
+
+    const result = await this.deleteUserUseCase.execute(input);
+
+    if (!result.success) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
   }
 }

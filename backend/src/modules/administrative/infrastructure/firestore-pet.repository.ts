@@ -16,7 +16,13 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Firestore } from 'firebase-admin/firestore';
 import { Pet, VaccinationRecord } from '../domain/pet.entity';
-import { PetRepository } from '../ports/pet.repository.port';
+import {
+  PetRepository,
+  PetSearchCriteria,
+  Pagination,
+  Sort,
+  PaginatedResult,
+} from '../ports/pet.repository.port';
 
 /**
  * Firestore document structure for Pet
@@ -84,6 +90,16 @@ export class FirestorePetRepository implements PetRepository {
   }
 
   /**
+   * Updates a Pet entity in Firestore
+   *
+   * @param pet - Pet domain entity to update
+   * @returns Updated Pet entity
+   */
+  async update(pet: Pet): Promise<Pet> {
+    return this.save(pet); // Firestore set with merge handles both create and update
+  }
+
+  /**
    * Counts pets by customer ID
    *
    * @param customerId - Customer ID
@@ -97,6 +113,80 @@ export class FirestorePetRepository implements PetRepository {
       .get();
 
     return snapshot.data().count;
+  }
+
+  /**
+   * Searches for pets with pagination
+   *
+   * @param criteria - Search criteria
+   * @param pagination - Pagination parameters
+   * @param sort - Sort parameters
+   * @returns Paginated result of pets
+   */
+  async search(
+    criteria: PetSearchCriteria,
+    pagination: Pagination,
+    sort: Sort,
+  ): Promise<PaginatedResult<Pet>> {
+    let query: FirebaseFirestore.Query = this.firestore.collection(this.collectionName);
+
+    // Apply filters
+    if (criteria.customerId) {
+      query = query.where('customerId', '==', criteria.customerId);
+    }
+
+    if (criteria.species) {
+      query = query.where('species', '==', criteria.species);
+    }
+
+    if (criteria.breed) {
+      query = query.where('breed', '==', criteria.breed);
+    }
+
+    // Get total count (before pagination and sorting for efficiency)
+    const countSnapshot = await query.get();
+    const total = countSnapshot.size;
+
+    // Apply sorting
+    const sortField = sort.field || 'createdAt';
+    const sortDirection = sort.direction === 'desc' ? 'desc' : 'asc';
+    query = query.orderBy(sortField, sortDirection);
+
+    // Apply pagination
+    const page = pagination.page || 1;
+    const perPage = pagination.perPage || 20;
+    const offset = (page - 1) * perPage;
+
+    query = query.limit(perPage).offset(offset);
+
+    // Execute query
+    const snapshot = await query.get();
+
+    const items = snapshot.docs.map((doc) => this.toEntity(doc.id, doc.data() as PetDocument));
+
+    const totalPages = Math.ceil(total / perPage);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        perPage,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1,
+      },
+    };
+  }
+
+  /**
+   * Deletes a Pet entity
+   *
+   * @param id - Pet ID
+   */
+  async delete(id: string): Promise<void> {
+    const docRef = this.firestore.collection(this.collectionName).doc(id);
+    await docRef.delete();
   }
 
   /**

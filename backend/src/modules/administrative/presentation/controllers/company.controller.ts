@@ -37,6 +37,10 @@ import {
   UpdateCompanyProfileUseCase,
   UpdateCompanyProfileInput,
 } from '../../application/update-company-profile.use-case';
+import {
+  GetCompanyProfileUseCase,
+  GetCompanyProfileInput,
+} from '../../application/get-company-profile.use-case';
 import { mapApplicationErrorToHttpException } from '../../../../shared/presentation/errors/http-error.mapper';
 
 @ApiTags('Administrative')
@@ -47,6 +51,7 @@ export class CompanyController {
   constructor(
     private readonly createCompanyProfileUseCase: CreateCompanyProfileUseCase,
     private readonly updateCompanyProfileUseCase: UpdateCompanyProfileUseCase,
+    private readonly getCompanyProfileUseCase: GetCompanyProfileUseCase,
   ) {}
 
   /**
@@ -202,10 +207,27 @@ export class CompanyController {
     status: 404,
     description: 'Company not found',
   })
-  async findOne(@Param('id') id: string): Promise<CompanyResponseDto> {
-    // TODO: Implement GetCompanyUseCase or use repository directly
-    // For now, this is a placeholder
-    throw new Error('Not implemented yet');
+  async findOne(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<CompanyResponseDto> {
+    const userId = req.firebaseUid || req.user?.uid;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: GetCompanyProfileInput = {
+      id,
+      performedBy: userId,
+    };
+
+    const result = await this.getCompanyProfileUseCase.execute(input);
+
+    if (!result.success || !result.company) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
+
+    return this.mapToResponseDto(result.company);
   }
 
   /**

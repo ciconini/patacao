@@ -178,6 +178,22 @@ export class FirestoreSessionRepository implements SessionRepository {
   }
 
   /**
+   * Finds all sessions for a user
+   *
+   * @param userId - User ID
+   * @returns Array of Session entities
+   */
+  async findByUserId(userId: string): Promise<Session[]> {
+    const snapshot = await this.firestore
+      .collection(this.collectionName)
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    return snapshot.docs.map((doc) => this.toEntity(doc.id, doc.data() as SessionDocument));
+  }
+
+  /**
    * Converts Session domain entity to Firestore document
    *
    * @param session - Session domain entity

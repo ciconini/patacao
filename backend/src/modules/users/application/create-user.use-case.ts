@@ -24,7 +24,7 @@
  * - Persistence implementation details
  */
 
-import { Inject } from '@nestjs/common';
+import { Inject, Optional } from '@nestjs/common';
 import { User, WeeklySchedule } from '../domain/user.entity';
 import { EmailAddress } from '../../shared/domain/email-address.value-object';
 import { PhoneNumber } from '../../shared/domain/phone-number.value-object';
@@ -46,6 +46,20 @@ export interface AuditLogRepository {
   save(auditLog: AuditLog): Promise<AuditLog>;
 }
 
+// Firebase Auth integration interfaces
+export interface FirebaseAuthIntegration {
+  createFirebaseUser(input: {
+    email: string;
+    password: string;
+    displayName?: string;
+  }): Promise<string>;
+  setUserRoles(firebaseUid: string, roles: string[], storeIds?: string[]): Promise<void>;
+}
+
+export interface FirebaseUserLookup {
+  linkFirebaseUid(userId: string, firebaseUid: string): Promise<void>;
+}
+
 // Input model
 export interface CreateUserInput {
   email: string;
@@ -63,6 +77,7 @@ export interface CreateUserInput {
     saturday?: { start?: string; end?: string; available?: boolean };
     sunday?: { start?: string; end?: string; available?: boolean };
   };
+  password?: string; // Optional: if provided, creates Firebase Auth user
   performedBy: string; // User ID
 }
 
@@ -178,6 +193,13 @@ export class CreateUserUseCase {
     @Inject('CurrentUserRepository')
     private readonly currentUserRepository: CurrentUserRepository,
     private readonly auditLogDomainService: AuditLogDomainService,
+    // Optional Firebase Auth integration services
+    @Optional()
+    @Inject('FirebaseAuthIntegrationService')
+    private readonly firebaseAuthIntegration?: FirebaseAuthIntegration,
+    @Optional()
+    @Inject('FirebaseUserLookupService')
+    private readonly firebaseUserLookup?: FirebaseUserLookup,
   ) {}
 
   /**
@@ -216,10 +238,15 @@ export class CreateUserUseCase {
       // 8. Assign roles and stores
       await this.assignUserRelationships(savedUser.id, validatedInput);
 
-      // 9. Create audit log entry
+      // 9. Create Firebase Auth user if password is provided
+      if (input.password && input.password.trim().length > 0) {
+        await this.createFirebaseAuthUser(savedUser, input.password, validatedInput);
+      }
+
+      // 10. Create audit log entry
       await this.createAuditLog(savedUser, input.performedBy);
 
-      // 10. Return success result
+      // 11. Return success result
       return {
         success: true,
         user: this.mapToOutput(savedUser, validatedInput),
@@ -497,6 +524,55 @@ export class CreateUserUseCase {
 
     if (validatedInput.storeIds.length > 0) {
       await this.userRepository.assignStores(userId, validatedInput.storeIds);
+    }
+  }
+
+  /**
+   * Creates Firebase Auth user and links it to internal user
+   *
+   * @param user - User domain entity
+   * @param password - User password
+   * @param validatedInput - Validated input data
+   */
+  private async createFirebaseAuthUser(
+    user: User,
+    password: string,
+    validatedInput: {
+      roles: string[];
+      storeIds: string[];
+    },
+  ): Promise<void> {
+    // Skip if Firebase integration services are not available
+    if (!this.firebaseAuthIntegration || !this.firebaseUserLookup) {
+      console.warn(
+        'Firebase Auth integration services not available. User created in Firestore but not in Firebase Auth.',
+      );
+      return;
+    }
+
+    try {
+      // Create Firebase Auth user
+      const firebaseUid = await this.firebaseAuthIntegration.createFirebaseUser({
+        email: user.email,
+        password: password,
+        displayName: user.fullName,
+      });
+
+      // Link Firebase UID to internal user
+      await this.firebaseUserLookup.linkFirebaseUid(user.id, firebaseUid);
+
+      // Set custom claims (roles) on Firebase user
+      await this.firebaseAuthIntegration.setUserRoles(
+        firebaseUid,
+        validatedInput.roles,
+        validatedInput.storeIds.length > 0 ? validatedInput.storeIds : undefined,
+      );
+    } catch (error: any) {
+      // Log error but don't fail user creation if Firebase integration fails
+      // This ensures user is still created in Firestore even if Firebase is unavailable
+      console.error('Failed to create Firebase Auth user during user creation:', error.message);
+      // In production, you might want to use a proper logger and potentially
+      // queue a retry job for Firebase Auth user creation
     }
   }
 
