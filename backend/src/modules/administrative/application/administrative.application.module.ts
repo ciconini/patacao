@@ -9,6 +9,8 @@ import { Module } from '@nestjs/common';
 import { AdministrativeInfrastructureModule } from '../infrastructure/administrative.infrastructure.module';
 import { SharedModule } from '../../../shared/shared.module';
 import { UsersInfrastructureModule } from '../../users/infrastructure/users.infrastructure.module';
+import { ServicesInfrastructureModule } from '../../services/infrastructure/services.infrastructure.module';
+import { FinancialInfrastructureModule } from '../../financial/infrastructure/financial.infrastructure.module';
 import { CreateCompanyProfileUseCase } from './create-company-profile.use-case';
 import { UpdateCompanyProfileUseCase } from './update-company-profile.use-case';
 import { GetCompanyProfileUseCase } from './get-company-profile.use-case';
@@ -32,7 +34,13 @@ import { ImportCustomersUseCase } from './import-customers.use-case';
 import { ExportCustomersUseCase } from './export-customers.use-case';
 
 @Module({
-  imports: [AdministrativeInfrastructureModule, SharedModule, UsersInfrastructureModule],
+  imports: [
+    AdministrativeInfrastructureModule,
+    SharedModule,
+    UsersInfrastructureModule,
+    ServicesInfrastructureModule, // Provides AppointmentRepository
+    FinancialInfrastructureModule, // Provides InvoiceRepository
+  ],
   providers: [
     CreateCompanyProfileUseCase,
     UpdateCompanyProfileUseCase,

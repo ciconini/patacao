@@ -29,9 +29,9 @@ import {
   ApiExtraModels,
 } from '@nestjs/swagger';
 import {
-  FirebaseAuthGuard,
+  JwtAuthGuard,
   AuthenticatedRequest,
-} from '../../../../shared/auth/firebase-auth.guard';
+} from '../../../../shared/auth/jwt-auth.guard';
 import { CreateCustomerDto, UpdateCustomerDto, CustomerResponseDto } from '../dto/customer.dto';
 import { PaginatedResponseDto, PaginationMetaDto } from '../../../../shared/presentation/dto/pagination.dto';
 import { SearchCustomersQueryDto } from '../dto/search-customers-query.dto';
@@ -64,8 +64,8 @@ import { mapApplicationErrorToHttpException } from '../../../../shared/presentat
 @ApiTags('Administrative')
 @ApiBearerAuth('JWT-auth')
 @ApiExtraModels(PaginatedResponseDto, PaginationMetaDto)
-@Controller('api/v1/customers')
-@UseGuards(FirebaseAuthGuard)
+@Controller('customers')
+@UseGuards(JwtAuthGuard)
 export class CustomerController {
   constructor(
     private readonly createCustomerUseCase: CreateCustomerUseCase,
@@ -97,7 +97,7 @@ export class CustomerController {
     @Body() createDto: CreateCustomerDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<CustomerResponseDto> {
-    const userId = req.firebaseUid || req.user?.uid;
+    const userId = req.userId || req.firebaseUid || req.user?.userId;
     if (!userId) {
       throw new Error('User ID not found in request');
     }
@@ -113,53 +113,6 @@ export class CustomerController {
     };
 
     const result = await this.createCustomerUseCase.execute(input);
-
-    if (!result.success || !result.customer) {
-      throw mapApplicationErrorToHttpException(result.error!);
-    }
-
-    return this.mapToResponseDto(result.customer);
-  }
-
-  /**
-   * Update an existing customer
-   * PUT /api/v1/customers/:id
-   */
-  @Put(':id')
-  @ApiOperation({ summary: 'Update customer', description: 'Updates an existing customer profile' })
-  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
-  @ApiBody({ type: UpdateCustomerDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Customer updated successfully',
-    type: CustomerResponseDto,
-  })
-  @ApiResponse({ status: 400, description: 'Invalid input data' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
-  @ApiResponse({ status: 404, description: 'Customer not found' })
-  async update(
-    @Param('id') id: string,
-    @Body() updateDto: UpdateCustomerDto,
-    @Request() req: AuthenticatedRequest,
-  ): Promise<CustomerResponseDto> {
-    const userId = req.firebaseUid || req.user?.uid;
-    if (!userId) {
-      throw new Error('User ID not found in request');
-    }
-
-    const input: UpdateCustomerInput = {
-      id,
-      fullName: updateDto.fullName,
-      email: updateDto.email,
-      phone: updateDto.phone,
-      address: updateDto.address,
-      consentMarketing: updateDto.consentMarketing,
-      consentReminders: updateDto.consentReminders,
-      performedBy: userId,
-    };
-
-    const result = await this.updateCustomerUseCase.execute(input);
 
     if (!result.success || !result.customer) {
       throw mapApplicationErrorToHttpException(result.error!);
@@ -239,7 +192,7 @@ export class CustomerController {
     @Query() query: SearchCustomersQueryDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<PaginatedResponseDto<CustomerResponseDto>> {
-    const userId = req.firebaseUid || req.user?.uid;
+    const userId = req.userId || req.firebaseUid || req.user?.userId;
     if (!userId) {
       throw new Error('User ID not found in request');
     }
@@ -271,6 +224,53 @@ export class CustomerController {
   }
 
   /**
+   * Update an existing customer
+   * PUT /api/v1/customers/:id
+   */
+  @Put(':id')
+  @ApiOperation({ summary: 'Update customer', description: 'Updates an existing customer profile' })
+  @ApiParam({ name: 'id', description: 'Customer UUID', type: String })
+  @ApiBody({ type: UpdateCustomerDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer updated successfully',
+    type: CustomerResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  async update(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateCustomerDto,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<CustomerResponseDto> {
+    const userId = req.userId || req.firebaseUid || req.user?.userId;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+
+    const input: UpdateCustomerInput = {
+      id,
+      fullName: updateDto.fullName,
+      email: updateDto.email,
+      phone: updateDto.phone,
+      address: updateDto.address,
+      consentMarketing: updateDto.consentMarketing,
+      consentReminders: updateDto.consentReminders,
+      performedBy: userId,
+    };
+
+    const result = await this.updateCustomerUseCase.execute(input);
+
+    if (!result.success || !result.customer) {
+      throw mapApplicationErrorToHttpException(result.error!);
+    }
+
+    return this.mapToResponseDto(result.customer);
+  }
+
+  /**
    * Get a customer by ID
    * GET /api/v1/customers/:id
    */
@@ -292,7 +292,7 @@ export class CustomerController {
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
   ): Promise<CustomerResponseDto> {
-    const userId = req.firebaseUid || req.user?.uid;
+    const userId = req.userId || req.firebaseUid || req.user?.userId;
     if (!userId) {
       throw new Error('User ID not found in request');
     }
@@ -323,8 +323,11 @@ export class CustomerController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Customer not found' })
-  async archive(@Param('id') id: string, @Request() req: AuthenticatedRequest): Promise<void> {
-    const userId = req.firebaseUid || req.user?.uid;
+  async archive(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<void> {
+    const userId = req.userId || req.firebaseUid || req.user?.userId;
     if (!userId) {
       throw new Error('User ID not found in request');
     }
@@ -361,7 +364,7 @@ export class CustomerController {
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
   ): Promise<void> {
-    const userId = req.firebaseUid || req.user?.uid;
+    const userId = req.userId || req.firebaseUid || req.user?.userId;
     if (!userId) {
       throw new Error('User ID not found in request');
     }

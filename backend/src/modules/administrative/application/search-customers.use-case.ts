@@ -17,6 +17,7 @@
  * - Persistence implementation details
  */
 
+import { Inject } from '@nestjs/common';
 import { Customer } from '../domain/customer.entity';
 import { RoleId } from '../../shared/domain/role-id.value-object';
 
@@ -175,7 +176,9 @@ export class SearchCustomersUseCase {
   private static readonly MAX_QUERY_LENGTH = 255;
 
   constructor(
+    @Inject('CustomerRepository')
     private readonly customerRepository: CustomerRepository,
+    @Inject('CurrentUserRepository')
     private readonly currentUserRepository: CurrentUserRepository,
   ) {}
 

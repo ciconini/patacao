@@ -43,10 +43,12 @@ import {
 import {
   GetPetUseCase,
   GetPetInput,
+  GetPetOutput,
 } from '../../application/get-pet.use-case';
 import {
   UpdatePetUseCase,
   UpdatePetInput,
+  UpdatePetOutput,
 } from '../../application/update-pet.use-case';
 import {
   DeletePetUseCase,
@@ -301,7 +303,7 @@ export class PetController {
   /**
    * Maps use case output to response DTO
    */
-  private mapToResponseDto(output: CreatePetOutput | GetPetOutput | any): PetResponseDto {
+  private mapToResponseDto(output: CreatePetOutput | GetPetOutput | UpdatePetOutput | any): PetResponseDto {
     return {
       id: output.id,
       customerId: output.customerId,

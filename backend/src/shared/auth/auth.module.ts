@@ -12,6 +12,7 @@ import { DatabaseModule } from '../../adapters/db/database.module';
 import { RedisModule } from '../../adapters/redis/redis.module';
 import { FirebaseAuthService } from './firebase-auth.service';
 import { FirebaseAuthGuard } from './firebase-auth.guard';
+import { JwtAuthGuard } from './jwt-auth.guard';
 import { PasswordHasherService } from './password-hasher.service';
 import { JwtTokenGeneratorService } from './jwt-token-generator.service';
 import { RateLimiterService } from './rate-limiter.service';
@@ -36,6 +37,8 @@ import { FirebaseUserLookupService } from './firebase-user-lookup.service';
       provide: 'FirebaseAuthService',
       useExisting: FirebaseAuthService,
     },
+    // JWT Auth
+    JwtAuthGuard,
     // Password hashing
     PasswordHasherService,
     {
@@ -74,6 +77,7 @@ import { FirebaseUserLookupService } from './firebase-user-lookup.service';
   exports: [
     FirebaseAuthService,
     FirebaseAuthGuard,
+    JwtAuthGuard,
     PasswordHasherService,
     'PasswordHasher',
     JwtTokenGeneratorService,

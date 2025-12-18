@@ -18,6 +18,7 @@
  * - Persistence implementation details
  */
 
+import { Inject } from '@nestjs/common';
 import { Customer } from '../domain/customer.entity';
 import { AuditLogDomainService } from '../../shared/domain/audit-log.domain-service';
 import { AuditLog, AuditAction } from '../../shared/domain/audit-log.entity';
@@ -141,21 +142,31 @@ export class ArchiveCustomerUseCase {
   private static readonly MAX_REASON_LENGTH = 500;
 
   constructor(
+    @Inject('CustomerRepository')
     private readonly customerRepository: CustomerRepository,
+    @Inject('PetRepository')
     private readonly petRepository: PetRepository,
+    @Inject('AppointmentRepository')
     private readonly appointmentRepository: AppointmentRepository,
+    @Inject('InvoiceRepository')
     private readonly invoiceRepository: InvoiceRepository,
+    @Inject('AuditLogRepository')
     private readonly auditLogRepository: AuditLogRepository,
+    @Inject('UserRepository')
     private readonly userRepository: UserRepository,
     private readonly auditLogDomainService: AuditLogDomainService,
-    private readonly generateId: () => string = () => {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      });
-    },
   ) {}
+
+  /**
+   * Generates a UUID v4
+   */
+  private generateId(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
 
   /**
    * Executes the archive/delete customer use case
